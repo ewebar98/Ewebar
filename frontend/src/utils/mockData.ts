@@ -41,7 +41,7 @@ export const mockApplications = [
   { id: "app_1", university: "University of Lagos", course: "Computer Science", status: "Under Review", submitted: "2026-04-12", probability: 92 },
   { id: "app_2", university: "Covenant University", course: "Computer Science", status: "Accepted", submitted: "2026-03-28", probability: 88 },
   { id: "app_3", university: "OAU", course: "Mech. Engineering", status: "Submitted", submitted: "2026-04-20", probability: 80 },
-  { id: "app_4", university: "Pan-Atlantic", course: "Business Admin", status: "Draft", submitted: "—", probability: 65 },
+  { id: "app_4", university: "Pan-Atlantic", course: "Business Admin", status: "Draft", submitted: "N/A", probability: 65 },
 ];
 
 export const mockProfile = {

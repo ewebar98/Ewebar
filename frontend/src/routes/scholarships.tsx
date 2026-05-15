@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Wallet, Calendar, Trophy, Sparkles, ChevronRight, RotateCcw } from "lucide-react";
+import { Search, Wallet, Calendar, Trophy, ChevronRight, RotateCcw } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton, EmptyState } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/scholarships")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Scholarships — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Scholarships | Intellipath" }] }),
   component: () => <AppLayout><Scholarships /></AppLayout>,
 });
 
@@ -70,8 +70,8 @@ const QUIZ_STEPS: {
     key: "needBased",
     question: "Do you require need-based support?",
     options: [
-      { value: "yes", label: "Yes — financial aid important" },
-      { value: "no", label: "No — merit only is fine" },
+      { value: "yes", label: "Yes. Financial aid important" },
+      { value: "no", label: "No. Merit only is fine" },
     ],
   },
   {
@@ -162,7 +162,7 @@ function Scholarships() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
-              <Sparkles className="h-5 w-5" />
+              <Trophy className="h-5 w-5" />
             </div>
             <div>
               <p className="font-display font-semibold">Scholarship Finder</p>

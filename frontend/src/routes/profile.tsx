@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { ScanLine, Sparkles, Loader2 } from "lucide-react";
+import { ScanLine, FilePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/profile")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Profile — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Profile | Intellipath" }] }),
   component: () => <AppLayout><Profile /></AppLayout>,
 });
 
@@ -73,11 +73,11 @@ function Profile() {
               <ScanLine className="h-5 w-5 text-primary" />
               <h3 className="font-display text-lg font-semibold">Intelligent Result Upload</h3>
             </div>
-            <p className="text-sm text-muted-foreground">Upload your JAMB or WAEC/NECO result — we'll extract subjects and grades automatically.</p>
+            <p className="text-sm text-muted-foreground">Upload your JAMB or WAEC/NECO result. Subjects and grades will be extracted automatically.</p>
             <label className="mt-4 inline-flex">
               <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleResultUpload} />
-              <Button className="bg-gradient-primary" asChild>
-                <span>{extracting ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Extracting...</> : <><Sparkles className="mr-1 h-4 w-4" /> Upload result</>}</span>
+              <Button asChild className="bg-gradient-primary">
+                <span>{extracting ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Extracting...</> : <><FilePlus className="mr-1 h-4 w-4" /> Upload result</>}</span>
               </Button>
             </label>
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Send, Sparkles, RefreshCcw, User as UserIcon, Download, Copy, History } from "lucide-react";
+import { Send, GraduationCap, RefreshCcw, User as UserIcon, Download, Copy, History } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader } from "@/components/ui-kit";
@@ -12,7 +12,7 @@ import { mockChatHistory } from "@/utils/mockData";
 
 export const Route = createFileRoute("/assistant")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "AI Assistant — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Assistant | Intellipath" }] }),
   component: () => <AppLayout><Assistant /></AppLayout>,
 });
 
@@ -33,9 +33,9 @@ function mockReply(message: string): string {
     return [
       "Based on your profile, here are 3 scholarships you qualify for:",
       "",
-      "• **MTN Foundation Scholarship** — ₦600k, deadline Aug 15",
-      "• **NNPC/Total National Merit** — ₦800k, deadline Jul 20",
-      "• **Google Africa Developer** — Free training, deadline May 25",
+      "• **MTN Foundation Scholarship** : ₦600k, deadline Aug 15",
+      "• **NNPC/Total National Merit** : ₦800k, deadline Jul 20",
+      "• **Google Africa Developer** : Free training, deadline May 25",
       "",
       "Want me to draft your applications?",
     ].join("\n");
@@ -44,13 +44,13 @@ function mockReply(message: string): string {
     return "Your JAMB score (268) is already in the top 12%. To push higher, focus on **English comprehension** (your weakest area) and practice 2 timed mock tests per week. I can build a 6-week study plan.";
   }
   if (/career|ai|future|path/.test(m)) {
-    return "AI careers with strongest growth in Nigeria right now:\n\n1. **ML Engineer** — ₦8M–₦25M/yr\n2. **Data Scientist** — ₦6M–₦18M/yr\n3. **AI Product Manager** — ₦10M–₦22M/yr\n\nGiven your CS interest, the ML Engineer path aligns with 94% of your skill profile.";
+    return "AI careers with strongest growth in Nigeria right now:\n\n1. **ML Engineer** : ₦8M–₦25M/yr\n2. **Data Scientist** : ₦6M–₦18M/yr\n3. **AI Product Manager** : ₦10M–₦22M/yr\n\nGiven your CS interest, the ML Engineer path aligns with 94% of your skill profile.";
   }
   if (/unilag|covenant|compare/.test(m)) {
-    return "**UNILAG vs Covenant — quick compare:**\n\n• UNILAG: 94% match, ₦120k/yr, larger cohort, stronger research\n• Covenant: 88% match, ₦950k/yr, better mentorship, faster placement\n\nFor your profile, UNILAG edges out on cost-to-outcome. Covenant wins on industry network.";
+    return "**UNILAG vs Covenant | quick compare:**\n\n• UNILAG: 94% match, ₦120k/yr, larger cohort, stronger research\n• Covenant: 88% match, ₦950k/yr, better mentorship, faster placement\n\nFor your profile, UNILAG edges out on cost-to-outcome. Covenant wins on industry network.";
   }
   if (/best|cs|school|university/.test(m)) {
-    return "Your top 3 matches based on your JAMB score and interests:\n\n1. **University of Lagos — CS** (94% match)\n2. **Covenant University — CS** (88% match)\n3. **OAU — Mech. Engineering** (82% match)\n\nWant a deeper breakdown of any of these?";
+    return "Your top 3 matches based on your JAMB score and interests:\n\n1. **University of Lagos : CS** (94% match)\n2. **Covenant University : CS** (88% match)\n3. **OAU : Mech. Engineering** (82% match)\n\nWant a deeper breakdown of any of these?";
   }
   return `Great question! Based on your profile (JAMB 268, CS interest), here's a focused take on "${message.slice(0, 60)}": I'd recommend exploring the **Recommendations** tab where I've matched 4 strong-fit programs. Want me to dive deeper into any specific area?`;
 }
@@ -64,7 +64,7 @@ function Assistant() {
     {
       id: uid(),
       role: "assistant",
-      content: "Hi Ada 👋 I'm your AI admission counselor. Ask me about programs, scholarships, JAMB strategy, or careers — I learn from your profile in real time.",
+      content: "Hi Ada. I'm your intelligent admission counselor. Ask me about programs, scholarships, JAMB strategy, or careers. I learn from your profile in real time.",
       ts: Date.now(),
     },
   ]);
@@ -150,7 +150,7 @@ function Assistant() {
   return (
     <div className="flex h-[calc(100vh-9rem)] flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <PageHeader title="AI Assistant" subtitle="Your 24/7 admission counselor — powered by mock AI." />
+        <PageHeader title="Assistant" subtitle="Your 24/7 admission counselor." />
         <div className="mb-6 flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={loadMockHistory} className="gap-2">
             <History className="h-3.5 w-3.5" /> Load mock
@@ -180,7 +180,7 @@ function Assistant() {
               >
                 {m.role === "assistant" && (
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-primary">
-                    <Sparkles className="h-4 w-4 text-primary-foreground" />
+                    <GraduationCap className="h-4 w-4 text-primary-foreground" />
                   </div>
                 )}
                 <div
@@ -214,7 +214,7 @@ function Assistant() {
               className="flex gap-3"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-primary">
-                <Sparkles className="h-4 w-4 text-primary-foreground" />
+                <GraduationCap className="h-4 w-4 text-primary-foreground" />
               </div>
               <div className="flex items-center gap-1 rounded-2xl bg-muted px-4 py-3 shadow-soft">
                 {[0, 1, 2].map((i) => (

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Sparkles, Mail, Lock, Info } from "lucide-react";
+import { GraduationCap, Mail, Lock, Info } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth, type Role } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Sign in | Intellipath" }] }),
   component: Login,
 });
 
@@ -54,13 +54,13 @@ function Login() {
         <div className="relative flex h-full flex-col justify-between p-12 text-primary-foreground">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-              <Sparkles className="h-5 w-5" />
+              <GraduationCap className="h-5 w-5" />
             </div>
             <span className="font-display text-lg font-bold">Intellipath</span>
           </Link>
           <div>
             <h2 className="font-display text-3xl font-bold leading-tight">Welcome back to your future.</h2>
-            <p className="mt-3 text-primary-foreground/80">Pick up where you left off — your recommendations are waiting.</p>
+            <p className="mt-3 text-primary-foreground/80">Pick up where you left off. Your recommendations are waiting.</p>
           </div>
           <p className="text-xs text-primary-foreground/60">© Intellipath</p>
         </div>

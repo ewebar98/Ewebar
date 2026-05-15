@@ -52,7 +52,7 @@ export function StudentAnalyticsWidgets() {
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Admission probability</p>
               <p className="mt-1 font-display text-2xl font-bold">
-                {data?.probabilityTrend.at(-1)?.v ?? "—"}
+                {data?.probabilityTrend.at(-1)?.v ?? "0"}
                 <span className="text-sm font-medium text-muted-foreground">%</span>
               </p>
             </div>

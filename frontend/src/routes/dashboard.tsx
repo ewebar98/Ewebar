@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Sparkles, GraduationCap, Wallet, Bell, FileText, TrendingUp, ArrowRight } from "lucide-react";
+import { Star, GraduationCap, Wallet, Bell, FileText, TrendingUp, ArrowRight } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, StatCard, Badge } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
@@ -11,7 +11,7 @@ import { StudentAnalyticsWidgets } from "@/components/StudentAnalyticsWidgets";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Dashboard — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Dashboard | Intellipath" }] }),
   component: () => <AppLayout><Dashboard /></AppLayout>,
 });
 
@@ -62,10 +62,10 @@ function Dashboard() {
 
       {/* Stat cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Recommendations" value={recs?.length ?? "—"} icon={Sparkles} accent="primary" hint="3 new today" />
-        <StatCard label="Scholarships" value={scholarships?.length ?? "—"} icon={Wallet} accent="success" hint="Eligible" />
-        <StatCard label="Applications" value={apps?.length ?? "—"} icon={FileText} accent="warning" hint="Track progress" />
-        <StatCard label="Notifications" value={notifs?.filter((n) => !n.read).length ?? "—"} icon={Bell} accent="destructive" hint="Unread" />
+        <StatCard label="Recommendations" value={recs?.length ?? "0"} icon={Star} accent="primary" hint="3 new today" />
+        <StatCard label="Scholarships" value={scholarships?.length ?? "0"} icon={Wallet} accent="success" hint="Eligible" />
+        <StatCard label="Applications" value={apps?.length ?? "0"} icon={FileText} accent="warning" hint="Track progress" />
+        <StatCard label="Notifications" value={notifs?.filter((n) => !n.read).length ?? "0"} icon={Bell} accent="destructive" hint="Unread" />
       </div>
 
       {/* Premium analytics widgets */}

@@ -75,11 +75,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Intellipath — AI University Admission Platform" },
-      { name: "description", content: "Discover universities, get AI admission recommendations, find scholarships, and plan your career." },
+      { title: "Intellipath | University Admission Platform" },
+      { name: "description", content: "Discover universities, get personalized admission recommendations, find scholarships, and plan your career." },
       { name: "author", content: "Intellipath" },
-      { property: "og:title", content: "Intellipath — AI University Admission Platform" },
-      { property: "og:description", content: "AI-powered university admission, scholarships and career guidance for students." },
+      { property: "og:title", content: "Intellipath | University Admission Platform" },
+      { property: "og:description", content: "Intelligent university admission, scholarships and career guidance for students." },
       {
         rel: "preconnect",
         href: "https://fonts.googleapis.com",

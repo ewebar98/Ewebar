@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 export function Footer() {
   return (
@@ -8,12 +8,12 @@ export function Footer() {
         <div>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <GraduationCap className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-display font-bold">Intellipath</span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            AI-powered admission guidance for the next generation of African students.
+            Intelligent admission guidance for the next generation of African students.
           </p>
         </div>
         <div>
@@ -40,7 +40,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Intellipath — Built for ambitious students.
+        © {new Date().getFullYear()} Intellipath. Built for ambitious students.
       </div>
     </footer>
   );

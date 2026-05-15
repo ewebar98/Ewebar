@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { ChevronDown, Search, Sparkles } from "lucide-react";
+import { ChevronDown, Search, Star } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/recommendations")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Recommendations — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Recommendations | Intellipath" }] }),
   component: () => <AppLayout><Recommendations /></AppLayout>,
 });
 
@@ -77,7 +77,7 @@ function Recommendations() {
               onClick={() => setOpenId(openId === r.id ? null : r.id)}
               className="mt-4 flex w-full items-center justify-between rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground"
             >
-              <span className="flex items-center gap-2"><Sparkles className="h-3.5 w-3.5" /> Why this recommendation?</span>
+              <span className="flex items-center gap-2"><Star className="h-3.5 w-3.5" /> Why this recommendation?</span>
               <ChevronDown className={`h-4 w-4 transition-transform ${openId === r.id ? "rotate-180" : ""}`} />
             </button>
             {openId === r.id && (

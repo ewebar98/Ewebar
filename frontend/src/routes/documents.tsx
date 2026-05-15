@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/documents")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Documents — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Documents | Intellipath" }] }),
   component: () => <AppLayout><Documents /></AppLayout>,
 });
 
@@ -61,7 +61,7 @@ function Documents() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Documents" subtitle="Upload your results, transcripts and certificates — we'll extract them automatically." />
+      <PageHeader title="Documents" subtitle="Upload your results, transcripts and certificates. We'll extract them automatically." />
 
       <motion.div
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}

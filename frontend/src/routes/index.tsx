@@ -11,18 +11,18 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Intellipath — AI-Powered University Admission Platform" },
-      { name: "description", content: "Discover universities, get personalized admission recommendations, find scholarships, and plan your future career — all powered by AI." },
+      { title: "Intellipath | University Admission Platform" },
+      { name: "description", content: "Discover universities, get personalized admission recommendations, find scholarships, and plan your future career." },
     ],
   }),
   component: Landing,
 });
 
 const features = [
-  { icon: Sparkles, title: "Admission Recommendations", desc: "AI matches your scores and interests to programs you're most likely to get into.", tone: "primary" },
+  { icon: GraduationCap, title: "Admission Recommendations", desc: "Intelligent matching for your scores and interests.", tone: "primary" },
   { icon: Wallet, title: "Scholarship Discovery", desc: "Find scholarships you actually qualify for, with countdowns and requirements.", tone: "success" },
-  { icon: Brain, title: "AI Career Guidance", desc: "A 24/7 mentor that maps your strengths to careers and degrees.", tone: "warning" },
-  { icon: FileScan, title: "Intelligent Result Upload", desc: "Upload JAMB or WAEC results — we extract subjects and grades automatically.", tone: "primary" },
+  { icon: Brain, title: "Career Guidance", desc: "A 24/7 mentor that maps your strengths to careers and degrees.", tone: "warning" },
+  { icon: FileScan, title: "Result Upload", desc: "Upload JAMB or WAEC results for automatic subject extraction.", tone: "primary" },
 ] as const;
 
 const toneMap = {
@@ -67,17 +67,14 @@ function Landing() {
 
         <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2 md:py-28">
           <div>
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs font-medium backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              Powered by intelligent matching
-            </motion.div>
+            <div className="h-4" />
             <motion.h1
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl"
             >
-              Find your <span className="gradient-text">perfect university</span> with AI guidance.
+              Find your <span className="gradient-text">perfect university</span> with intelligent guidance.
             </motion.h1>
             <motion.p
               initial={{ opacity: 0 }}
@@ -85,7 +82,7 @@ function Landing() {
               transition={{ delay: 0.2 }}
               className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg"
             >
-              Intellipath analyses your results, interests, and goals to recommend programs and scholarships that fit you — in seconds, not semesters.
+              Intellipath analyses your results, interests, and goals to recommend programs and scholarships that fit you.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -99,7 +96,7 @@ function Landing() {
                 </Button>
               </Link>
               <Link to="/assistant">
-                <Button size="lg" variant="outline">Try the AI assistant</Button>
+                <Button size="lg" variant="outline">Consult the assistant</Button>
               </Link>
             </motion.div>
             <div className="mt-6 flex items-center gap-4 text-sm text-muted-foreground">
@@ -119,9 +116,9 @@ function Landing() {
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary">
-                    <Sparkles className="h-4 w-4 text-primary-foreground" />
+                    <GraduationCap className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  <p className="text-sm font-semibold">AI Match Report</p>
+                  <p className="text-sm font-semibold">Match Report</p>
                 </div>
                 <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">Live</span>
               </div>
@@ -237,7 +234,7 @@ function Landing() {
 
         <div className="mt-16 overflow-hidden rounded-3xl bg-gradient-primary p-10 text-center text-primary-foreground shadow-elegant md:p-16">
           <h2 className="font-display text-3xl font-bold md:text-4xl">Your future university is one click away.</h2>
-          <p className="mt-3 text-primary-foreground/85">Create a free account and get your first AI recommendations today.</p>
+          <p className="mt-3 text-primary-foreground/85">Create a free account and get your first recommendations today.</p>
           <Link to="/register">
             <Button size="lg" variant="secondary" className="mt-6">Get started free <ArrowRight className="ml-1 h-4 w-4" /></Button>
           </Link>

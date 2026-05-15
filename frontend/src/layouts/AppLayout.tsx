@@ -1,8 +1,8 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard, Sparkles, GraduationCap, Wallet, FileText, FolderOpen,
-  Bell, Settings, Brain, Compass, User, Sun, Moon, LogOut, Menu, X,
+  LayoutDashboard, Star, GraduationCap, Wallet, FileText, FolderOpen,
+  Bell, Settings, Brain, Compass, User, Sun, Moon, LogOut, Menu, X, BarChart,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -10,13 +10,13 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const studentNav = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/recommendations", icon: Sparkles, label: "Recommendations" },
+  { to: "/recommendations", icon: Star, label: "Recommendations" },
   { to: "/universities", icon: GraduationCap, label: "Universities" },
   { to: "/scholarships", icon: Wallet, label: "Scholarships" },
   { to: "/documents", icon: FolderOpen, label: "Documents" },
   { to: "/applications", icon: FileText, label: "Applications" },
   { to: "/career", icon: Compass, label: "Career" },
-  { to: "/assistant", icon: Brain, label: "AI Assistant" },
+  { to: "/assistant", icon: Brain, label: "Assistant" },
   { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/profile", icon: User, label: "Profile" },
   { to: "/settings", icon: Settings, label: "Settings" },
@@ -27,7 +27,7 @@ const adminNav = [
   { to: "/admin/universities", icon: GraduationCap, label: "Universities" },
   { to: "/admin/courses", icon: FileText, label: "Courses" },
   { to: "/admin/scholarships", icon: Wallet, label: "Scholarships" },
-  { to: "/admin/analytics", icon: Sparkles, label: "Analytics" },
+  { to: "/admin/analytics", icon: BarChart, label: "Analytics" },
 ];
 
 export function AppLayout({ variant = "student", children }: { variant?: "student" | "admin"; children?: ReactNode }) {
@@ -53,7 +53,7 @@ export function AppLayout({ variant = "student", children }: { variant?: "studen
         <div className="flex h-16 items-center justify-between border-b px-5">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <GraduationCap className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-display font-bold">Intellipath</span>
           </Link>

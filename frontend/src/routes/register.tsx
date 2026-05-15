@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { registerUser } from "@/services/api";
 
 export const Route = createFileRoute("/register")({
-  head: () => ({ meta: [{ title: "Create account — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Create account | Intellipath" }] }),
   component: Register,
 });
 
@@ -24,7 +24,7 @@ function Register() {
     setLoading(true);
     try {
       await registerUser(form.name, form.email, form.password);
-      toast.success("Account created — welcome!");
+      toast.success("Account created. Welcome!");
       navigate({ to: "/dashboard" });
     } finally {
       setLoading(false);
@@ -42,7 +42,7 @@ function Register() {
         >
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <GraduationCap className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-display font-bold">Intellipath</span>
           </Link>
@@ -78,7 +78,7 @@ function Register() {
         <div className="relative flex h-full items-center justify-center p-12 text-primary-foreground">
           <div>
             <h2 className="font-display text-3xl font-bold leading-tight">Join 18,000+ students<br />finding their path.</h2>
-            <p className="mt-3 max-w-sm text-primary-foreground/80">Smart matching, scholarship alerts, and a 24/7 AI mentor. Free, always.</p>
+            <p className="mt-3 max-w-sm text-primary-foreground/80">Smart matching, scholarship alerts, and a 24/7 intelligent mentor. Free, always.</p>
           </div>
         </div>
       </div>
