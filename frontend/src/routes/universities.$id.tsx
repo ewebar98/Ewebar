@@ -45,13 +45,10 @@ function UniversityDetails() {
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (loading) return <Skeleton className="h-64 w-full" />;
-  if (!uni) return <p className="text-center text-muted-foreground">Not found.</p>;
-
-  const universityCourses = uni.courses || [];
-
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFacultyTab, setActiveFacultyTab] = useState<string>("");
+
+  const universityCourses = uni?.courses || [];
 
   // 1. Extract unique faculties from the university courses
   const faculties = useMemo(() => {
@@ -106,8 +103,12 @@ function UniversityDetails() {
     return groups;
   }, [filteredCourses, activeFacultyTab, searchQuery]);
 
+  if (loading) return <Skeleton className="h-64 w-full" />;
+  if (!uni) return <p className="text-center text-muted-foreground">Not found.</p>;
+
   const selectedCourse = universityCourses.find((c) => c.id === selectedCourseId);
   const studentJambScore = profile?.jambScore || 180;
+
 
   // Compute cutoff eligibility
   const isCutoffMet = selectedCourse ? studentJambScore >= selectedCourse.cutoff : false;
