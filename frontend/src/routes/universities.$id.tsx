@@ -5,8 +5,9 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
 import { getUniversityById, getUploadedDocuments, getProfile, submitApplication } from "@/services/api";
 import { Button } from "@/components/ui/button";
-import { MapPin, Users, TrendingUp, Award, Check, ChevronRight, AlertTriangle, FileText, X } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { MapPin, Users, TrendingUp, Award, Check, ChevronRight, AlertTriangle, FileText, X, Search, BookOpen } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -48,6 +49,63 @@ function UniversityDetails() {
   if (!uni) return <p className="text-center text-muted-foreground">Not found.</p>;
 
   const universityCourses = uni.courses || [];
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFacultyTab, setActiveFacultyTab] = useState<string>("");
+
+  // 1. Extract unique faculties from the university courses
+  const faculties = useMemo(() => {
+    const facSet = new Set<string>();
+    universityCourses.forEach((c) => {
+      if (c.faculty) facSet.add(c.faculty);
+    });
+    return Array.from(facSet).sort();
+  }, [universityCourses]);
+
+  // 2. Set the first faculty as active tab if none is selected yet
+  useEffect(() => {
+    if (faculties.length > 0 && !activeFacultyTab) {
+      setActiveFacultyTab(faculties[0]);
+    }
+  }, [faculties, activeFacultyTab]);
+
+  // 3. Filter courses by search query
+  const filteredCourses = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return universityCourses;
+    return universityCourses.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.department && c.department.toLowerCase().includes(q)) ||
+        c.description.toLowerCase().includes(q)
+    );
+  }, [universityCourses, searchQuery]);
+
+  // 4. Group filtered courses by Faculty -> Department
+  const groupedCourses = useMemo(() => {
+    const isSearching = searchQuery.trim() !== "";
+    const coursesToGroup = isSearching 
+      ? filteredCourses 
+      : filteredCourses.filter((c) => c.faculty === activeFacultyTab);
+
+    // Structure: { [faculty: string]: { [department: string]: Course[] } }
+    const groups: { [facName: string]: { [deptName: string]: any[] } } = {};
+
+    coursesToGroup.forEach((c) => {
+      const fac = c.faculty || "Sciences";
+      const dept = c.department || "General Department";
+      if (!groups[fac]) {
+        groups[fac] = {};
+      }
+      if (!groups[fac][dept]) {
+        groups[fac][dept] = [];
+      }
+      groups[fac][dept].push(c);
+    });
+
+    return groups;
+  }, [filteredCourses, activeFacultyTab, searchQuery]);
+
   const selectedCourse = universityCourses.find((c) => c.id === selectedCourseId);
   const studentJambScore = profile?.jambScore || 180;
 
@@ -124,38 +182,129 @@ function UniversityDetails() {
         ))}
       </div>
 
-      <div className="rounded-2xl border bg-card p-6 shadow-soft">
-        <h3 className="mb-4 font-display text-lg font-semibold">Offered Programs</h3>
-        {universityCourses.length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {universityCourses.map((c) => (
-              <div key={c.id} className="rounded-xl border p-4 hover:bg-accent flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between">
-                    <p className="font-medium">{c.name}</p>
-                    <Badge tone="default">JAMB Cutoff: {c.cutoff}</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">{c.faculty} · {c.duration}</p>
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{c.description}</p>
-                </div>
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedCourseId(c.id);
-                      setStep(1);
-                      setIsOpen(true);
-                    }}
-                  >
-                    Select Program
-                  </Button>
-                </div>
-              </div>
-            ))}
+      <div className="rounded-2xl border bg-card p-6 shadow-soft space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+          <div>
+            <h3 className="font-display text-lg font-semibold text-foreground">Offered Programs</h3>
+            <p className="text-xs text-muted-foreground">Browse courses relationally grouped by faculties and departments.</p>
           </div>
+          <div className="relative w-full sm:max-w-xs shrink-0">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search programs..."
+              className="pl-9 h-9 rounded-xl text-xs"
+            />
+          </div>
+        </div>
+
+        {/* 1. Tab Switcher (Only visible when search is empty) */}
+        {searchQuery.trim() === "" && faculties.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 border-b pb-4">
+            {faculties.map((fac) => {
+              const isActive = activeFacultyTab === fac;
+              return (
+                <button
+                  key={fac}
+                  type="button"
+                  onClick={() => setActiveFacultyTab(fac)}
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-soft scale-102"
+                      : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  {fac}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 2. Structured Grouped Course Catalog Grid */}
+        {universityCourses.length > 0 ? (
+          Object.keys(groupedCourses).length > 0 ? (
+            <div className="space-y-8">
+              {Object.entries(groupedCourses).map(([facName, depts]) => (
+                <div key={facName} className="space-y-6">
+                  {/* Faculty Header (only render during search since tabs are hidden) */}
+                  {searchQuery.trim() !== "" && (
+                    <h4 className="font-display text-sm font-bold text-primary flex items-center gap-2 border-b pb-2">
+                      <BookOpen className="h-4 w-4" /> {facName} Faculty
+                    </h4>
+                  )}
+                  {Object.entries(depts).map(([deptName, courses]) => (
+                    <div key={deptName} className="space-y-3">
+                      <h5 className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest pl-1">
+                        {deptName}
+                      </h5>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {courses.map((c) => {
+                          const isEligible = studentJambScore >= c.cutoff;
+                          return (
+                            <div
+                              key={c.id}
+                              className="rounded-2xl border bg-muted/15 p-4 hover:border-primary/20 hover:bg-muted/5 transition-all flex flex-col justify-between shadow-soft relative overflow-hidden group"
+                            >
+                              <div
+                                className={`absolute left-0 top-0 h-full w-1 transition-all ${
+                                  isEligible ? "bg-success/50 group-hover:bg-success" : "bg-warning/40 group-hover:bg-warning"
+                                }`}
+                              />
+                              <div className="pl-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <p className="font-semibold text-sm text-foreground leading-snug">{c.name}</p>
+                                  <Badge
+                                    tone={isEligible ? "success" : "default"}
+                                  >
+                                    UTME Cutoff: {c.cutoff}
+                                  </Badge>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 font-medium">
+                                  <span>{c.duration}</span>
+                                  <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                                  <span>{c.faculty}</span>
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                                  {c.description}
+                                </p>
+                              </div>
+                              <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t pl-1">
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                                  {c.tuition || uni.tuition}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedCourseId(c.id);
+                                    setStep(1);
+                                    setIsOpen(true);
+                                  }}
+                                  className="h-8 rounded-lg text-xs"
+                                >
+                                  Apply Now
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 border border-dashed rounded-2xl bg-muted/10">
+              <AlertTriangle className="mx-auto h-8 w-8 text-muted-foreground animate-pulse mb-3" />
+              <p className="text-sm font-semibold text-foreground">No matching programs found</p>
+              <p className="text-xs text-muted-foreground mt-1">Try typing a different course name or clear the search query.</p>
+            </div>
+          )
         ) : (
-          <p className="text-sm text-muted-foreground">No program lists currently populated for this institution.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">No program lists currently populated for this institution.</p>
         )}
       </div>
 

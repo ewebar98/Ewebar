@@ -65,7 +65,7 @@ export const getUniversityById = asyncHandler(async (req, res) => {
     const programs = await Program.find({ institutionId: institution._id })
       .populate("facultyId", "name")
       .populate("departmentId", "name")
-      .limit(20);
+      .limit(100);
 
     res.json({
       success: true,

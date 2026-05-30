@@ -56,6 +56,7 @@ export interface Course {
   id: string;
   name: string;
   faculty: string;
+  department?: string;
   duration: string;
   cutoff: number;
   description: string;
@@ -97,6 +98,7 @@ export async function getUniversityById(id: string): Promise<University | null> 
       id: c._id,
       name: c.name,
       faculty: c.facultyId?.name || "Sciences",
+      department: c.departmentId?.name || "General Department",
       duration: c.duration || "4 years",
       cutoff: c.cutoffMark || 200,
       description: c.description || `Explore the ${c.name} program.`,
