@@ -107,7 +107,6 @@ institutionSchema.index({ name: "text", city: "text", state: "text", tags: "text
 
 // Compound filter optimization indexes to support high-volume sub-millisecond client queries
 institutionSchema.index({ state: 1, institutionType: 1, name: 1 });
-institutionSchema.index({ ownershipType: 1 });
 
 export const Institution = mongoose.model("Institution", institutionSchema);
 
@@ -249,7 +248,5 @@ programSchema.index({ name: "text", description: "text" });
 
 // High performance relational and pre-filtering indexes to accelerate recommendation pipelines
 programSchema.index({ cutoffMark: 1, name: 1 });
-programSchema.index({ institutionId: 1 });
-programSchema.index({ facultyId: 1 });
 
 export const Program = mongoose.model("Program", programSchema);
