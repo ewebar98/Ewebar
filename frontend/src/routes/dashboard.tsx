@@ -52,7 +52,7 @@ function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
             <p className="text-sm text-primary-foreground/80">Good to see you,</p>
-            <h2 className="mt-1 font-display text-2xl font-bold md:text-3xl">{firstName} 👋</h2>
+            <h2 className="mt-1 font-display text-2xl font-bold md:text-3xl">{firstName}</h2>
             <p className="mt-2 max-w-md text-sm text-primary-foreground/85">
               {recs && recs.length > 0
                 ? `Your admission probability looks strong. You have ${recs.length} program ${recs.length === 1 ? "match" : "matches"}.`

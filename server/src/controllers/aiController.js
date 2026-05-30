@@ -35,7 +35,7 @@ export const careerGuidance = asyncHandler(async (req, res) => {
   // Trigger AI advisor notification
   await Notification.create({
     userId: req.user._id,
-    title: "AI Career Guidance Ready 🧠",
+    title: "AI Career Guidance Ready",
     body: `Your custom AI advisor career guidance report for "${interest}" has been successfully compiled.`,
     type: "info",
     link: "/career",

@@ -1,10 +1,10 @@
 export const mockUniversities = [
-  { id: "uni_1", name: "University of Lagos", location: "Lagos, Nigeria", ranking: 1, students: 57000, acceptance: 22, tuition: "₦120,000/yr", logo: "🎓", tags: ["Federal", "Top-Ranked"] },
-  { id: "uni_2", name: "Covenant University", location: "Ota, Ogun", ranking: 4, students: 12000, acceptance: 35, tuition: "₦950,000/yr", logo: "📚", tags: ["Private", "Tech"] },
-  { id: "uni_3", name: "Ahmadu Bello University", location: "Zaria, Kaduna", ranking: 3, students: 35000, acceptance: 28, tuition: "₦95,000/yr", logo: "🏛️", tags: ["Federal"] },
-  { id: "uni_4", name: "Obafemi Awolowo University", location: "Ile-Ife, Osun", ranking: 2, students: 30000, acceptance: 25, tuition: "₦110,000/yr", logo: "🌿", tags: ["Federal"] },
-  { id: "uni_5", name: "Pan-Atlantic University", location: "Lagos", ranking: 6, students: 1800, acceptance: 40, tuition: "₦2,500,000/yr", logo: "💼", tags: ["Private", "Business"] },
-  { id: "uni_6", name: "University of Ibadan", location: "Ibadan, Oyo", ranking: 5, students: 25000, acceptance: 24, tuition: "₦100,000/yr", logo: "🦁", tags: ["Federal", "Research"] },
+  { id: "uni_1", name: "University of Lagos", location: "Lagos, Nigeria", ranking: 1, students: 57000, acceptance: 22, tuition: "₦120,000/yr", logo: "", tags: ["Federal", "Top-Ranked"] },
+  { id: "uni_2", name: "Covenant University", location: "Ota, Ogun", ranking: 4, students: 12000, acceptance: 35, tuition: "₦950,000/yr", logo: "", tags: ["Private", "Tech"] },
+  { id: "uni_3", name: "Ahmadu Bello University", location: "Zaria, Kaduna", ranking: 3, students: 35000, acceptance: 28, tuition: "₦95,000/yr", logo: "", tags: ["Federal"] },
+  { id: "uni_4", name: "Obafemi Awolowo University", location: "Ile-Ife, Osun", ranking: 2, students: 30000, acceptance: 25, tuition: "₦110,000/yr", logo: "", tags: ["Federal"] },
+  { id: "uni_5", name: "Pan-Atlantic University", location: "Lagos", ranking: 6, students: 1800, acceptance: 40, tuition: "₦2,500,000/yr", logo: "", tags: ["Private", "Business"] },
+  { id: "uni_6", name: "University of Ibadan", location: "Ibadan, Oyo", ranking: 5, students: 25000, acceptance: 24, tuition: "₦100,000/yr", logo: "", tags: ["Federal", "Research"] },
 ];
 
 export const mockCourses = [

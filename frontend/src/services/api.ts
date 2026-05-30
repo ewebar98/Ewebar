@@ -408,7 +408,7 @@ export async function getAdminApplications(): Promise<AdminApplication[]> {
     university: {
       id: a.universityId?._id || "",
       name: a.universityId?.name || "University",
-      logo: a.universityId?.logo || "🎓",
+      logo: a.universityId?.logo || "",
       location: a.universityId?._id ? `${a.universityId.city}, ${a.universityId.state}` : "",
     },
     course: {

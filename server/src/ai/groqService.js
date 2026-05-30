@@ -54,7 +54,7 @@ export const getAIExplanation = async (prompt) => {
       messages: [
         {
           role: "system",
-          content: "You are an intelligent university admission counselor for Intellipath. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences).",
+          content: "You are an intelligent university admission counselor for Intellipath. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences). Do NOT output any emojis under any circumstances.",
         },
         {
           role: "user",
@@ -72,7 +72,7 @@ export const getAIExplanation = async (prompt) => {
         messages: [
           {
             role: "system",
-            content: "You are an intelligent university admission counselor for Intellipath. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences).",
+            content: "You are an intelligent university admission counselor for Intellipath. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences). Do NOT output any emojis under any circumstances.",
           },
           {
             role: "user",
@@ -101,7 +101,8 @@ export const chatWithAI = async (messages) => {
     "IMPORTANT RULE: Keep your replies very concise, conversational, and punchy (maximum 2-3 sentences or a very short bulleted list of 2-3 items). " +
     "Never write long paragraphs or give generic walls of information. " +
     "Be direct and address exactly what is asked in a friendly tone (use terms like 'bro' naturally). " +
-    "Ask a quick, short follow-up question to keep the conversation conversational.";
+    "Do NOT output any emojis under any circumstances. " +
+    "Always conclude with a quick, short follow-up question to keep the conversation conversational.";
 
   // Try the best reasoning model first: llama-3.3-70b-versatile
   try {
