@@ -3,7 +3,7 @@
  * All secure requests automatically inject the stored JWT token.
  */
 
-const BASE_URL = "http://localhost:5001/api";
+const BASE_URL = "https://ewebar.onrender.com/api";
 
 // Helper request wrapper for JSON fetch calls
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

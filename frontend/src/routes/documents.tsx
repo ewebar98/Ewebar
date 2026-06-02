@@ -620,7 +620,7 @@ function Documents() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <a
-                        href={`http://localhost:5001${doc.url}`}
+                        href={`https://ewebar.onrender.com${doc.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex h-7 w-7 items-center justify-center rounded-md border hover:bg-background text-muted-foreground hover:text-foreground transition-colors"

@@ -53,7 +53,7 @@ function Career() {
     setGuidance(null);
     try {
       const token = localStorage.getItem("Ewebar.token");
-      const res = await fetch("http://localhost:5001/api/ai/career-guidance", {
+      const res = await fetch("https://ewebar.onrender.com/api/ai/career-guidance", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

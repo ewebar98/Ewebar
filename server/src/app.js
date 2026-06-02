@@ -49,7 +49,7 @@ app.use("/api/subjects", subjectRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Intellipath API is running...",
+    message: "Ewebar API is running...",
   });
 });
 
