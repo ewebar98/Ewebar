@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import dns from "node:dns";
 import Subject from "../models/subjectModel.js";
 
 dotenv.config();
@@ -675,8 +676,19 @@ const subjectsList = [
 
 const seedSubjects = async () => {
   try {
+    // Force process-level public DNS resolvers to resolve MONGODB_URI SRV records successfully,
+    // bypassing any querySrv ECONNREFUSED blocks from local ISP or network DNS limitations.
+    try {
+      dns.setServers(["1.1.1.1", "8.8.8.8"]);
+    } catch (dnsErr) {
+      console.warn("[DNS Resolution Warning] Failed to set public DNS servers:", dnsErr.message);
+    }
+
     console.log("Establishing database connection for Subject Seeder...");
-    const conn = await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ewebar", {
+    const connectionUri = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ewebar";
+    const maskedUri = connectionUri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@");
+    console.log(`Connecting to: ${maskedUri}`);
+    const conn = await mongoose.connect(connectionUri, {
       serverSelectionTimeoutMS: 5000,
     });
     console.log(`Connected successfully to database: ${conn.connection.db.databaseName}`);

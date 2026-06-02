@@ -1,6 +1,15 @@
 import mongoose from "mongoose";
+import dns from "node:dns";
 
 const connectDB = async () => {
+  // Force process-level public DNS resolvers to resolve MONGODB_URI SRV records successfully,
+  // bypassing any querySrv ECONNREFUSED blocks from local ISP or network DNS limitations.
+  try {
+    dns.setServers(["1.1.1.1", "8.8.8.8"]);
+  } catch (dnsErr) {
+    console.warn("[DNS Resolution Warning] Failed to set public DNS servers:", dnsErr.message);
+  }
+
   const uri = process.env.MONGODB_URI;
   const fallbackUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/intellipath";
 

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import dns from "node:dns";
 import User from "../models/userModel.js";
 import { Institution, Faculty, Department, Program } from "../models/universityModel.js";
 import { Scholarship } from "../models/scholarshipModel.js";
@@ -490,9 +491,20 @@ const programTemplates = [
 
 const seedData = async () => {
   try {
+    // Force process-level public DNS resolvers to resolve MONGODB_URI SRV records successfully,
+    // bypassing any querySrv ECONNREFUSED blocks from local ISP or network DNS limitations.
+    try {
+      dns.setServers(["1.1.1.1", "8.8.8.8"]);
+    } catch (dnsErr) {
+      console.warn("[DNS Resolution Warning] Failed to set public DNS servers:", dnsErr.message);
+    }
+
     // 1. Establish Database Connection
     console.log("Establishing connection to database...");
-    const conn = await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ewebar", { serverSelectionTimeoutMS: 5000 });
+    const connectionUri = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ewebar";
+    const maskedUri = connectionUri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@");
+    console.log(`Connecting to: ${maskedUri}`);
+    const conn = await mongoose.connect(connectionUri, { serverSelectionTimeoutMS: 5000 });
     console.log(`Connected successfully to: ${conn.connection.db.databaseName}`);
 
     // 2. Clear Existing Collections
@@ -511,8 +523,21 @@ const seedData = async () => {
     console.log("Starting ETL Ingestion pipeline for institutions...");
     const institutionMap = new Map();
 
-    for (const rawInst of rawInstitutions) {
-      const inst = await ETLService.ingestInstitution(rawInst);
+    const normalizedInstitutions = [];
+    const seenNames = new Set();
+    const seenSlugs = new Set();
+
+    for (const raw of rawInstitutions) {
+      const normalized = ETLService.normalizeInstitution(raw);
+      if (!seenNames.has(normalized.name) && !seenSlugs.has(normalized.slug)) {
+        seenNames.add(normalized.name);
+        seenSlugs.add(normalized.slug);
+        normalizedInstitutions.push(normalized);
+      }
+    }
+
+    const insertedInstitutions = await Institution.insertMany(normalizedInstitutions, { ordered: false });
+    for (const inst of insertedInstitutions) {
       institutionMap.set(inst.name, inst);
     }
     console.log(`Successfully normalized & ingested ${institutionMap.size} institutions.`);
@@ -520,6 +545,20 @@ const seedData = async () => {
     // 4. Ingest Faculties, Departments, and Programs relationally for all institutions
     console.log("Relational ingestion pipeline mapping Faculties, Departments, and Programs...");
     let programCount = 0;
+
+    const facultiesToInsert = [];
+    const departmentsToInsert = [];
+    const programsToInsert = [];
+
+    const localFacultyCache = new Map();
+    const localDeptCache = new Map();
+
+    const makeSlug = (str) => {
+      return str
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    };
 
     for (const [instName, instDoc] of institutionMap.entries()) {
       const isUni = instDoc.institutionType === "university";
@@ -597,12 +636,35 @@ const seedData = async () => {
       }
 
       for (const tmpl of matchedTemplates) {
-        // ETL Ingest Faculty
-        const faculty = await ETLService.ingestFaculty(instDoc._id, tmpl.faculty);
+        // 1. Get or Create Faculty in memory
+        const facKey = `${instDoc._id}_${tmpl.faculty.trim()}`;
+        let faculty = localFacultyCache.get(facKey);
+        if (!faculty) {
+          faculty = {
+            _id: new mongoose.Types.ObjectId(),
+            institutionId: instDoc._id,
+            name: tmpl.faculty.trim(),
+            slug: makeSlug(tmpl.faculty.trim())
+          };
+          localFacultyCache.set(facKey, faculty);
+          facultiesToInsert.push(faculty);
+        }
         
-        // ETL Ingest Department (derive department name from program)
-        const deptName = `Department of ${tmpl.name}`;
-        const department = await ETLService.ingestDepartment(instDoc._id, faculty._id, deptName);
+        // 2. Get or Create Department in memory (derive department name from program)
+        const deptName = `Department of ${tmpl.name.trim()}`;
+        const deptKey = `${instDoc._id}_${faculty._id}_${deptName}`;
+        let department = localDeptCache.get(deptKey);
+        if (!department) {
+          department = {
+            _id: new mongoose.Types.ObjectId(),
+            institutionId: instDoc._id,
+            facultyId: faculty._id,
+            name: deptName,
+            slug: makeSlug(deptName)
+          };
+          localDeptCache.set(deptKey, department);
+          departmentsToInsert.push(department);
+        }
         
         // Adjust attributes according to Institution status
         const adjustedTuition = instDoc.ownershipType === "private" 
@@ -656,12 +718,14 @@ const seedData = async () => {
           adjustedCutoff = Math.max(140, tmpl.cutoffMark - 100);
         }
 
-        // ETL Ingest Program
-        await ETLService.ingestProgram({
+        // 3. Create Program in memory
+        const program = {
+          _id: new mongoose.Types.ObjectId(),
           institutionId: instDoc._id,
           facultyId: faculty._id,
           departmentId: department._id,
-          name: tmpl.name,
+          name: tmpl.name.trim(),
+          slug: makeSlug(tmpl.name.trim()),
           duration: isPoly 
             ? "2 years (ND/HND)" 
             : (instDoc.institutionType === "college_of_education" ? "3 years (NCE)" : tmpl.duration),
@@ -669,12 +733,22 @@ const seedData = async () => {
           tuition: adjustedTuition,
           requirements: tmpl.requirements,
           careerPaths: tmpl.careerPaths,
-          description: tmpl.description,
-        });
+          description: tmpl.description
+        };
+        programsToInsert.push(program);
 
         programCount++;
       }
     }
+
+    console.log(`Prepared in memory: ${facultiesToInsert.length} faculties, ${departmentsToInsert.length} departments, ${programsToInsert.length} programs.`);
+
+    console.log("Bulk inserting Faculties...");
+    await Faculty.insertMany(facultiesToInsert, { ordered: false });
+    console.log("Bulk inserting Departments...");
+    await Department.insertMany(departmentsToInsert, { ordered: false });
+    console.log("Bulk inserting Programs...");
+    await Program.insertMany(programsToInsert, { ordered: false });
 
     console.log(`Relationally mapped and seeded ${programCount} programs.`);
 

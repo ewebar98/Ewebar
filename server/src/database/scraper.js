@@ -6,6 +6,7 @@ import { Scholarship } from "../models/scholarshipModel.js";
 import { Application } from "../models/applicationModel.js";
 import Recommendation from "../models/recommendationModel.js";
 import { ETLService } from "../services/etlService.js";
+import dns from "node:dns";
 
 dotenv.config();
 
@@ -91,8 +92,19 @@ const programTemplates = [
 
 async function runScraper() {
   try {
+    // Force process-level public DNS resolvers to resolve MONGODB_URI SRV records successfully,
+    // bypassing any querySrv ECONNREFUSED blocks from local ISP or network DNS limitations.
+    try {
+      dns.setServers(["1.1.1.1", "8.8.8.8"]);
+    } catch (dnsErr) {
+      console.warn("[DNS Resolution Warning] Failed to set public DNS servers:", dnsErr.message);
+    }
+
     console.log("Establishing database connection...");
-    await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ewebar", { serverSelectionTimeoutMS: 5000 });
+    const connectionUri = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://127.0.0.1:27017/ewebar";
+    const maskedUri = connectionUri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@");
+    console.log(`Connecting to: ${maskedUri}`);
+    await mongoose.connect(connectionUri, { serverSelectionTimeoutMS: 5000 });
     console.log("Database connected successfully.");
 
     // Fetch existing institutions
@@ -140,6 +152,20 @@ async function runScraper() {
 
     let programCount = 0;
     let instCounter = 0;
+
+    const facultiesToInsert = [];
+    const departmentsToInsert = [];
+    const programsToInsert = [];
+
+    const localFacultyCache = new Map();
+    const localDeptCache = new Map();
+
+    const makeSlug = (str) => {
+      return str
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    };
 
     for (const inst of institutions) {
       const isUni = inst.institutionType === "university";
@@ -261,12 +287,35 @@ async function runScraper() {
 
       // Bulk ingest relationally
       for (const tmpl of matchedTemplates) {
-        // 1. Ingest Faculty
-        const faculty = await ETLService.ingestFaculty(inst._id, tmpl.faculty);
+        // 1. Get or Create Faculty in memory
+        const facKey = `${inst._id}_${tmpl.faculty.trim()}`;
+        let faculty = localFacultyCache.get(facKey);
+        if (!faculty) {
+          faculty = {
+            _id: new mongoose.Types.ObjectId(),
+            institutionId: inst._id,
+            name: tmpl.faculty.trim(),
+            slug: makeSlug(tmpl.faculty.trim())
+          };
+          localFacultyCache.set(facKey, faculty);
+          facultiesToInsert.push(faculty);
+        }
         
-        // 2. Ingest Department
-        const deptName = `Department of ${tmpl.name}`;
-        const department = await ETLService.ingestDepartment(inst._id, faculty._id, deptName);
+        // 2. Get or Create Department in memory
+        const deptName = `Department of ${tmpl.name.trim()}`;
+        const deptKey = `${inst._id}_${faculty._id}_${deptName}`;
+        let department = localDeptCache.get(deptKey);
+        if (!department) {
+          department = {
+            _id: new mongoose.Types.ObjectId(),
+            institutionId: inst._id,
+            facultyId: faculty._id,
+            name: deptName,
+            slug: makeSlug(deptName)
+          };
+          localDeptCache.set(deptKey, department);
+          departmentsToInsert.push(department);
+        }
         
         // 3. Calibrate local parameters
         const adjustedTuition = inst.ownershipType === "private" 
@@ -316,12 +365,14 @@ async function runScraper() {
           adjustedCutoff = Math.max(100, tmpl.cutoffMark - 120);
         }
 
-        // 4. Ingest Program
-        await ETLService.ingestProgram({
+        // 4. Create Program in memory
+        const program = {
+          _id: new mongoose.Types.ObjectId(),
           institutionId: inst._id,
           facultyId: faculty._id,
           departmentId: department._id,
-          name: tmpl.name,
+          name: tmpl.name.trim(),
+          slug: makeSlug(tmpl.name.trim()),
           duration: isPoly 
             ? "2 years (ND/HND)" 
             : (isCollege ? "3 years (NCE)" : tmpl.duration),
@@ -329,17 +380,27 @@ async function runScraper() {
           tuition: adjustedTuition,
           requirements: tmpl.requirements,
           careerPaths: tmpl.careerPaths,
-          description: tmpl.description,
-        });
+          description: tmpl.description
+        };
+        programsToInsert.push(program);
 
         programCount++;
       }
 
       instCounter++;
       if (instCounter % 50 === 0) {
-        console.log(`Seeding progress: Processed ${instCounter}/${institutions.length} institutions...`);
+        console.log(`Seeding progress: Prepared ${instCounter}/${institutions.length} institutions in memory...`);
       }
     }
+
+    console.log(`Prepared in memory: ${facultiesToInsert.length} faculties, ${departmentsToInsert.length} departments, ${programsToInsert.length} programs.`);
+
+    console.log("Bulk inserting Faculties...");
+    await Faculty.insertMany(facultiesToInsert, { ordered: false });
+    console.log("Bulk inserting Departments...");
+    await Department.insertMany(departmentsToInsert, { ordered: false });
+    console.log("Bulk inserting Programs...");
+    await Program.insertMany(programsToInsert, { ordered: false });
 
     console.log(`Successfully mapped and seeded ${programCount} authentic program tracks!`);
 
