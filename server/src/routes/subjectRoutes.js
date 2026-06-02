@@ -17,14 +17,12 @@ router.get("/search", async (req, res, next) => {
     // 1. Optimized Fuzzy & Autocomplete Text Querying
     if (q && q.trim()) {
       const cleanQ = q.trim();
+      const escapedQ = cleanQ.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
       
-      // Hybrid search: uses text index but supports anchored index-friendly prefix matches
-      // for optimal autocomplete response times while typing partial terms.
       dbQuery.$or = [
-        { $text: { $search: cleanQ } },
-        { name: { $regex: `^${cleanQ}`, $options: "i" } },
-        { shortName: { $regex: `^${cleanQ}`, $options: "i" } },
-        { aliases: { $regex: `^${cleanQ}`, $options: "i" } }
+        { name: { $regex: escapedQ, $options: "i" } },
+        { shortName: { $regex: escapedQ, $options: "i" } },
+        { aliases: { $regex: escapedQ, $options: "i" } }
       ];
     }
 

@@ -26,14 +26,22 @@ export const calculateMatchScore = (student, program) => {
     matches.jambMatched = true;
   }
 
+  const normalizeSubject = (name) => {
+    if (!name) return "";
+    const n = name.toLowerCase().trim();
+    if (n === "english language" || n === "english") return "english";
+    if (n === "general mathematics" || n === "mathematics") return "mathematics";
+    return n;
+  };
+
   // 2. Required O'Level Subjects (35%)
-  const studentSubjectNames = (student.subjects || []).map((s) => s.name.toLowerCase());
-  const programRequirements = program.requirements || [];
+  const studentSubjectNames = (student.subjects || []).map((s) => normalizeSubject(s.name));
+  const programRequirements = (program.requirements || []).map((r) => normalizeSubject(r));
   matches.requiredCount = programRequirements.length;
 
   if (programRequirements.length > 0) {
     const matchedSubjects = programRequirements.filter((reqSub) =>
-      studentSubjectNames.includes(reqSub.toLowerCase())
+      studentSubjectNames.includes(reqSub)
     );
     matches.subjectCount = matchedSubjects.length;
     const subjectMatchRatio = matchedSubjects.length / programRequirements.length;
@@ -55,7 +63,7 @@ export const calculateMatchScore = (student, program) => {
     facultyNameLower.includes("science")
   ) {
     const hasPhysics = studentSubjectNames.includes("physics");
-    const hasMath = studentSubjectNames.includes("general mathematics") || studentSubjectNames.includes("further mathematics");
+    const hasMath = studentSubjectNames.includes("mathematics") || studentSubjectNames.includes("further mathematics");
     
     if (!hasMath) {
       matches.prerequisitesMet = false;

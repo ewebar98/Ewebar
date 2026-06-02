@@ -40,7 +40,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/documents")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Academic Locker | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Academic Locker | Ewebar" }] }),
   component: () => <AppLayout><Documents /></AppLayout>,
 });
 
