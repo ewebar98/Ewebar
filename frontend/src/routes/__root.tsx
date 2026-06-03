@@ -89,6 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Ewebar" },
     ],
     links: [
+      { rel: "icon", type: "image/svg+xml", href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%236366f1'/><path d='M16 8L6 13l10 5 10-5-10-5z' fill='%23ffffff'/><path d='M10 17v4.5c0 1 2 2.5 6 2.5s6-1.5 6-2.5V17l-6 3-6-3z' fill='%23ffffff'/><path d='M23.5 14v5.5' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/><circle cx='23.5' cy='19.5' r='1' fill='%23ffffff'/></svg>" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },

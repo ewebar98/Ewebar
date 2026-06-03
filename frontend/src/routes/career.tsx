@@ -7,7 +7,7 @@ import { Compass, Briefcase, Lightbulb, TrendingUp, ArrowRight, Send } from "luc
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
-import { getProfile } from "@/services/api";
+import { getProfile, BACKEND_URL } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -53,7 +53,7 @@ function Career() {
     setGuidance(null);
     try {
       const token = localStorage.getItem("Ewebar.token");
-      const res = await fetch("https://ewebar.onrender.com/api/ai/career-guidance", {
+      const res = await fetch(`${BACKEND_URL}/api/ai/career-guidance`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

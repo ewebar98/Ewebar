@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/useApi";
-import { getAdminApplications, updateApplicationStatus, AdminApplication, getApplicationMessages, sendApplicationMessage, markApplicationMessagesAsRead, Message } from "@/services/api";
+import { getAdminApplications, updateApplicationStatus, AdminApplication, getApplicationMessages, sendApplicationMessage, markApplicationMessagesAsRead, Message, BACKEND_URL } from "@/services/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -341,7 +341,7 @@ function EvaluateApplications() {
                         {selectedApp.documents.map((doc, idx) => (
                           <a
                             key={idx}
-                            href={`https://ewebar.onrender.com${doc.url}`}
+                            href={`${BACKEND_URL}${doc.url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center justify-between rounded-xl border p-2 text-xs hover:bg-accent hover:border-primary/30 transition-all bg-card"

@@ -3,7 +3,11 @@
  * All secure requests automatically inject the stored JWT token.
  */
 
-const BASE_URL = "https://ewebar.onrender.com/api";
+export const BACKEND_URL = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
+  : "https://ewebar.onrender.com";
+
+export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper request wrapper for JSON fetch calls
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

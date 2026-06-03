@@ -31,7 +31,8 @@ import {
   deleteDocument,
   getProfile,
   updateProfile,
-  Subject
+  Subject,
+  BACKEND_URL
 } from "@/services/api";
 import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
@@ -620,7 +621,7 @@ function Documents() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <a
-                        href={`https://ewebar.onrender.com${doc.url}`}
+                        href={`${BACKEND_URL}${doc.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex h-7 w-7 items-center justify-center rounded-md border hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
