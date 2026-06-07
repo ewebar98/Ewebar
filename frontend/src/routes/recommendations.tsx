@@ -5,19 +5,19 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { ChevronDown, Search, Star } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
+import { PageHeader, Badge, Skeleton, ErrorAlert } from "@/components/ui-kit";
 import { getRecommendations } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/recommendations")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Recommendations | Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Recommendations | WeBAR" }] }),
   component: () => <AppLayout><Recommendations /></AppLayout>,
 });
 
 function Recommendations() {
-  const { data, isLoading: loading } = useQuery({
+  const { data, isLoading: loading, error, isError, refetch } = useQuery({
     queryKey: ["recommendations"],
     queryFn: getRecommendations,
     staleTime: 5 * 60 * 1000, // 5 minutes cache lifetime
@@ -28,11 +28,19 @@ function Recommendations() {
 
   const filtered = (data ?? [])
     .filter((r) => r.university.toLowerCase().includes(q.toLowerCase()) || r.course.toLowerCase().includes(q.toLowerCase()))
-    .filter((r) => (filter === "high" ? r.match >= 85 : true));
+    .filter((r) => (filter === "high" ? (r.match !== null && r.match >= 85) : true));
 
   return (
     <div className="space-y-6">
       <PageHeader title="Your recommendations" subtitle="Programs ranked by AI match score." />
+
+      {isError && (
+        <ErrorAlert
+          title="Failed to load recommendations"
+          message={error instanceof Error ? error.message : "A connection problem occurred. Please check your internet connection."}
+          onRetry={refetch}
+        />
+      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[220px]">
@@ -45,6 +53,17 @@ function Recommendations() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {loading && Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+        {!loading && filtered.length === 0 && (
+          <div className="md:col-span-2 rounded-2xl border border-dashed p-12 text-center bg-card shadow-soft">
+            <Star className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-semibold text-foreground">
+              {q || filter === "high" ? "No recommendations match your filter" : "No recommendations yet"}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {q ? `Try a different search term or clear the filter.` : filter === "high" ? "No programs currently score 85%+ for your profile." : "Update your profile with your JAMB score and interests to get matched."}
+            </p>
+          </div>
+        )}
         {filtered.map((r, i) => (
           <motion.div
             key={r.id}
@@ -60,23 +79,31 @@ function Recommendations() {
                 </Link>
                 <p className="text-sm text-muted-foreground">{r.course}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Badge tone="primary">Cutoff {r.cutoff}</Badge>
+                  {r.cutoff !== null && <Badge tone="primary">Cutoff {r.cutoff}</Badge>}
                   <Badge tone="success">{r.slots} slots</Badge>
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-display text-3xl font-bold gradient-text">{r.match}%</p>
-                <p className="text-xs text-muted-foreground">match</p>
+                {r.match !== null ? (
+                  <>
+                    <p className="font-display text-3xl font-bold gradient-text">{r.match}%</p>
+                    <p className="text-xs text-muted-foreground">match</p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic font-semibold text-muted-foreground/80">No score yet</p>
+                )}
               </div>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${r.match}%` }}
-                transition={{ duration: 0.8 }}
-                className="h-full bg-gradient-primary"
-              />
-            </div>
+            {r.match !== null && (
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${r.match}%` }}
+                  transition={{ duration: 0.8 }}
+                  className="h-full bg-gradient-primary"
+                />
+              </div>
+            )}
             <button
               onClick={() => setOpenId(openId === r.id ? null : r.id)}
               className="mt-4 flex w-full items-center justify-between rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-foreground"

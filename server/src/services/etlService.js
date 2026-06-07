@@ -45,7 +45,7 @@ export class ETLService {
       },
       admissionRequirements: raw.admissionRequirements || "General requirements include JAMB score matching cutoff and WAEC/NECO credits.",
       metadata: {
-        title: `${name} Admissions & Programs | Ewebar`,
+        title: `${name} Admissions & Programs | WeBAR`,
         description: `Explore academic requirements, tuitions, and popular departments at ${name} (${state} State).`,
       },
     };

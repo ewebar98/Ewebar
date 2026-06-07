@@ -13,7 +13,7 @@ import { chatWithAssistant } from "@/services/api";
 
 export const Route = createFileRoute("/assistant")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Assistant | Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Assistant | WeBAR" }] }),
   component: () => <AppLayout><Assistant /></AppLayout>,
 });
 
@@ -167,7 +167,7 @@ function Assistant() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Ewebar-chat-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `WeBAR-chat-${new Date().toISOString().slice(0, 10)}.txt`;
     document.body.appendChild(a);
     a.click();
     a.remove();

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
+import { PageHeader, Badge, Skeleton, ErrorAlert } from "@/components/ui-kit";
 import { getUniversityById, getUploadedDocuments, getProfile, submitApplication } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,14 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/universities/$id")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "University — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "University — WeBAR" }] }),
   component: () => <AppLayout><UniversityDetails /></AppLayout>,
 });
 
 function UniversityDetails() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { data: uni, isLoading: loadingUni } = useQuery({
+  const { data: uni, isLoading: loadingUni, error: uniErr, isError: isUniErr, refetch: refetchUni } = useQuery({
     queryKey: ["university", id],
     queryFn: () => getUniversityById(id),
     staleTime: 5 * 60 * 1000, // 5 minutes cache lifetime
@@ -103,15 +103,26 @@ function UniversityDetails() {
     return groups;
   }, [filteredCourses, activeFacultyTab, searchQuery]);
 
+  if (isUniErr) {
+    return (
+      <div className="py-12">
+        <ErrorAlert
+          title="Failed to load university details"
+          message={uniErr instanceof Error ? uniErr.message : "A connection problem occurred. Please check your internet connection."}
+          onRetry={refetchUni}
+        />
+      </div>
+    );
+  }
   if (loading) return <Skeleton className="h-64 w-full" />;
   if (!uni) return <p className="text-center text-muted-foreground">Not found.</p>;
 
   const selectedCourse = universityCourses.find((c) => c.id === selectedCourseId);
-  const studentJambScore = profile?.jambScore || 180;
-
+  const studentJambScore = profile?.jambScore ?? null;
+  const hasJambScore = studentJambScore !== null && studentJambScore > 0;
 
   // Compute cutoff eligibility
-  const isCutoffMet = selectedCourse ? studentJambScore >= selectedCourse.cutoff : false;
+  const isCutoffMet = hasJambScore && selectedCourse ? studentJambScore >= selectedCourse.cutoff : false;
 
   // Handle checking document locker items
   const toggleDoc = (url: string) => {
@@ -242,7 +253,7 @@ function UniversityDetails() {
                       </h5>
                       <div className="grid gap-4 sm:grid-cols-2">
                         {courses.map((c) => {
-                          const isEligible = studentJambScore >= c.cutoff;
+                          const isEligible = hasJambScore ? studentJambScore >= c.cutoff : null;
                           return (
                             <div
                               key={c.id}
@@ -250,14 +261,18 @@ function UniversityDetails() {
                             >
                               <div
                                 className={`absolute left-0 top-0 h-full w-1 transition-all ${
-                                  isEligible ? "bg-success/50 group-hover:bg-success" : "bg-warning/40 group-hover:bg-warning"
+                                  isEligible === null
+                                    ? "bg-muted/50"
+                                    : isEligible
+                                    ? "bg-success/50 group-hover:bg-success"
+                                    : "bg-warning/40 group-hover:bg-warning"
                                 }`}
                               />
                               <div className="pl-1">
                                 <div className="flex items-start justify-between gap-3">
                                   <p className="font-semibold text-sm text-foreground leading-snug">{c.name}</p>
                                   <Badge
-                                    tone={isEligible ? "success" : "default"}
+                                    tone={isEligible === null ? "default" : isEligible ? "success" : "default"}
                                   >
                                     UTME Cutoff: {c.cutoff}
                                   </Badge>
@@ -395,12 +410,17 @@ function UniversityDetails() {
                         </div>
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">Your JAMB Score</span>
-                          <span className="font-semibold">{studentJambScore}</span>
+                          <span className="font-semibold">{hasJambScore ? studentJambScore : <span className="text-muted-foreground italic">Not uploaded</span>}</span>
                         </div>
 
                         {/* Cutoff warning panel */}
                         <div className="pt-2 border-t flex gap-3">
-                          {isCutoffMet ? (
+                          {!hasJambScore ? (
+                            <div className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-xs font-medium text-muted-foreground w-full">
+                              <AlertTriangle className="h-4 w-4 shrink-0" />
+                              <span>No JAMB score uploaded yet. <Link to="/documents" className="underline text-primary">Upload your results</Link> to check eligibility.</span>
+                            </div>
+                          ) : isCutoffMet ? (
                             <div className="flex items-center gap-2 rounded-xl bg-success/10 px-3 py-2 text-xs font-medium text-success w-full">
                               <Check className="h-4 w-4 shrink-0" />
                               <span>Eligible! Your score exceeds the cutoff minimum requirements.</span>
@@ -471,6 +491,7 @@ function UniversityDetails() {
 
                 {step === 3 && (
                   <div className="space-y-4">
+                  {hasJambScore ? (
                     <div className="rounded-2xl border p-4 bg-muted/40 text-center">
                       <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                         Admission Match Probability
@@ -483,6 +504,13 @@ function UniversityDetails() {
                           : "85%"}
                       </h4>
                     </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed p-4 bg-muted/20 text-center">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Admission Match Probability</p>
+                      <p className="text-sm text-muted-foreground mt-2">Upload your JAMB result to see your match score.</p>
+                      <Link to="/documents" className="inline-flex items-center justify-center mt-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold h-8 px-4 hover:opacity-90 transition-all">Upload Results</Link>
+                    </div>
+                  )}
 
                     <div className="rounded-xl border p-4 space-y-2 text-sm bg-card">
                       <div className="flex justify-between">

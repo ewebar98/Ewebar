@@ -90,6 +90,18 @@ router.put(
       if (req.body.olevelSittings !== undefined) {
         user.olevelSittings = req.body.olevelSittings;
       }
+      if (req.body.stateOfOrigin !== undefined) {
+        user.stateOfOrigin = req.body.stateOfOrigin;
+      }
+      if (req.body.lga !== undefined) {
+        user.lga = req.body.lga;
+      }
+      if (req.body.preferredCourse !== undefined) {
+        user.preferredCourse = req.body.preferredCourse;
+      }
+      if (req.body.bio !== undefined) {
+        user.bio = req.body.bio;
+      }
 
       const updatedUser = await user.save();
 

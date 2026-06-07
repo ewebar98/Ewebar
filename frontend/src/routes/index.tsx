@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ewebar | University Admission Platform" },
+      { title: "WeBAR | University Admission Platform" },
       { name: "description", content: "Discover universities, get personalized admission recommendations, and plan your future career." },
     ],
   }),
@@ -39,7 +39,7 @@ const stats = [
 ];
 
 const testimonials = [
-  { name: "Tunde A.", role: "UNILAG, Computer Science", quote: "Ewebar matched me with three programs I'd never considered. I got into my top choice." },
+  { name: "Tunde A.", role: "UNILAG, Computer Science", quote: "WeBAR matched me with three programs I'd never considered. I got into my top choice." },
   { name: "Aisha B.", role: "Covenant, Engineering", quote: "The career advisor tool alone saved me months of searching and helped me choose the right path." },
   { name: "Chinedu O.", role: "OAU, Medicine", quote: "The AI assistant felt like talking to a real counselor. Confidence-building and honest." },
 ];
@@ -82,7 +82,7 @@ function Landing() {
               transition={{ delay: 0.2 }}
               className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg"
             >
-              Ewebar analyses your results, interests, and goals to recommend programs that fit you.
+              WeBAR analyses your results, interests, and goals to recommend programs that fit you.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -171,7 +171,7 @@ function Landing() {
           <h2 className="font-display text-3xl font-bold md:text-4xl">Everything you need to choose well.</h2>
           <p className="mt-3 text-muted-foreground">Built around the real decisions students face.</p>
         </div>
-        <div className="grid gap-5 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-3">
           {features.map((f, i) => (
             <motion.div
               key={f.title}
@@ -194,7 +194,7 @@ function Landing() {
 
       {/* STATS */}
       <section className="bg-card">
-        <div className="mx-auto grid max-w-7xl gap-6 px-6 py-16 grid-cols-1 md:grid-cols-3">
+        <div className="mx-auto grid max-w-7xl gap-6 px-6 py-16 sm:grid-cols-3">
           {stats.map((s) => (
             <div key={s.label} className="flex items-center gap-4 rounded-2xl border bg-background p-5">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">

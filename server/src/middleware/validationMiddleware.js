@@ -95,6 +95,10 @@ export const profileUpdateSchema = z.object({
       .string()
       .max(100, "WAEC aggregate score is too long")
       .optional(),
+    stateOfOrigin: z.string().optional(),
+    lga: z.string().optional(),
+    preferredCourse: z.string().optional(),
+    bio: z.string().optional(),
     subjects: z.array(z.any()).optional(),
     jambSubjects: z.array(z.any()).optional(),
     olevelSittings: z.array(z.any()).optional(),

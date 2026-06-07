@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/admin/applications")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Admissions Evaluation — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Admissions Evaluation — WeBAR" }] }),
   component: () => <AppLayout variant="admin"><EvaluateApplications /></AppLayout>,
 });
 

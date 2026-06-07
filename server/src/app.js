@@ -49,7 +49,7 @@ app.use("/api/subjects", subjectRoutes);
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Ewebar API is running...",
+    message: "WeBAR API is running...",
   });
 });
 

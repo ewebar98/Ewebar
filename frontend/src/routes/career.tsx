@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Compass, Briefcase, Lightbulb, TrendingUp, ArrowRight, Send } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
+import { PageHeader, Badge, Skeleton, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
 import { getProfile, BACKEND_URL } from "@/services/api";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/career")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Career Guidance — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Career Guidance — WeBAR" }] }),
   component: () => <AppLayout><Career /></AppLayout>,
 });
 
@@ -28,7 +28,7 @@ const careerPaths = [
 
 function Career() {
   const { user } = useAuth();
-  const { data: profile, loading: profileLoading } = useApi(getProfile);
+  const { data: profile, loading: profileLoading, error: profileErr, refresh: refreshProfile } = useApi(getProfile);
   const [interest, setInterest] = useState("");
   const [guidance, setGuidance] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -42,7 +42,7 @@ function Career() {
     const pathKeywords = [...p.skills, p.title, p.field].map((k: string) => k.toLowerCase());
     const matches = interestKeywords.filter((k: string) => pathKeywords.some((pk: string) => pk.includes(k) || k.includes(pk)));
     const matchPct = Math.min(95, 50 + matches.length * 15 + (profile.jambScore > 250 ? 10 : 0));
-    return { ...p, match: matches.length > 0 ? matchPct : 55 };
+    return { ...p, match: matches.length > 0 ? matchPct : null };
   }).sort((a, b) => (b.match ?? 0) - (a.match ?? 0));
 
   const topMatch = withMatch[0];
@@ -52,7 +52,7 @@ function Career() {
     setAsking(true);
     setGuidance(null);
     try {
-      const token = localStorage.getItem("Ewebar.token");
+      const token = localStorage.getItem("WeBAR.token");
       const res = await fetch(`${BACKEND_URL}/api/ai/career-guidance`, {
         method: "POST",
         headers: {
@@ -75,6 +75,14 @@ function Career() {
   return (
     <div className="space-y-6">
       <PageHeader title="Career guidance" subtitle="AI-mapped career paths based on your profile." />
+
+      {profileErr && (
+        <ErrorAlert
+          title="Failed to load career profile data"
+          message={profileErr.message || "A connection problem occurred. Please check your internet connection."}
+          onRetry={refreshProfile}
+        />
+      )}
 
       {/* Hero banner - dynamic based on real profile */}
       <div className="overflow-hidden rounded-3xl bg-gradient-hero p-8">

@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader } from "@/components/ui-kit";
-import { Skeleton, Badge } from "@/components/ui-kit";
+import { PageHeader, Skeleton, Badge, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
 import { getApplications, getApplicationMessages, sendApplicationMessage, markApplicationMessagesAsRead, Message } from "@/services/api";
 import { useState, useEffect, useRef } from "react";
@@ -13,12 +12,12 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/applications")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Applications — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Applications — WeBAR" }] }),
   component: () => <AppLayout><Applications /></AppLayout>,
 });
 
 function Applications() {
-  const { data, loading, refresh } = useApi(getApplications);
+  const { data, loading, error, refresh } = useApi(getApplications);
   const [activeAppId, setActiveAppId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -93,9 +92,16 @@ function Applications() {
   return (
     <div className="space-y-6">
       <PageHeader title="Applications" subtitle="Track every program you've applied to." />
+      {error && (
+        <ErrorAlert
+          title="Failed to load applications"
+          message={error.message || "A connection problem occurred. Please check your internet connection."}
+          onRetry={refresh}
+        />
+      )}
       {loading && <Skeleton className="h-64" />}
       
-      {!loading && (!data || data.length === 0) && (
+      {!loading && !error && (!data || data.length === 0) && (
         <div className="rounded-2xl border p-12 text-center bg-card shadow-soft">
           <MessageCircle className="h-12 w-12 text-muted-foreground/60 mx-auto mb-4" />
           <h3 className="text-lg font-bold">No applications found</h3>
@@ -297,9 +303,9 @@ function Applications() {
                   </Button>
                 </div>
                 <div className="flex justify-between items-center mt-2 px-1 text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 bg-success rounded-full animate-ping" />
-                    Admissions Desk Online
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <MessageCircle className="h-3 w-3" />
+                    Admissions Support
                   </span>
                   <span>{newMessageText.length}/1000</span>
                 </div>

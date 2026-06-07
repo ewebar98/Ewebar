@@ -4,13 +4,13 @@ import { GraduationCap } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t bg-card">
-      <div className="mx-auto grid max-w-7xl gap-8 px-6 py-12 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-8 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-              <GraduationCap className="h-4 w-4 text-primary-foreground" />
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow ring-2 ring-primary/20">
+              <GraduationCap className="h-[22px] w-[22px] text-primary-foreground" strokeWidth={2} />
             </div>
-            <span className="font-display font-bold">Ewebar</span>
+            <span className="font-display text-xl font-bold tracking-tight">WeBAR</span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
             Intelligent admission guidance for the next generation of African students.
@@ -40,7 +40,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Ewebar. Built for ambitious students.
+        © {new Date().getFullYear()} WeBAR. Built for ambitious students.
       </div>
     </footer>
   );

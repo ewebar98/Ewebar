@@ -77,3 +77,30 @@ export function Badge({ children, tone = "default" }: { children: ReactNode; ton
   } as const;
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${toneMap[tone]}`}>{children}</span>;
 }
+
+export function ErrorAlert({ title = "Something went wrong", message, onRetry }: { title?: string; message?: string; onRetry?: () => void }) {
+  return (
+    <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 shadow-soft flex gap-4 items-start text-left">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <div className="flex-1 space-y-1">
+        <p className="font-display font-semibold text-sm text-foreground">{title}</p>
+        {message && <p className="text-xs text-muted-foreground leading-relaxed">{message}</p>}
+        {onRetry && (
+          <div className="pt-1.5">
+            <button
+              onClick={onRetry}
+              className="inline-flex items-center justify-center rounded-lg bg-destructive/10 hover:bg-destructive/15 text-destructive px-3 py-1.5 text-xs font-semibold transition-all"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+

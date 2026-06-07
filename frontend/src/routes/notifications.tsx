@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { Bell, Check, CheckCircle2, AlertCircle, XCircle, ArrowRight, Eye } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Badge, Skeleton, EmptyState } from "@/components/ui-kit";
+import { PageHeader, Badge, Skeleton, EmptyState, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,12 +11,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/notifications")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Notifications — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Notifications — WeBAR" }] }),
   component: () => <AppLayout><Notifications /></AppLayout>,
 });
 
 function Notifications() {
-  const { data, loading } = useApi(getNotifications);
+  const { data, loading, error, refresh } = useApi(getNotifications);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
@@ -101,6 +101,14 @@ function Notifications() {
         action={headerAction}
       />
 
+      {error && (
+        <ErrorAlert
+          title="Failed to load notifications"
+          message={error.message || "A connection problem occurred. Please check your internet connection."}
+          onRetry={refresh}
+        />
+      )}
+
       {/* Filter Tabs */}
       <div className="flex gap-2 border-b pb-3">
         <button
@@ -133,7 +141,7 @@ function Notifications() {
         </div>
       )}
 
-      {!loading && filteredNotifs.length === 0 && (
+      {!loading && !error && filteredNotifs.length === 0 && (
         <EmptyState 
           icon={Bell} 
           title={filter === "unread" ? "You're all caught up!" : "No notifications yet"} 

@@ -1,4 +1,4 @@
-import { Program } from "../models/universityModel.js";
+import { Program, Institution } from "../models/universityModel.js";
 
 export const calculateMatchScore = (student, program) => {
   let score = 0;
@@ -104,10 +104,22 @@ export const calculateMatchScore = (student, program) => {
  * Generates academic recommendations using indexed database pre-filtering.
  */
 export const generateRecommendations = async (user) => {
+  // Constrain recommendations strictly to LASUSTECH
+  const lasustech = await Institution.findOne({
+    $or: [
+      { name: "Lagos State University of Science and Technology" },
+      { name: "LASUSTECH" }
+    ]
+  });
+
   // 1. Scalable Database Index Pre-filtering!
   const query = {
     cutoffMark: { $lte: user.jambScore + 15 },
   };
+
+  if (lasustech) {
+    query.institutionId = lasustech._id;
+  }
 
   const programs = await Program.find(query)
     .populate("institutionId")

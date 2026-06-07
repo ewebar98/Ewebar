@@ -5,14 +5,14 @@ import { Search, MapPin, Users, TrendingUp, Award, SlidersHorizontal } from "luc
 import { useQuery } from "@tanstack/react-query";
 import { requireRole } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Badge, Skeleton, EmptyState } from "@/components/ui-kit";
+import { PageHeader, Badge, Skeleton, EmptyState, ErrorAlert } from "@/components/ui-kit";
 import { getUniversities, getCourses } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/universities/")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Discover Universities — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Discover Universities — WeBAR" }] }),
   component: () => (
     <AppLayout>
       <Discover />
@@ -21,12 +21,12 @@ export const Route = createFileRoute("/universities/")({
 });
 
 function Discover() {
-  const { data: unis, isLoading: loadingUnis } = useQuery({
+  const { data: unis, isLoading: loadingUnis, error: unisErr, isError: isUnisErr, refetch: refetchUnis } = useQuery({
     queryKey: ["universities"],
     queryFn: getUniversities,
     staleTime: 5 * 60 * 1000, // 5 minutes cache lifetime
   });
-  const { data: courses } = useQuery({
+  const { data: courses, error: coursesErr, isError: isCoursesErr, refetch: refetchCourses } = useQuery({
     queryKey: ["courses"],
     queryFn: getCourses,
     staleTime: 10 * 60 * 1000, // 10 minutes cache lifetime
@@ -67,6 +67,17 @@ function Discover() {
   return (
     <div className="space-y-6">
       <PageHeader title="Discover institutions" subtitle="Search and filter across Nigeria's top universities, polytechnics, and colleges." />
+
+      {(isUnisErr || isCoursesErr) && (
+        <ErrorAlert
+          title="Failed to load institutions data"
+          message={unisErr?.message || coursesErr?.message || "A connection problem occurred. Please check your internet connection."}
+          onRetry={() => {
+            if (isUnisErr) refetchUnis();
+            if (isCoursesErr) refetchCourses();
+          }}
+        />
+      )}
 
       <div className="rounded-2xl border bg-card p-4 shadow-soft">
         <div className="flex flex-wrap gap-3">

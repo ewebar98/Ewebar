@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { Search, Wallet, Calendar, Trophy, ChevronRight, RotateCcw } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Badge, Skeleton, EmptyState } from "@/components/ui-kit";
+import { PageHeader, Badge, Skeleton, EmptyState, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
 import { getScholarships } from "@/services/api";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/scholarships")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Scholarships | Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Scholarships | WeBAR" }] }),
   component: () => <AppLayout><Scholarships /></AppLayout>,
 });
 
@@ -110,7 +110,7 @@ function scoreScholarship(s: Scholarship, q: Quiz): number {
 }
 
 function Scholarships() {
-  const { data, loading } = useApi(getScholarships);
+  const { data, loading, error, refresh } = useApi(getScholarships);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("All");
   const [quizOpen, setQuizOpen] = useState(false);
@@ -152,6 +152,14 @@ function Scholarships() {
   return (
     <div className="space-y-6">
       <PageHeader title="Scholarships" subtitle="Funding opportunities matched to your profile." />
+
+      {error && (
+        <ErrorAlert
+          title="Failed to load scholarships"
+          message={error.message || "A connection problem occurred. Please check your internet connection."}
+          onRetry={refresh}
+        />
+      )}
 
       {/* Eligibility finder banner */}
       <motion.div
@@ -202,7 +210,7 @@ function Scholarships() {
 
       {loading && <div className="grid gap-4 md:grid-cols-2"><Skeleton className="h-44" /><Skeleton className="h-44" /></div>}
 
-      {!loading && enriched.length === 0 && (
+      {!loading && !error && enriched.length === 0 && (
         <EmptyState icon={Wallet} title="No scholarships match your filters" hint="Try a different category." />
       )}
 

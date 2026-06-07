@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
-import { PageHeader, Skeleton, Badge } from "@/components/ui-kit";
+import { PageHeader, Skeleton, Badge, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
 import { getCourseById } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -9,15 +9,26 @@ import { Clock, BookOpen, Target } from "lucide-react";
 
 export const Route = createFileRoute("/courses/$id")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Course — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Course — WeBAR" }] }),
   component: () => <AppLayout><CourseDetails /></AppLayout>,
 });
 
 function CourseDetails() {
   const { id } = Route.useParams();
-  const { data: c, loading } = useApi(() => getCourseById(id), [id]);
+  const { data: c, loading, error, refresh } = useApi(() => getCourseById(id), [id]);
+  if (error) {
+    return (
+      <div className="py-12">
+        <ErrorAlert
+          title="Failed to load course details"
+          message={error.message || "A connection problem occurred. Please check your internet connection."}
+          onRetry={refresh}
+        />
+      </div>
+    );
+  }
   if (loading) return <Skeleton className="h-64 w-full" />;
-  if (!c) return <p>Course not found.</p>;
+  if (!c) return <p className="text-center text-muted-foreground py-8">Course not found.</p>;
 
   return (
     <div className="space-y-6">

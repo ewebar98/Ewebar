@@ -75,10 +75,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ewebar | University Admission Platform" },
+      { title: "WeBAR | University Admission Platform" },
       { name: "description", content: "Discover universities, get personalized admission recommendations, and plan your career." },
-      { name: "author", content: "Ewebar" },
-      { property: "og:title", content: "Ewebar | University Admission Platform" },
+      { name: "author", content: "WeBAR" },
+      { property: "og:title", content: "WeBAR | University Admission Platform" },
       { property: "og:description", content: "Intelligent university admission and career guidance for students." },
       {
         rel: "preconnect",
@@ -86,7 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Ewebar" },
+      { name: "twitter:site", content: "@WeBAR" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%236366f1'/><path d='M16 8L6 13l10 5 10-5-10-5z' fill='%23ffffff'/><path d='M10 17v4.5c0 1 2 2.5 6 2.5s6-1.5 6-2.5V17l-6 3-6-3z' fill='%23ffffff'/><path d='M23.5 14v5.5' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/><circle cx='23.5' cy='19.5' r='1' fill='%23ffffff'/></svg>" },

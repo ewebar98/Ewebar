@@ -54,7 +54,7 @@ export const getAIExplanation = async (prompt) => {
       messages: [
         {
           role: "system",
-          content: "You are an intelligent university admission counselor for Ewebar. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences). Do NOT output any emojis under any circumstances.",
+          content: "You are an intelligent university admission counselor for WeBAR. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences). Do NOT output any emojis under any circumstances.",
         },
         {
           role: "user",
@@ -72,7 +72,7 @@ export const getAIExplanation = async (prompt) => {
         messages: [
           {
             role: "system",
-            content: "You are an intelligent university admission counselor for Ewebar. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences). Do NOT output any emojis under any circumstances.",
+            content: "You are an intelligent university admission counselor for WeBAR. Provide extremely concise, direct, helpful, and professional advice (max 2-3 sentences). Do NOT output any emojis under any circumstances.",
           },
           {
             role: "user",
@@ -97,7 +97,7 @@ export const chatWithAI = async (messages) => {
   }
 
   const systemPrompt = 
-    "You are Ada, an intelligent and extremely friendly university admission counselor for Ewebar. " +
+    "You are Ada, an intelligent and extremely friendly university admission counselor for WeBAR. " +
     "IMPORTANT RULE: Keep your replies very concise, conversational, and punchy (maximum 2-3 sentences or a very short bulleted list of 2-3 items). " +
     "Never write long paragraphs or give generic walls of information. " +
     "Be direct and address exactly what is asked in a friendly tone (use terms like 'bro' naturally). " +

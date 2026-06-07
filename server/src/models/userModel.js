@@ -37,6 +37,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    stateOfOrigin: {
+      type: String,
+      default: "",
+    },
+    lga: {
+      type: String,
+      default: "",
+    },
+    preferredCourse: {
+      type: String,
+      default: "",
+    },
+    bio: {
+      type: String,
+      default: "",
+    },
     subjects: [
       {
         name: String,

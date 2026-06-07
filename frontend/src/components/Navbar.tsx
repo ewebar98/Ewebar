@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { GraduationCap, Moon, Sun, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { Button } from "@/components/ui/button";
 
 const links = [
   { to: "/", label: "Home" },
@@ -24,11 +23,11 @@ export function Navbar() {
       className="sticky top-0 z-50 glass"
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow ring-2 ring-primary/20">
+            <GraduationCap className="h-[22px] w-[22px] text-primary-foreground" strokeWidth={2} />
           </div>
-          <span className="font-display text-lg font-bold tracking-tight">Ewebar</span>
+          <span className="font-display text-xl font-bold tracking-tight">WeBAR</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

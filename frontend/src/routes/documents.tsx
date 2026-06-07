@@ -31,6 +31,8 @@ import {
   deleteDocument,
   getProfile,
   updateProfile,
+  getUniversities,
+  getUniversityById,
   Subject,
   BACKEND_URL
 } from "@/services/api";
@@ -39,9 +41,36 @@ import { Button } from "@/components/ui/button";
 import { SearchableSubjectSelect } from "@/components/SearchableSubjectSelect";
 import { useQueryClient } from "@tanstack/react-query";
 
+const NIGERIAN_STATES = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
+  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", 
+  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
+  "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
+  "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+];
+
+const LAGOS_LGAs = [
+  "Agege", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti-Osa", 
+  "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", 
+  "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"
+];
+
+const FALLBACK_LASUSTECH_COURSES = [
+  "Agricultural Science",
+  "Biochemistry",
+  "Microbiology",
+  "Computer Science",
+  "Accounting",
+  "Business Administration",
+  "Mass Communication",
+  "Civil and Environmental Engineering",
+  "Mechanical Engineering",
+  "Electrical and Electronics Engineering"
+];
+
 export const Route = createFileRoute("/documents")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Academic Locker | Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Academic Locker | WeBAR" }] }),
   component: () => <AppLayout><Documents /></AppLayout>,
 });
 
@@ -59,12 +88,11 @@ interface OLevelSitting {
   dateOfBirth: string;
   gender: string;
   examNumber: string;
-  candidateNumber: string;
-  centerNumber: string;
   schoolNumber: string;
-  registrationNumber: string;
   serialNumber?: string;
   pin?: string;
+  stateOfOrigin?: string;
+  lga?: string;
   subjects: OLevelSubject[];
 }
 
@@ -93,12 +121,11 @@ const createDefaultSitting = (num: number): OLevelSitting => ({
   dateOfBirth: "",
   gender: "Male",
   examNumber: "",
-  candidateNumber: "",
-  centerNumber: "",
   schoolNumber: "",
-  registrationNumber: "",
   serialNumber: "",
   pin: "",
+  stateOfOrigin: "",
+  lga: "",
   subjects: [
     { name: "English Language", grade: "C6" },
     { name: "Mathematics", grade: "C6" },
@@ -129,6 +156,28 @@ function Documents() {
     { name: "", score: 0 },
     { name: "", score: 0 },
   ]);
+
+  const [stateOfOrigin, setStateOfOrigin] = useState<string>("");
+  const [lga, setLga] = useState<string>("");
+  const [preferredCourse, setPreferredCourse] = useState<string>("");
+
+  // Fetch LASUSTECH courses dynamically for preferred course dropdown
+  const { data: schools } = useApi(getUniversities);
+  const lasustechUni = schools?.find(
+    (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
+  );
+
+  const { data: lasustechData } = useApi(
+    () => (lasustechUni ? getUniversityById(lasustechUni.id) : Promise.resolve(null)),
+    [lasustechUni?.id]
+  );
+
+  const lasustechCourses = lasustechData?.courses || [];
+  const courseOptions = Array.from(new Set(
+    lasustechCourses.length > 0 
+      ? lasustechCourses.map(c => c.name) 
+      : FALLBACK_LASUSTECH_COURSES
+  )).sort();
 
   // Upload/OCR status list
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -177,6 +226,16 @@ function Documents() {
           { name: "", score: 0 },
           { name: "", score: 0 },
         ]);
+      }
+
+      if (profile.stateOfOrigin !== undefined) {
+        setStateOfOrigin(profile.stateOfOrigin);
+      }
+      if (profile.lga !== undefined) {
+        setLga(profile.lga);
+      }
+      if (profile.preferredCourse !== undefined) {
+        setPreferredCourse(profile.preferredCourse);
       }
     }
   }, [profile]);
@@ -287,12 +346,11 @@ function Documents() {
         dateOfBirth: ocrData.dateOfBirth || "",
         gender: ocrData.gender || "Male",
         examNumber: ocrData.examNumber || "",
-        candidateNumber: ocrData.candidateNumber || "",
-        centerNumber: ocrData.centerNumber || "",
         schoolNumber: ocrData.schoolNumber || "",
-        registrationNumber: ocrData.registrationNumber || "",
         serialNumber: ocrData.serialNumber || "",
         pin: ocrData.pin || "",
+        stateOfOrigin: "",
+        lga: "",
         subjects: formattedSubjects.length > 0 ? formattedSubjects : [
           { name: "English Language", grade: "C6" },
           { name: "Mathematics", grade: "C6" },
@@ -488,6 +546,9 @@ function Documents() {
         jambSubjects: jambSubjects.filter((s) => s.name),
         olevelSittings,
         subjects: combinedOLevelInfo.uniqueSubjects,
+        stateOfOrigin,
+        lga,
+        preferredCourse,
       });
 
       // Invalidate React Query cached queries for immediate reactive updates on other pages
@@ -796,36 +857,6 @@ function Documents() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Candidate No.</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 012"
-                        value={sitting.candidateNumber}
-                        onChange={(e) => handleSittingFieldChange(sIdx, "candidateNumber", e.target.value)}
-                        className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Center Number</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 4201029"
-                        value={sitting.centerNumber}
-                        onChange={(e) => handleSittingFieldChange(sIdx, "centerNumber", e.target.value)}
-                        className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Registration No.</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. WAEC/2026/..."
-                        value={sitting.registrationNumber}
-                        onChange={(e) => handleSittingFieldChange(sIdx, "registrationNumber", e.target.value)}
-                        className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">School Number</label>
                       <input
                         type="text"
@@ -836,6 +867,46 @@ function Documents() {
                       />
                     </div>
                     <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">State of Origin</label>
+                      <select
+                        className="w-full rounded-xl border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        value={sitting.stateOfOrigin || ""}
+                        onChange={(e) => {
+                          handleSittingFieldChange(sIdx, "stateOfOrigin", e.target.value);
+                          handleSittingFieldChange(sIdx, "lga", "");
+                        }}
+                      >
+                        <option value="">Select State</option>
+                        {NIGERIAN_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">LGA of Origin</label>
+                      {sitting.stateOfOrigin === "Lagos" ? (
+                        <select
+                          className="w-full rounded-xl border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          value={sitting.lga || ""}
+                          onChange={(e) => handleSittingFieldChange(sIdx, "lga", e.target.value)}
+                        >
+                          <option value="">Select LGA</option>
+                          {LAGOS_LGAs.map((l) => (
+                            <option key={l} value={l}>{l}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={sitting.lga || ""}
+                          onChange={(e) => handleSittingFieldChange(sIdx, "lga", e.target.value)}
+                          placeholder={sitting.stateOfOrigin ? "Enter LGA" : "Select state first"}
+                          disabled={!sitting.stateOfOrigin}
+                          className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none"
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-1 col-span-2">
                       <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Card Serial No.</label>
                       <input
                         type="text"
@@ -932,6 +1003,63 @@ function Documents() {
                 <div className="col-span-2 flex items-center bg-muted/40 p-3.5 rounded-2xl border text-xs text-muted-foreground">
                   <Info className="h-4 w-4 mr-2 shrink-0 text-primary" />
                   <span>JAMB UTME contains exactly 4 subjects, where the first is locked to <b>Use of English</b>. Scores must add up to your aggregate.</span>
+                </div>
+              </div>
+
+              {/* Preferences and Demographics */}
+              <div className="grid gap-4 sm:grid-cols-3 bg-muted/20 p-4 rounded-2xl border">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">State of Origin</label>
+                  <select
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                    value={stateOfOrigin}
+                    onChange={(e) => {
+                      setStateOfOrigin(e.target.value);
+                      setLga("");
+                    }}
+                  >
+                    <option value="">Select State</option>
+                    {NIGERIAN_STATES.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">LGA of Origin</label>
+                  {stateOfOrigin === "Lagos" ? (
+                    <select
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={lga}
+                      onChange={(e) => setLga(e.target.value)}
+                    >
+                      <option value="">Select LGA</option>
+                      {LAGOS_LGAs.map((l) => (
+                        <option key={l} value={l}>{l}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={lga}
+                      onChange={(e) => setLga(e.target.value)}
+                      placeholder={stateOfOrigin ? "Enter LGA" : "Select state first"}
+                      disabled={!stateOfOrigin}
+                      className="w-full rounded-xl border bg-background px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                    />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preferred Course (LASUSTECH)</label>
+                  <select
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                    value={preferredCourse}
+                    onChange={(e) => setPreferredCourse(e.target.value)}
+                  >
+                    <option value="">Select Course</option>
+                    {courseOptions.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

@@ -11,7 +11,7 @@ export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper request wrapper for JSON fetch calls
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("Ewebar.token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("WeBAR.token") : null;
 
   const headers = new Headers(options.headers);
   if (!(options.body instanceof FormData)) {
@@ -148,8 +148,8 @@ export async function getRecommendations() {
     universityId: r.universityId?._id || "",
     course: r.courseId?.courseName || "Computer Science",
     courseId: r.courseId?._id || "",
-    match: r.matchScore || 85,
-    cutoff: r.courseId?.cutoffMark || 220,
+    match: r.matchScore ?? null,
+    cutoff: r.courseId?.cutoffMark ?? null,
     slots: r.courseId?.slotsAvailable || 100,
     reason: r.reason || "Excellent match based on your interests and score.",
   }));
@@ -238,6 +238,9 @@ export async function getProfile() {
     interests: u.interests || [],
     preferredUniversities: u.preferredUniversities || [],
     bio: u.bio || "",
+    stateOfOrigin: u.stateOfOrigin || "",
+    lga: u.lga || "",
+    preferredCourse: u.preferredCourse || "",
     subjects: u.subjects || [],
     jambSubjects: u.jambSubjects || [],
     olevelSittings: u.olevelSittings || [],
@@ -254,6 +257,10 @@ export async function updateProfile(data: any) {
   if (data.subjects !== undefined) payload.subjects = data.subjects;
   if (data.jambSubjects !== undefined) payload.jambSubjects = data.jambSubjects;
   if (data.olevelSittings !== undefined) payload.olevelSittings = data.olevelSittings;
+  if (data.stateOfOrigin !== undefined) payload.stateOfOrigin = data.stateOfOrigin;
+  if (data.lga !== undefined) payload.lga = data.lga;
+  if (data.preferredCourse !== undefined) payload.preferredCourse = data.preferredCourse;
+  if (data.bio !== undefined) payload.bio = data.bio;
 
   const u = await request<any>("/users/update-profile", {
     method: "PUT",
@@ -271,6 +278,9 @@ export async function updateProfile(data: any) {
     interests: u.interests || [],
     preferredUniversities: u.preferredUniversities || [],
     bio: u.bio || "",
+    stateOfOrigin: u.stateOfOrigin || "",
+    lga: u.lga || "",
+    preferredCourse: u.preferredCourse || "",
     subjects: u.subjects || [],
     jambSubjects: u.jambSubjects || [],
     olevelSittings: u.olevelSittings || [],

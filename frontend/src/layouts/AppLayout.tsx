@@ -68,7 +68,7 @@ export function AppLayout({ variant = "student", children }: { variant?: "studen
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
               <GraduationCap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold">Ewebar</span>
+            <span className="font-display font-bold">WeBAR</span>
           </Link>
           <button className="md:hidden" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
         </div>

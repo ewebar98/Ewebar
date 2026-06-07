@@ -10,7 +10,9 @@ export default defineConfig({
     tanstackStart({
       server: { entry: "src/server.ts" },
     }),
-    nitro(),
+    nitro({
+      preset: "vercel",
+    }),
     react(),
     tailwindcss(),
     tsconfigPaths(),

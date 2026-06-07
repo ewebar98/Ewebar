@@ -5,7 +5,7 @@ import { loginUser, registerUser } from "@/services/api";
 export type Role = "student" | "admin";
 export type AuthUser = { id: string; name: string; email: string; role: Role };
 
-const STORAGE_KEY = "Ewebar.auth";
+const STORAGE_KEY = "WeBAR.auth";
 
 type AuthState = {
   user: AuthUser | null;
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: res.user.role as Role,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-    localStorage.setItem("Ewebar.token", res.token);
+    localStorage.setItem("WeBAR.token", res.token);
     setUser(u);
     return u;
   };
@@ -63,14 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: res.user.role as Role,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-    localStorage.setItem("Ewebar.token", res.token);
+    localStorage.setItem("WeBAR.token", res.token);
     setUser(u);
     return u;
   };
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem("Ewebar.token");
+    localStorage.removeItem("WeBAR.token");
     setUser(null);
   };
 

@@ -1,21 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScanLine, FilePlus, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
-import { getProfile, ocrExtractResult, updateProfile } from "@/services/api";
+import { getProfile, ocrExtractResult, updateProfile, getUniversities, getUniversityById } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
+const NIGERIAN_STATES = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
+  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", 
+  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
+  "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
+  "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+];
+
+const LAGOS_LGAs = [
+  "Agege", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti-Osa", 
+  "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", 
+  "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"
+];
+
+const FALLBACK_LASUSTECH_COURSES = [
+  "Agricultural Science",
+  "Biochemistry",
+  "Microbiology",
+  "Computer Science",
+  "Accounting",
+  "Business Administration",
+  "Mass Communication",
+  "Civil and Environmental Engineering",
+  "Mechanical Engineering",
+  "Electrical and Electronics Engineering"
+];
+
 export const Route = createFileRoute("/profile")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Profile | Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Profile | WeBAR" }] }),
   component: () => <AppLayout><Profile /></AppLayout>,
 });
 
@@ -25,24 +52,44 @@ function Profile() {
   const [extracted, setExtracted] = useState<Awaited<ReturnType<typeof ocrExtractResult>> | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Local form state — synced from data on load
+  // Fetch LASUSTECH courses dynamically
+  const { data: schools } = useApi(getUniversities);
+  const lasustechUni = schools?.find(
+    (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
+  );
+
+  const { data: lasustechData } = useApi(
+    () => (lasustechUni ? getUniversityById(lasustechUni.id) : Promise.resolve(null)),
+    [lasustechUni?.id]
+  );
+
+  const lasustechCourses = lasustechData?.courses || [];
+
+  // Local form state
   const [form, setForm] = useState({
     jambScore: "",
     waecAggregate: "",
     bio: "",
     preferredUniversities: "",
+    stateOfOrigin: "",
+    lga: "",
+    preferredCourse: "",
   });
 
-  // Sync form when data loads
-  const initialized = data && form.jambScore === "";
-  if (initialized) {
-    setForm({
-      jambScore: String(data.jambScore || ""),
-      waecAggregate: data.waecAggregate || "",
-      bio: data.bio || "",
-      preferredUniversities: (data.preferredUniversities || []).join(", "),
-    });
-  }
+  // Sync form when data loads (using useEffect to fix infinite loop)
+  useEffect(() => {
+    if (data) {
+      setForm({
+        jambScore: data.jambScore ? String(data.jambScore) : "",
+        waecAggregate: data.waecAggregate || "",
+        bio: data.bio || "",
+        preferredUniversities: (data.preferredUniversities || []).join(", "),
+        stateOfOrigin: data.stateOfOrigin || "",
+        lga: data.lga || "",
+        preferredCourse: data.preferredCourse || "",
+      });
+    }
+  }, [data]);
 
   const handleResultUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,9 +116,14 @@ function Profile() {
     try {
       await updateProfile({
         name: data.name,
-        jambScore: Number(form.jambScore) || 0,
+        jambScore: form.jambScore ? Number(form.jambScore) : 0,
         interests: data.interests,
         state: data.state,
+        waecAggregate: form.waecAggregate,
+        bio: form.bio,
+        stateOfOrigin: form.stateOfOrigin,
+        lga: form.lga,
+        preferredCourse: form.preferredCourse,
       });
       toast.success("Profile updated successfully");
     } catch (err) {
@@ -186,8 +238,64 @@ function Profile() {
                   placeholder="e.g. A1, B2, A1, B3"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>State of Origin</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={form.stateOfOrigin}
+                  onChange={(e) => setForm((f) => ({ ...f, stateOfOrigin: e.target.value, lga: "" }))}
+                >
+                  <option value="">Select State</option>
+                  {NIGERIAN_STATES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>LGA of Origin</Label>
+                {form.stateOfOrigin === "Lagos" ? (
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={form.lga}
+                    onChange={(e) => setForm((f) => ({ ...f, lga: e.target.value }))}
+                  >
+                    <option value="">Select LGA</option>
+                    {LAGOS_LGAs.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    value={form.lga}
+                    onChange={(e) => setForm((f) => ({ ...f, lga: e.target.value }))}
+                    placeholder={form.stateOfOrigin ? "Enter LGA" : "Select a state first"}
+                    disabled={!form.stateOfOrigin}
+                  />
+                )}
+              </div>
+
               <div className="space-y-2 md:col-span-2">
-                <Label>Bio</Label>
+                <Label>Preferred Course of Study (LASUSTECH)</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={form.preferredCourse}
+                  onChange={(e) => setForm((f) => ({ ...f, preferredCourse: e.target.value }))}
+                >
+                  <option value="">Select Course</option>
+                  {Array.from(new Set(
+                    lasustechCourses.length > 0 
+                      ? lasustechCourses.map(c => c.name) 
+                      : FALLBACK_LASUSTECH_COURSES
+                  )).sort().map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>A short Bio explaining your career interests and skills</Label>
                 <Textarea
                   value={form.bio}
                   onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}

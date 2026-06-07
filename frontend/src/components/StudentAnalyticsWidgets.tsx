@@ -57,7 +57,15 @@ export function StudentAnalyticsWidgets() {
               </p>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
-              <TrendingUp className="h-3 w-3" /> +9 this {range === "7d" ? "week" : range === "30d" ? "month" : "quarter"}
+              <TrendingUp className="h-3 w-3" />
+              {data?.probabilityTrend && data.probabilityTrend.length >= 2
+                ? (() => {
+                    const last = data.probabilityTrend.at(-1)?.v ?? 0;
+                    const prev = data.probabilityTrend[0]?.v ?? 0;
+                    const diff = last - prev;
+                    return diff >= 0 ? `+${diff} this ${range === "7d" ? "week" : range === "30d" ? "month" : "quarter"}` : `${diff} this ${range === "7d" ? "week" : range === "30d" ? "month" : "quarter"}`;
+                  })()
+                : "No trend data yet"}
             </div>
           </div>
           {loading ? (

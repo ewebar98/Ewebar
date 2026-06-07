@@ -24,7 +24,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/courses")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Manage Course Catalog — Ewebar" }] }),
+  head: () => ({ meta: [{ title: "Manage Course Catalog — WeBAR" }] }),
   component: () => <AppLayout variant="admin"><ManageCourses /></AppLayout>,
 });
 
