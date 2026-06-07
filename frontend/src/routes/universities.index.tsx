@@ -94,7 +94,7 @@ function Discover() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge tone="success" className="animate-pulse">Official Partner</Badge>
+              <span className="animate-pulse"><Badge tone="success">Official Partner</Badge></span>
               <span className="text-xs font-semibold text-primary">Direct Application Integration</span>
             </div>
             <h4 className="font-display font-bold text-base text-foreground">Lagos State University of Science and Technology (LASUSTECH)</h4>
@@ -218,7 +218,7 @@ function Discover() {
                 ) : (
                   <>
                     <Badge tone="warning">Waiting List</Badge>
-                    <Badge tone="muted">Coming Soon</Badge>
+                    <Badge tone="default">Coming Soon</Badge>
                   </>
                 )}
                 {u.tags.map((t: string) => <Badge key={t}>{t}</Badge>)}

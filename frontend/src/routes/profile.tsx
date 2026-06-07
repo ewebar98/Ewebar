@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ScanLine, FilePlus, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/layouts/AppLayout";
@@ -76,9 +76,11 @@ function Profile() {
     preferredCourse: "",
   });
 
-  // Sync form when data loads (using useEffect to fix infinite loop)
+  const initializedRef = useRef(false);
+
+  // Sync form when data loads (using useEffect to fix infinite loop, only once)
   useEffect(() => {
-    if (data) {
+    if (data && !initializedRef.current) {
       setForm({
         jambScore: data.jambScore ? String(data.jambScore) : "",
         waecAggregate: data.waecAggregate || "",
@@ -88,6 +90,7 @@ function Profile() {
         lga: data.lga || "",
         preferredCourse: data.preferredCourse || "",
       });
+      initializedRef.current = true;
     }
   }, [data]);
 

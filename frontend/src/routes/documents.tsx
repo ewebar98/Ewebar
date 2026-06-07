@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Upload,
   FileText,
@@ -202,9 +202,11 @@ function Documents() {
     }
   };
 
-  // Sync profile details to state on load
+  const initializedRef = useRef(false);
+
+  // Sync profile details to state on load (only once)
   useEffect(() => {
-    if (profile) {
+    if (profile && !initializedRef.current) {
       if (profile.olevelSittings && profile.olevelSittings.length > 0) {
         setOlevelSittings(profile.olevelSittings);
         setSittingCount(profile.olevelSittings.length === 2 ? 2 : 1);
@@ -237,6 +239,7 @@ function Documents() {
       if (profile.preferredCourse !== undefined) {
         setPreferredCourse(profile.preferredCourse);
       }
+      initializedRef.current = true;
     }
   }, [profile]);
 
