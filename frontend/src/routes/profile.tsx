@@ -12,20 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-const NIGERIAN_STATES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
-  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", 
-  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
-  "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
-  "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
-];
-
-const LAGOS_LGAs = [
-  "Agege", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti-Osa", 
-  "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", 
-  "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"
-];
+import { NIGERIAN_STATES, STATE_LGA_MAPPING } from "@/constants/nigerianStatesLgas";
 
 const FALLBACK_LASUSTECH_COURSES = [
   "Agricultural Science",
@@ -40,10 +27,16 @@ const FALLBACK_LASUSTECH_COURSES = [
   "Electrical and Electronics Engineering"
 ];
 
+const ProfileRouteComponent = () => (
+  <AppLayout>
+    <Profile />
+  </AppLayout>
+);
+
 export const Route = createFileRoute("/profile")({
   beforeLoad: requireRole("student"),
   head: () => ({ meta: [{ title: "Profile | WeBAR" }] }),
-  component: () => <AppLayout><Profile /></AppLayout>,
+  component: ProfileRouteComponent,
 });
 
 function Profile() {
@@ -258,24 +251,25 @@ function Profile() {
 
               <div className="space-y-2">
                 <Label>LGA of Origin</Label>
-                {form.stateOfOrigin === "Lagos" ? (
+                {form.stateOfOrigin ? (
                   <select
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     value={form.lga}
                     onChange={(e) => setForm((f) => ({ ...f, lga: e.target.value }))}
                   >
                     <option value="">Select LGA</option>
-                    {LAGOS_LGAs.map((l) => (
+                    {(STATE_LGA_MAPPING[form.stateOfOrigin] || []).map((l) => (
                       <option key={l} value={l}>{l}</option>
                     ))}
                   </select>
                 ) : (
-                  <Input
-                    value={form.lga}
-                    onChange={(e) => setForm((f) => ({ ...f, lga: e.target.value }))}
-                    placeholder={form.stateOfOrigin ? "Enter LGA" : "Select a state first"}
-                    disabled={!form.stateOfOrigin}
-                  />
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value=""
+                    disabled
+                  >
+                    <option value="">Select state first</option>
+                  </select>
                 )}
               </div>
 

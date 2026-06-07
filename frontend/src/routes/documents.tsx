@@ -40,20 +40,7 @@ import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { SearchableSubjectSelect } from "@/components/SearchableSubjectSelect";
 import { useQueryClient } from "@tanstack/react-query";
-
-const NIGERIAN_STATES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
-  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT - Abuja", "Gombe", 
-  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
-  "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
-  "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
-];
-
-const LAGOS_LGAs = [
-  "Agege", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti-Osa", 
-  "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", 
-  "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"
-];
+import { NIGERIAN_STATES, STATE_LGA_MAPPING } from "@/constants/nigerianStatesLgas";
 
 const FALLBACK_LASUSTECH_COURSES = [
   "Agricultural Science",
@@ -68,10 +55,16 @@ const FALLBACK_LASUSTECH_COURSES = [
   "Electrical and Electronics Engineering"
 ];
 
+const DocumentsRouteComponent = () => (
+  <AppLayout>
+    <Documents />
+  </AppLayout>
+);
+
 export const Route = createFileRoute("/documents")({
   beforeLoad: requireRole("student"),
   head: () => ({ meta: [{ title: "Academic Locker | WeBAR" }] }),
-  component: () => <AppLayout><Documents /></AppLayout>,
+  component: DocumentsRouteComponent,
 });
 
 interface OLevelSubject {
@@ -887,26 +880,25 @@ function Documents() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">LGA of Origin</label>
-                      {sitting.stateOfOrigin === "Lagos" ? (
+                      {sitting.stateOfOrigin ? (
                         <select
                           className="w-full rounded-xl border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                           value={sitting.lga || ""}
                           onChange={(e) => handleSittingFieldChange(sIdx, "lga", e.target.value)}
                         >
                           <option value="">Select LGA</option>
-                          {LAGOS_LGAs.map((l) => (
+                          {(STATE_LGA_MAPPING[sitting.stateOfOrigin] || []).map((l) => (
                             <option key={l} value={l}>{l}</option>
                           ))}
                         </select>
                       ) : (
-                        <input
-                          type="text"
-                          value={sitting.lga || ""}
-                          onChange={(e) => handleSittingFieldChange(sIdx, "lga", e.target.value)}
-                          placeholder={sitting.stateOfOrigin ? "Enter LGA" : "Select state first"}
-                          disabled={!sitting.stateOfOrigin}
-                          className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none"
-                        />
+                        <select
+                          className="w-full rounded-xl border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          value=""
+                          disabled
+                        >
+                          <option value="">Select state first</option>
+                        </select>
                       )}
                     </div>
 
@@ -1010,26 +1002,25 @@ function Documents() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">LGA of Origin</label>
-                  {stateOfOrigin === "Lagos" ? (
+                  {stateOfOrigin ? (
                     <select
                       className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                       value={lga}
                       onChange={(e) => setLga(e.target.value)}
                     >
                       <option value="">Select LGA</option>
-                      {LAGOS_LGAs.map((l) => (
+                      {(STATE_LGA_MAPPING[stateOfOrigin] || []).map((l) => (
                         <option key={l} value={l}>{l}</option>
                       ))}
                     </select>
                   ) : (
-                    <input
-                      type="text"
-                      value={lga}
-                      onChange={(e) => setLga(e.target.value)}
-                      placeholder={stateOfOrigin ? "Enter LGA" : "Select state first"}
-                      disabled={!stateOfOrigin}
-                      className="w-full rounded-xl border bg-background px-3 py-2 text-xs focus:border-primary focus:outline-none"
-                    />
+                    <select
+                      className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                      value=""
+                      disabled
+                    >
+                      <option value="">Select state first</option>
+                    </select>
                   )}
                 </div>
                 <div className="space-y-1">
