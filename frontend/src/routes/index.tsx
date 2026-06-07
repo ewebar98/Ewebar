@@ -85,6 +85,15 @@ function Landing() {
               WeBAR analyses your results, interests, and goals to recommend programs that fit you.
             </motion.p>
             <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.25 }}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
+            >
+              <Sparkles className="h-3.5 w-3.5 animate-pulse text-success" />
+              <span>In partnership with <strong>LASUSTECH</strong> for direct admissions matching</span>
+            </motion.div>
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}

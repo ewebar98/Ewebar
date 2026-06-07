@@ -906,26 +906,7 @@ function Documents() {
                         />
                       )}
                     </div>
-                    <div className="space-y-1 col-span-2">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Card Serial No.</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. WRN190..."
-                        value={sitting.serialNumber || ""}
-                        onChange={(e) => handleSittingFieldChange(sIdx, "serialNumber", e.target.value)}
-                        className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1 col-span-2">
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Verification PIN</label>
-                      <input
-                        type="password"
-                        placeholder="12-digit scratch card PIN"
-                        value={sitting.pin || ""}
-                        onChange={(e) => handleSittingFieldChange(sIdx, "pin", e.target.value)}
-                        className="w-full rounded-xl border bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none font-mono"
-                      />
-                    </div>
+
                   </div>
 
                   {/* Subject Grade Table */}

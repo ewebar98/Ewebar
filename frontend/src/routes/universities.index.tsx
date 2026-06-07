@@ -40,6 +40,12 @@ function Discover() {
   const [instType, setInstType] = useState("All");
   const [sort, setSort] = useState<"name" | "acceptance" | "students">("name");
 
+  const lasustechUni = useMemo(() => {
+    return (unis ?? []).find(
+      (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
+    );
+  }, [unis]);
+
   const locations = useMemo(() => {
     const all = (unis ?? []).map((u) => u.location.split(",")[0].trim());
     return ["All", ...Array.from(new Set(all))];
@@ -61,12 +67,56 @@ function Discover() {
     if (sort === "name") r = [...r].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "acceptance") r = [...r].sort((a, b) => b.acceptance - a.acceptance);
     if (sort === "students") r = [...r].sort((a, b) => b.students - a.students);
+
+    // Push LASUSTECH to the top of the list if it matches filters
+    const lasustechIdx = r.findIndex(
+      (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
+    );
+    if (lasustechIdx !== -1) {
+      const lasustechObj = r[lasustechIdx];
+      const rest = r.filter((_, idx) => idx !== lasustechIdx);
+      return [lasustechObj, ...rest];
+    }
     return r;
   }, [unis, q, location, instType, program, courses, sort]);
 
   return (
     <div className="space-y-6">
       <PageHeader title="Discover institutions" subtitle="Search and filter across Nigeria's top universities, polytechnics, and colleges." />
+
+      {/* Partnership Alert Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-accent/5 to-card p-5 shadow-soft relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge tone="success" className="animate-pulse">Official Partner</Badge>
+              <span className="text-xs font-semibold text-primary">Direct Application Integration</span>
+            </div>
+            <h4 className="font-display font-bold text-base text-foreground">Lagos State University of Science and Technology (LASUSTECH)</h4>
+            <p className="text-xs text-muted-foreground max-w-2xl leading-relaxed">
+              WeBAR is in official partnership with LASUSTECH. Students can instantly match, verify results, and submit direct applications. All other institutions are on the waiting list (coming soon) but remain browseable for reference.
+            </p>
+          </div>
+          {lasustechUni ? (
+            <Link
+              to="/universities/$id"
+              params={{ id: lasustechUni.id }}
+              className="shrink-0 inline-flex items-center justify-center rounded-xl bg-gradient-primary text-xs font-semibold text-primary-foreground h-9 px-4 shadow-soft hover:shadow-elegant transition-all text-center"
+            >
+              Apply to LASUSTECH
+            </Link>
+          ) : (
+            <Button disabled className="shrink-0 text-xs h-9">
+              Apply to LASUSTECH
+            </Button>
+          )}
+        </div>
+      </motion.div>
 
       {(isUnisErr || isCoursesErr) && (
         <ErrorAlert
@@ -160,6 +210,17 @@ function Discover() {
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
+                {u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH") ? (
+                  <>
+                    <Badge tone="success">Official Partner</Badge>
+                    <Badge tone="primary">Direct Admission</Badge>
+                  </>
+                ) : (
+                  <>
+                    <Badge tone="warning">Waiting List</Badge>
+                    <Badge tone="muted">Coming Soon</Badge>
+                  </>
+                )}
                 {u.tags.map((t: string) => <Badge key={t}>{t}</Badge>)}
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
