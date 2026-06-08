@@ -111,26 +111,6 @@ const subjectsList = [
     code: "SC-007"
   },
   {
-    name: "Physical Education",
-    shortName: "Physical Ed",
-    category: "science",
-    isCoreSubject: false,
-    examTypes: ["WAEC", "NECO", "GCE"],
-    aliases: ["PE", "P.E.", "Gymnastics", "Sports Science"],
-    keywords: ["sports", "exercise", "training", "athletics", "anatomy", "fitness", "coaching"],
-    code: "SC-008"
-  },
-  {
-    name: "Health Science / Health Education",
-    shortName: "Health Sci",
-    category: "science",
-    isCoreSubject: false,
-    examTypes: ["WAEC", "NECO", "NABTEB", "GCE"],
-    aliases: ["Health Education", "Health Science", "PHE", "Physical & Health Education"],
-    keywords: ["hygiene", "body", "nutrition", "first aid", "diseases", "wellness", "health"],
-    code: "SC-009"
-  },
-  {
     name: "Foods and Nutrition",
     shortName: "Foods & Nutrition",
     category: "science",
@@ -139,16 +119,6 @@ const subjectsList = [
     aliases: ["Food and Nutrition", "Home Economics (Food)", "Food Nutrition", "Food & Nutrition"],
     keywords: ["diet", "vitamins", "nutrients", "cooking", "health", "meal planning", "hygiene", "baking", "nutrition"],
     code: "SC-010"
-  },
-  {
-    name: "Integrated Science",
-    shortName: "Integrated Sci",
-    category: "science",
-    isCoreSubject: false,
-    examTypes: ["WAEC", "GCE"],
-    aliases: ["Int Science", "Integrated Science", "General Science"],
-    keywords: ["general science", "basic chemistry", "basic physics", "basic biology", "ghana science", "integrated"],
-    code: "SC-011"
   },
   {
     name: "Computer Studies / ICT",

@@ -19,6 +19,7 @@ import { StudentAnalyticsWidgets } from "@/components/StudentAnalyticsWidgets";
 import { useState } from "react";
 import { useApi } from "@/hooks/useApi";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const FALLBACK_LASUSTECH_COURSES = [
   "Agricultural Science",
@@ -33,10 +34,94 @@ const FALLBACK_LASUSTECH_COURSES = [
   "Electrical and Electronics Engineering"
 ];
 
+const normalizeSubject = (name: string) => {
+  if (!name) return "";
+  const n = name.toLowerCase().trim();
+  if (n === "english language" || n === "english" || n === "use of english") return "english";
+  if (n === "general mathematics" || n === "mathematics" || n === "maths" || n === "math") return "mathematics";
+  if (n === "further mathematics" || n === "further maths") return "further mathematics";
+  if (n === "literature-in-english" || n === "literature in english" || n === "literature") return "literature";
+  if (n === "agricultural science" || n === "agricultural education" || n === "agric" || n === "agriculture") return "agricultural science";
+  return n;
+};
+
+const isCreditPass = (grade: string) => {
+  if (!grade) return false;
+  const g = grade.toUpperCase().trim();
+  return ["A1", "B2", "B3", "C4", "C5", "C6", "A", "B", "C"].includes(g);
+};
+
+const checkEligibility = (profile: any, course: any) => {
+  if (!profile || !course) return null;
+  
+  const errors: string[] = [];
+  
+  // 1. Cutoff check
+  const meetsCutoff = profile.jambScore >= course.cutoff;
+  if (!meetsCutoff) {
+    errors.push(`Your JAMB score (${profile.jambScore}) is below the required cutoff of ${course.cutoff}.`);
+  }
+  
+  // 2. Prerequisite subjects check
+  const courseRequirements = (course.requirements || []).map((r: string) => normalizeSubject(r));
+  const studentJambSubjects = (profile.jambSubjects || []).map((s: any) => normalizeSubject(s.name));
+  const studentOlevelMap: Record<string, string> = {};
+  (profile.subjects || []).forEach((s: any) => {
+    studentOlevelMap[normalizeSubject(s.name)] = s.grade;
+  });
+  
+  courseRequirements.forEach((reqSub: string) => {
+    const originalName = reqSub.charAt(0).toUpperCase() + reqSub.slice(1);
+    
+    // Check JAMB
+    const standardJambSubjects = [
+      "english", "mathematics", "physics", "chemistry", "biology", 
+      "economics", "government", "literature", "geography", 
+      "agricultural science", "commerce", "history"
+    ];
+    if (standardJambSubjects.includes(reqSub) && !studentJambSubjects.includes(reqSub)) {
+      errors.push(`Missing required JAMB subject: ${originalName}`);
+    }
+    
+    // Check O'Level
+    const grade = studentOlevelMap[reqSub];
+    if (!grade || !isCreditPass(grade)) {
+      errors.push(`Missing required O'Level credit pass: ${originalName}`);
+    }
+  });
+  
+  // 3. Stream alignment check
+  const scienceSubjects = ["physics", "chemistry", "biology", "agricultural science"];
+  const artCommSubjects = ["literature", "government", "economics", "commerce", "history"];
+  
+  const isScienceCourse = courseRequirements.some((r: string) => scienceSubjects.includes(r));
+  const isArtCommCourse = courseRequirements.some((r: string) => artCommSubjects.includes(r));
+  
+  const studentScienceCount = studentJambSubjects.filter((s: string) => scienceSubjects.includes(s)).length;
+  const studentArtCommCount = studentJambSubjects.filter((s: string) => artCommSubjects.includes(s)).length;
+  
+  if (isScienceCourse && studentScienceCount === 0 && studentJambSubjects.length > 0) {
+    errors.push("Incompatible stream: This is a Science program, but you took no science subjects in JAMB.");
+  } else if (isArtCommCourse && studentArtCommCount === 0 && studentJambSubjects.length > 0) {
+    errors.push("Incompatible stream: This is an Arts/Commercial program, but you took no arts/commercial subjects in JAMB.");
+  }
+  
+  return {
+    eligible: errors.length === 0,
+    errors
+  };
+};
+
+const DashboardRouteComponent = () => (
+  <AppLayout>
+    <Dashboard />
+  </AppLayout>
+);
+
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireRole("student"),
   head: () => ({ meta: [{ title: "Dashboard | WeBAR" }] }),
-  component: () => <AppLayout><Dashboard /></AppLayout>,
+  component: DashboardRouteComponent,
 });
 
 function Dashboard() {
@@ -94,6 +179,16 @@ function Dashboard() {
     (a) => a.university.includes("Lagos State University of Science") || a.university.includes("LASUSTECH")
   );
 
+  const activeApp = apps?.find(
+    (a) => a.university.includes("Lagos State University of Science") || a.university.includes("LASUSTECH")
+  );
+
+  const preferredCourseObj = lasustechCourses?.find(
+    (c: any) => c.name === context?.profile?.preferredCourse
+  );
+
+  const eligibility = preferredCourseObj ? checkEligibility(context?.profile, preferredCourseObj) : null;
+
   let currentStep = 1;
   if (!academicComplete) {
     currentStep = 1;
@@ -106,22 +201,20 @@ function Dashboard() {
   }
 
   // Quick Apply action
-  const handleQuickApply = async () => {
+  const handleQuickApply = async (courseToApply?: { id: string; name: string }) => {
     if (!lasustechUni) {
       toast.error("LASUSTECH university record not found");
       return;
     }
-    const preferredCourseObj = lasustechCourses?.find(
-      (c) => c.name === context?.profile?.preferredCourse
-    );
-    if (!preferredCourseObj) {
+    const targetCourse = courseToApply || (preferredCourseObj ? { id: preferredCourseObj.id, name: preferredCourseObj.name } : null);
+    if (!targetCourse) {
       toast.error("Please select a valid preferred course in your profile first");
       return;
     }
     setApplying(true);
     try {
-      await submitApplication(lasustechUni.id, preferredCourseObj.id, []);
-      toast.success(`Application to LASUSTECH for ${preferredCourseObj.name} submitted successfully!`);
+      await submitApplication(lasustechUni.id, targetCourse.id, []);
+      toast.success(`Application to LASUSTECH for ${targetCourse.name} submitted successfully!`);
       refetchApps();
       refetchContext();
     } catch (err: any) {
@@ -198,8 +291,8 @@ function Dashboard() {
           {[
             { id: 1, label: "Academic Locker", desc: "Upload WAEC/JAMB", done: academicComplete },
             { id: 2, label: "Demographics", desc: "Bio, State & LGA", done: profileComplete },
-            { id: 3, label: "Eligibility Match", desc: "View Recommendations", done: academicComplete && profileComplete },
-            { id: 4, label: "Direct Apply", desc: "Submit to LASUSTECH", done: hasApplied }
+            { id: 3, label: "Direct Apply", desc: "Submit to LASUSTECH", done: hasApplied },
+            { id: 4, label: "Admission Status", desc: "Track application", done: hasApplied }
           ].map((s) => {
             const isActive = currentStep === s.id;
             const isDone = s.done;
@@ -245,7 +338,7 @@ function Dashboard() {
                 <Link to="/documents">
                   <button className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-glow hover:bg-primary/95 flex items-center gap-1.5">
                     Open Academic Locker
-                    <ArrowRight className="h-3..5 w-3.5" />
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </Link>
                 <span className="text-[11px] text-muted-foreground italic">
@@ -281,57 +374,148 @@ function Dashboard() {
 
           {currentStep === 3 && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-primary" />
-                <h4 className="font-display text-sm font-semibold">Step 3: Eligibility Match Check</h4>
-              </div>
-              <p className="text-xs text-muted-foreground max-w-2xl">
-                Excellent! Your profile is verified. Below, you can see your matching programs. Your preferred course is <b>{context?.profile?.preferredCourse}</b>.
-              </p>
-              <div className="flex flex-wrap gap-3 items-center pt-2">
-                <Link to="/recommendations">
-                  <button className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-glow hover:bg-primary/95 flex items-center gap-1.5">
-                    View Course Eligibility matches
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-primary animate-pulse" />
-                <h4 className="font-display text-sm font-semibold text-primary">Step 4: Direct Application Submission</h4>
-              </div>
-              <p className="text-xs text-muted-foreground max-w-2xl">
-                All prerequisites met! You are fully eligible to apply. Submit your direct application to <b>Lagos State University of Science and Technology</b> for your preferred program: <b>{context?.profile?.preferredCourse}</b>.
-              </p>
-              
-              {!hasApplied ? (
-                <div className="pt-2">
-                  <button 
-                    onClick={handleQuickApply}
-                    disabled={applying}
-                    className="rounded-xl bg-gradient-primary px-5 py-2.5 text-xs font-bold text-white shadow-glow hover:brightness-105 flex items-center gap-2"
-                  >
-                    {applying ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Submitting application...</>
-                    ) : (
-                      <><Zap className="h-4 w-4" /> Apply to LASUSTECH Now</>
-                    )}
-                  </button>
+              {!preferredCourseObj ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    <h4 className="font-display text-sm font-semibold">Step 3: Direct Apply Match Checking</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    We are checking eligibility requirements for your preferred course: <b>{context?.profile?.preferredCourse || "None selected"}</b>.
+                  </p>
+                  {!context?.profile?.preferredCourse && (
+                    <div className="pt-2">
+                      <Link to="/profile">
+                        <Button className="bg-primary text-xs font-display">Set Preferred Course</Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : eligibility?.eligible ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-success">
+                    <CheckCircle className="h-5 w-5 shrink-0" />
+                    <h4 className="font-display text-sm font-semibold">Step 3: Direct Apply (Eligible)</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Congratulations! You meet all JAMB score cutoffs and prerequisite subject requirements for <b>{preferredCourseObj.name}</b> at <b>Lagos State University of Science and Technology</b>.
+                  </p>
+                  <div className="bg-success/5 border border-success/20 rounded-2xl p-4 text-xs space-y-2">
+                    <p className="font-bold text-success-foreground">LASUSTECH Cutoff Met:</p>
+                    <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                      <li>Program Cutoff: {preferredCourseObj.cutoff} (Your Score: {context?.profile?.jambScore})</li>
+                      <li>Required subjects: {preferredCourseObj.requirements?.join(", ") || "English, Mathematics"}</li>
+                    </ul>
+                  </div>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handleQuickApply()}
+                      disabled={applying}
+                      className="rounded-xl bg-gradient-primary px-5 py-2.5 text-xs font-bold text-white shadow-glow hover:brightness-105 flex items-center gap-2 font-display"
+                    >
+                      {applying ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Submitting application...</>
+                      ) : (
+                        <><Zap className="h-4 w-4" /> Apply to LASUSTECH Now</>
+                      )}
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 bg-success/10 border border-success/30 p-3 rounded-xl max-w-md">
-                  <CheckCircle className="h-5 w-5 text-success" />
-                  <div>
-                    <p className="text-xs font-bold text-success-foreground">Applied successfully!</p>
-                    <p className="text-[10px] text-muted-foreground">Track status under <Link to="/applications" className="text-primary hover:underline">Applications</Link>.</p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <h4 className="font-display text-sm font-semibold">Step 3: Direct Apply (Ineligible)</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Unfortunately, you do not meet the prerequisites to apply directly to <b>{preferredCourseObj.name}</b> at <b>LASUSTECH</b>:
+                  </p>
+                  <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-4 text-xs">
+                    <p className="font-bold text-destructive-foreground">Prerequisite Warnings:</p>
+                    <ul className="list-disc pl-4 mt-2 space-y-1 text-muted-foreground">
+                      {eligibility?.errors.map((err, idx) => (
+                        <li key={idx}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="border-t pt-4 space-y-3">
+                    <p className="text-xs font-semibold text-foreground">Recommended Alternative Courses (You meet prerequisites):</p>
+                    {recs && recs.filter((r: any) => r.matchScore >= 40 && (r.course?.name || r.course) !== preferredCourseObj.name).length > 0 ? (
+                      <div className="grid gap-3">
+                        {recs
+                          .filter((r: any) => r.matchScore >= 40 && (r.course?.name || r.course) !== preferredCourseObj.name)
+                          .slice(0, 2)
+                          .map((r: any) => {
+                            const altName = r.course?.name || r.course;
+                            const altId = r.course?._id || r.course?.id || r.courseId?._id || r.courseId;
+                            return (
+                              <div key={altId} className="flex items-center justify-between rounded-xl border bg-card p-3 shadow-soft text-xs">
+                                <div>
+                                  <p className="font-bold text-foreground">{altName}</p>
+                                  <p className="text-[10px] text-muted-foreground">Cutoff: {r.cutoff || r.course?.cutoffMark || 200}</p>
+                                </div>
+                                <button
+                                  onClick={() => handleQuickApply({ id: altId, name: altName })}
+                                  disabled={applying}
+                                  className="rounded-lg bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 font-bold text-[11px] transition-colors font-display"
+                                >
+                                  Apply Instead
+                                </button>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">No alternative matches found based on your subject combination. Update your academic locker or consult WeBAR advisor.</p>
+                    )}
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {currentStep === 4 && activeApp && (
+            <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 text-success">
+                <CheckCircle className="h-5 w-5 shrink-0" />
+                <h4 className="font-display text-sm font-semibold">Step 4: Admission Status Track</h4>
+              </div>
+              <p className="text-xs text-muted-foreground max-w-2xl">
+                Your direct application has been successfully submitted to <b>Lagos State University of Science and Technology (LASUSTECH)</b>.
+              </p>
+              
+              <div className="rounded-2xl border bg-background p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Applied Course</p>
+                  <p className="text-sm font-bold text-foreground">{activeApp.course}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Submitted on {activeApp.submitted}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Application Status</p>
+                  <div className="mt-1">
+                    <Badge 
+                      tone={
+                        activeApp.status === "Accepted" 
+                          ? "success" 
+                          : activeApp.status === "Rejected" 
+                          ? "destructive" 
+                          : "primary"
+                      }
+                    >
+                      {activeApp.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Admission Probability</p>
+                  <p className="text-lg font-bold text-primary">{activeApp.probability}%</p>
+                </div>
+              </div>
+              
+              <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+                Admissions officers are currently reviewing your documents. Keep an eye on your WeBAR notifications and applications dashboard for real-time status changes.
+              </p>
             </div>
           )}
         </div>

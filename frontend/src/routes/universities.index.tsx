@@ -10,14 +10,16 @@ import { getUniversities, getCourses } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+const DiscoverRouteComponent = () => (
+  <AppLayout>
+    <Discover />
+  </AppLayout>
+);
+
 export const Route = createFileRoute("/universities/")({
   beforeLoad: requireRole("student"),
   head: () => ({ meta: [{ title: "Discover Universities — WeBAR" }] }),
-  component: () => (
-    <AppLayout>
-      <Discover />
-    </AppLayout>
-  ),
+  component: DiscoverRouteComponent,
 });
 
 function Discover() {

@@ -248,35 +248,68 @@ function Documents() {
 
   // Modify sitting metadata
   const handleSittingFieldChange = (index: number, field: keyof OLevelSitting, value: any) => {
-    const updated = [...olevelSittings];
-    updated[index] = { ...updated[index], [field]: value };
-    setOlevelSittings(updated);
+    setOlevelSittings((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleSittingFieldsChange = (index: number, fields: Partial<OLevelSitting>) => {
+    setOlevelSittings((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], ...fields };
+      return updated;
+    });
   };
 
   // Subject actions in O'Level sitting
   const handleAddSubject = (sittingIndex: number) => {
-    const updated = [...olevelSittings];
-    updated[sittingIndex].subjects.push({ name: "", grade: "C6" });
-    setOlevelSittings(updated);
+    setOlevelSittings((prev) => {
+      const updated = [...prev];
+      const sittingCopy = { ...updated[sittingIndex] };
+      sittingCopy.subjects = [...sittingCopy.subjects, { name: "", grade: "C6" }];
+      updated[sittingIndex] = sittingCopy;
+      return updated;
+    });
   };
 
   const handleRemoveSubject = (sittingIndex: number, subjectIndex: number) => {
-    const updated = [...olevelSittings];
-    updated[sittingIndex].subjects.splice(subjectIndex, 1);
-    setOlevelSittings(updated);
+    setOlevelSittings((prev) => {
+      const updated = [...prev];
+      const sittingCopy = { ...updated[sittingIndex] };
+      const subCopy = [...sittingCopy.subjects];
+      subCopy.splice(subjectIndex, 1);
+      sittingCopy.subjects = subCopy;
+      updated[sittingIndex] = sittingCopy;
+      return updated;
+    });
   };
 
   const handleSubjectChange = (sittingIndex: number, subjectIndex: number, subjectName: string) => {
-    const updated = [...olevelSittings];
-    updated[sittingIndex].subjects[subjectIndex].name = subjectName;
-    setOlevelSittings(updated);
+    setOlevelSittings((prev) => {
+      const updated = [...prev];
+      const sittingCopy = { ...updated[sittingIndex] };
+      const subCopy = [...sittingCopy.subjects];
+      subCopy[subjectIndex] = { ...subCopy[subjectIndex], name: subjectName };
+      sittingCopy.subjects = subCopy;
+      updated[sittingIndex] = sittingCopy;
+      return updated;
+    });
   };
 
   const handleGradeChange = (sittingIndex: number, subjectIndex: number, grade: string) => {
-    const updated = [...olevelSittings];
-    updated[sittingIndex].subjects[subjectIndex].grade = grade;
-    setOlevelSittings(updated);
+    setOlevelSittings((prev) => {
+      const updated = [...prev];
+      const sittingCopy = { ...updated[sittingIndex] };
+      const subCopy = [...sittingCopy.subjects];
+      subCopy[subjectIndex] = { ...subCopy[subjectIndex], grade };
+      sittingCopy.subjects = subCopy;
+      updated[sittingIndex] = sittingCopy;
+      return updated;
+    });
   };
+
 
   // JAMB Subject changes
   const handleJambSubjectChange = (index: number, value: string) => {
@@ -868,8 +901,7 @@ function Documents() {
                         className="w-full rounded-xl border border-input bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                         value={sitting.stateOfOrigin || ""}
                         onChange={(e) => {
-                          handleSittingFieldChange(sIdx, "stateOfOrigin", e.target.value);
-                          handleSittingFieldChange(sIdx, "lga", "");
+                          handleSittingFieldsChange(sIdx, { stateOfOrigin: e.target.value, lga: "" });
                         }}
                       >
                         <option value="">Select State</option>

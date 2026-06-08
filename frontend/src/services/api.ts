@@ -66,6 +66,7 @@ export interface Course {
   description: string;
   institutionId?: string;
   tuition?: string;
+  requirements?: string[];
 }
 
 export async function getUniversities(): Promise<University[]> {
@@ -107,6 +108,7 @@ export async function getUniversityById(id: string): Promise<University | null> 
       cutoff: c.cutoffMark || 200,
       description: c.description || `Explore the ${c.name} program.`,
       institutionId: u._id,
+      requirements: c.requirements || [],
     })) || [],
   };
 }
@@ -122,6 +124,7 @@ export async function getCourses(): Promise<Course[]> {
     description: c.description || `Explore the ${c.name} program. Requirements: ${c.requirements?.join(", ") || "English, Mathematics"}.`,
     institutionId: c.institutionId?._id || c.institutionId || "",
     tuition: c.tuition || "₦150,000/yr",
+    requirements: c.requirements || [],
   }));
 }
 
@@ -137,6 +140,7 @@ export async function getCourseById(id: string): Promise<Course | null> {
     description: c.description || `Explore the ${c.name} program. Requirements: ${c.requirements?.join(", ") || "English, Mathematics"}.`,
     institutionId: c.institutionId?._id || c.institutionId || "",
     tuition: c.tuition || "₦150,000/yr",
+    requirements: c.requirements || [],
   };
 }
 

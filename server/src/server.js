@@ -22,11 +22,28 @@ validateEnvironment();
 
 import app from "./app.js";
 import connectDB from "./config/db.js";
+import Subject from "./models/subjectModel.js";
 
 const PORT = process.env.PORT || 5000;
 
+// Database migration: clean up decommissioned subjects
+const cleanDecommissionedSubjects = async () => {
+  try {
+    const result = await Subject.deleteMany({
+      name: { $in: ["Physical Education", "Integrated Science", "Health Science / Health Education"] }
+    });
+    if (result.deletedCount > 0) {
+      console.log(`[Migration] Cleaned up ${result.deletedCount} decommissioned subjects from the database.`);
+    }
+  } catch (err) {
+    console.error("[Migration Error] Failed to clean up decommissioned subjects:", err.message);
+  }
+};
+
 // Connect to Database
-connectDB();
+connectDB().then(() => {
+  cleanDecommissionedSubjects();
+});
 
 const keepAlive = () => {
   const url = process.env.RENDER_EXTERNAL_URL;

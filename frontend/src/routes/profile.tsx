@@ -61,7 +61,6 @@ function Profile() {
   // Local form state
   const [form, setForm] = useState({
     jambScore: "",
-    waecAggregate: "",
     bio: "",
     preferredUniversities: "",
     stateOfOrigin: "",
@@ -76,7 +75,6 @@ function Profile() {
     if (data && !initializedRef.current) {
       setForm({
         jambScore: data.jambScore ? String(data.jambScore) : "",
-        waecAggregate: data.waecAggregate || "",
         bio: data.bio || "",
         preferredUniversities: (data.preferredUniversities || []).join(", "),
         stateOfOrigin: data.stateOfOrigin || "",
@@ -115,7 +113,6 @@ function Profile() {
         jambScore: form.jambScore ? Number(form.jambScore) : 0,
         interests: data.interests,
         state: data.state,
-        waecAggregate: form.waecAggregate,
         bio: form.bio,
         stateOfOrigin: form.stateOfOrigin,
         lga: form.lga,
@@ -224,14 +221,6 @@ function Profile() {
                   min={0}
                   max={400}
                   placeholder="e.g. 268"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>WAEC Aggregate</Label>
-                <Input
-                  value={form.waecAggregate}
-                  onChange={(e) => setForm((f) => ({ ...f, waecAggregate: e.target.value }))}
-                  placeholder="e.g. A1, B2, A1, B3"
                 />
               </div>
 
