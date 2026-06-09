@@ -275,12 +275,18 @@ export const generateRecommendations = async (user) => {
       const { matchPercentage, details } = calculateMatchScore(user, program);
       const { breakdown, confidence, recourseActions } = buildExplainability(user, program, details, matchPercentage);
 
+      // Real-time seat check: flag if program is at or over capacity
+      const slotsAvailable = Math.max(0, (program.totalCapacity || 0) - (program.currentAdmitted || 0));
+      const isFull = program.totalCapacity > 0 && slotsAvailable === 0;
+
       return {
         course: program,
         matchPercentage,
         breakdown,
         confidence,
         recourseActions,
+        slotsAvailable: program.totalCapacity > 0 ? slotsAvailable : null,
+        isFull,
         prerequisitesMet: details.prerequisitesMet,
         details,
       };
@@ -288,6 +294,8 @@ export const generateRecommendations = async (user) => {
     // Only courses the applicant can actually apply for should be recommended.
     .filter((r) => r.prerequisitesMet)
     .sort((a, b) => {
+      // Per spec: push full programs to bottom, open-capacity programs to top
+      if (a.isFull !== b.isFull) return a.isFull ? 1 : -1;
       return b.matchPercentage - a.matchPercentage;
     });
 

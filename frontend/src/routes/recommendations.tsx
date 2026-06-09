@@ -106,7 +106,7 @@ function Recommendations() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="rounded-2xl border bg-card p-5 shadow-soft"
+            className={`rounded-2xl border p-5 shadow-soft bg-card ${r.isFull ? "border-destructive/20 opacity-90" : ""}`}
           >
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
@@ -117,7 +117,11 @@ function Recommendations() {
                 <p className="text-sm text-muted-foreground">{r.course}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {r.cutoff !== null && <Badge tone="primary">Cutoff {r.cutoff}</Badge>}
-                  <Badge tone="success">{r.slots} slots</Badge>
+                  {r.isFull ? (
+                    <Badge tone="destructive">Waitlist Only</Badge>
+                  ) : (
+                    <Badge tone="success">{r.slots} slots</Badge>
+                  )}
                   {/* Confidence badge */}
                   <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${confidenceStyle[r.confidence] ?? confidenceStyle.Medium}`}>
                     {r.confidence} Confidence

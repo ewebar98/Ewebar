@@ -48,6 +48,7 @@ function ManageCourses() {
   const [deptId, setDeptId] = useState("");
   const [duration, setDuration] = useState("4 years");
   const [cutoffMark, setCutoffMark] = useState(180);
+  const [totalCapacity, setTotalCapacity] = useState(100);
   const [tuition, setTuition] = useState("₦150,000/yr");
   const [requirementsStr, setRequirementsStr] = useState("English, Mathematics");
   const [careerPathsStr, setCareerPathsStr] = useState("");
@@ -89,6 +90,7 @@ function ManageCourses() {
     setDeptId("");
     setDuration("4 years");
     setCutoffMark(180);
+    setTotalCapacity(100);
     setTuition("₦150,000/yr");
     setRequirementsStr("English, Mathematics");
     setCareerPathsStr("");
@@ -114,6 +116,7 @@ function ManageCourses() {
             setDeptId(program.departmentId?._id || program.departmentId || "");
             setDuration(program.duration || c.duration || "4 years");
             setCutoffMark(program.cutoffMark || c.cutoff || 180);
+            setTotalCapacity(program.totalCapacity || c.totalCapacity || 100);
             setTuition(program.tuition || c.tuition || "₦150,000/yr");
             setDescription(program.description || c.description || "");
             setAutoAdmissionEnabled(program.autoAdmission?.enabled || false);
@@ -125,6 +128,7 @@ function ManageCourses() {
             setInstId(c.institutionId || "");
             setDuration(c.duration || "4 years");
             setCutoffMark(c.cutoff || 180);
+            setTotalCapacity(c.totalCapacity || 100);
             setTuition(c.tuition || "₦150,000/yr");
             setDescription(c.description || "");
             setFacultyId("");
@@ -138,6 +142,7 @@ function ManageCourses() {
         setInstId(c.institutionId || "");
         setDuration(c.duration || "4 years");
         setCutoffMark(c.cutoff || 180);
+        setTotalCapacity(c.totalCapacity || 100);
         setTuition(c.tuition || "₦150,000/yr");
         setDescription(c.description || "");
         setFacultyId("");
@@ -206,6 +211,7 @@ function ManageCourses() {
       name,
       duration,
       cutoffMark: Number(cutoffMark),
+      totalCapacity: Number(totalCapacity),
       tuition,
       autoAdmission: { enabled: autoAdmissionEnabled, mode: autoAdmissionMode, autoAcceptThreshold: Number(autoAdmissionThreshold) },
       requirements: requirementsStr.split(",").map((r) => r.trim()).filter((r) => r !== ""),
@@ -382,14 +388,18 @@ function ManageCourses() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="duration">Course Duration</Label>
+                <Label htmlFor="duration">Duration</Label>
                 <Input id="duration" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 4 years" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="cutoff">UTME Cutoff Mark</Label>
+                <Label htmlFor="cutoff">Cutoff Mark</Label>
                 <Input id="cutoff" type="number" value={cutoffMark} onChange={(e) => setCutoffMark(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="totalCapacity">Capacity (Seats)</Label>
+                <Input id="totalCapacity" type="number" value={totalCapacity} onChange={(e) => setTotalCapacity(Number(e.target.value))} />
               </div>
             </div>
 
@@ -472,6 +482,30 @@ function ManageCourses() {
               </div>
               <p className="mt-3 text-sm text-muted-foreground line-clamp-3">{c.description}</p>
               
+              {/* Dynamic seat occupancy visualizer bar */}
+              {(c.totalCapacity !== undefined && c.totalCapacity > 0) && (
+                <div className="mt-4 space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-muted-foreground">Seat Occupancy</span>
+                    <span className="text-foreground">
+                      {c.currentAdmitted || 0} / {c.totalCapacity} admitted
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      style={{ width: `${Math.min(100, Math.round(((c.currentAdmitted || 0) / c.totalCapacity) * 100))}%` }}
+                      className={`h-full rounded-full transition-all ${
+                        (c.currentAdmitted || 0) >= c.totalCapacity
+                          ? "bg-destructive"
+                          : (c.currentAdmitted || 0) / c.totalCapacity >= 0.9
+                            ? "bg-amber-500"
+                            : "bg-emerald-500"
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4 pt-3.5 border-t flex items-center justify-between">
                 <span className="text-xs font-semibold text-primary">{c.tuition}</span>
                 <div className="flex gap-1.5">

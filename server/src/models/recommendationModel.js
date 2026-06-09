@@ -15,6 +15,22 @@ const recommendationSchema = new mongoose.Schema(
         },
         matchPercentage: Number,
         explanation: String,
+        breakdown: [
+          {
+            type: { type: String, enum: ["PASS", "FAIL", "WARN"] },
+            field: String,
+            message: String,
+          }
+        ],
+        confidence: { type: String, default: "Medium" },
+        recourseActions: [
+          {
+            code: String,
+            type: { type: String },
+            message: String,
+            actionLink: String,
+          }
+        ],
       },
     ],
     matchPercentage: Number, // Overall profile match

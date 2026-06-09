@@ -79,6 +79,22 @@ router.get(
       value: u.count,
     }));
 
+    // Program capacity summary: current admitted vs total capacity
+    const capacityAgg = await Program.find(
+      { totalCapacity: { $gt: 0 } },
+      { name: 1, totalCapacity: 1, currentAdmitted: 1, cutoffMark: 1 }
+    )
+      .sort({ currentAdmitted: -1 })
+      .limit(20);
+
+    const programCapacities = capacityAgg.map((p) => ({
+      name: p.name,
+      total: p.totalCapacity || 0,
+      admitted: p.currentAdmitted || 0,
+      available: Math.max(0, (p.totalCapacity || 0) - (p.currentAdmitted || 0)),
+      occupancyPct: p.totalCapacity > 0 ? Math.round(((p.currentAdmitted || 0) / p.totalCapacity) * 100) : 0,
+    }));
+
     res.json({
       success: true,
       message: "Analytics fetched",
@@ -92,6 +108,7 @@ router.get(
         applicationsTrend: applicationsTrend.length > 0 ? applicationsTrend : [],
         facultyMix: facultyMix.length > 0 ? facultyMix : [],
         topUniversities: topUniversities.length > 0 ? topUniversities : [],
+        programCapacities,
       },
     });
   })
@@ -590,6 +607,7 @@ router.post(
       requirements,
       careerPaths,
       description,
+      totalCapacity,
     } = req.body;
 
     if (!institutionId || !facultyId || !departmentId || !name || !cutoffMark) {
@@ -619,6 +637,8 @@ router.post(
       requirements: requirements || [],
       careerPaths: careerPaths || [],
       description: description || `Professional degree in ${name}.`,
+      totalCapacity: totalCapacity !== undefined ? Number(totalCapacity) : 100,
+      currentAdmitted: 0,
       autoAdmission: req.body.autoAdmission || { enabled: false, mode: "batch", autoAcceptThreshold: 85 },
     });
 
@@ -664,7 +684,8 @@ router.put(
       requirements,
       careerPaths,
       description,
-        autoAdmission,
+      autoAdmission,
+      totalCapacity,
     } = req.body;
 
     const program = await Program.findById(req.params.id);
@@ -685,6 +706,7 @@ router.put(
     if (careerPaths !== undefined) program.careerPaths = careerPaths;
     if (description !== undefined) program.description = description;
     if (autoAdmission !== undefined) program.autoAdmission = autoAdmission;
+    if (totalCapacity !== undefined) program.totalCapacity = Number(totalCapacity);
 
     const updatedProgram = await program.save();
 

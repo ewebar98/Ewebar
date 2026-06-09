@@ -38,6 +38,9 @@ export const getRecommendations = asyncHandler(async (req, res) => {
           const program = r.courseId;
           const institutionName = program?.institutionId?.name || "Unknown University";
           const institutionId = program?.institutionId?._id || "";
+          const slotsAvailable = program?.totalCapacity > 0 ? Math.max(0, (program.totalCapacity || 0) - (program.currentAdmitted || 0)) : null;
+          const isFull = program?.totalCapacity > 0 && slotsAvailable === 0;
+
           return {
             _id: `${req.user._id}_${program?._id}`,
             universityId: { _id: institutionId, name: institutionName },
@@ -45,13 +48,18 @@ export const getRecommendations = asyncHandler(async (req, res) => {
               _id: program?._id,
               courseName: program?.name,
               cutoffMark: program?.cutoffMark || 200,
-              slotsAvailable: 100,
+              slotsAvailable: slotsAvailable ?? 100,
             },
             matchScore: r.matchPercentage,
             breakdown: r.breakdown || [],
             confidence: r.confidence || "Medium",
             recourseActions: r.recourseActions || [],
+            isFull,
           };
+        })
+        .sort((a, b) => {
+          if (a.isFull !== b.isFull) return a.isFull ? 1 : -1;
+          return b.matchScore - a.matchScore;
         });
 
       return res.json({
@@ -92,12 +100,13 @@ export const getRecommendations = asyncHandler(async (req, res) => {
       _id: r.course._id,
       courseName: r.course.name,
       cutoffMark: r.course.cutoffMark || 200,
-      slotsAvailable: 100,
+      slotsAvailable: r.slotsAvailable ?? 100,
     },
     matchScore: r.matchPercentage,
     breakdown: r.breakdown,
     confidence: r.confidence,
     recourseActions: r.recourseActions,
+    isFull: r.isFull ?? false,
   }));
 
   // Audit log for recommendation generation

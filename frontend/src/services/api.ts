@@ -67,6 +67,8 @@ export interface Course {
   institutionId?: string;
   tuition?: string | null;
   requirements?: string[];
+  totalCapacity?: number;
+  currentAdmitted?: number;
 }
 
 export async function getUniversities(): Promise<University[]> {
@@ -109,6 +111,8 @@ export async function getUniversityById(id: string): Promise<University | null> 
       description: c.description ?? `Explore the ${c.name} program.`,
       institutionId: u._id,
       requirements: c.requirements || [],
+      totalCapacity: c.totalCapacity ?? 0,
+      currentAdmitted: c.currentAdmitted ?? 0,
     })) || [],
   };
 }
@@ -125,6 +129,8 @@ export async function getCourses(): Promise<Course[]> {
     institutionId: c.institutionId?._id || c.institutionId || "",
     tuition: c.tuition || "₦150,000/yr",
     requirements: c.requirements || [],
+    totalCapacity: c.totalCapacity ?? 0,
+    currentAdmitted: c.currentAdmitted ?? 0,
   }));
 }
 
@@ -141,6 +147,8 @@ export async function getCourseById(id: string): Promise<Course | null> {
     institutionId: c.institutionId?._id || c.institutionId || "",
     tuition: c.tuition || "₦150,000/yr",
     requirements: c.requirements || [],
+    totalCapacity: c.totalCapacity ?? 0,
+    currentAdmitted: c.currentAdmitted ?? 0,
   };
 }
 
@@ -159,10 +167,11 @@ export async function getRecommendations() {
     courseId: r.courseId?._id || "",
     match: r.matchScore ?? null,
     cutoff: r.courseId?.cutoffMark ?? null,
-    slots: r.courseId?.slotsAvailable || 100,
+    slots: r.courseId?.slotsAvailable || 0,
     breakdown: (r.breakdown || []) as { type: "PASS" | "FAIL" | "WARN"; field: string; message: string }[],
     confidence: (r.confidence || "Medium") as "High" | "Medium" | "Low",
     recourseActions: (r.recourseActions || []) as { code: string; type: string; message: string; actionLink: string }[],
+    isFull: r.isFull ?? false,
   }));
 }
 
@@ -518,6 +527,7 @@ export async function getAnalytics() {
       applicationsTrend: [] as { month: string; value: number }[],
       facultyMix: [] as { name: string; value: number }[],
       topUniversities: [] as { name: string; value: number }[],
+      programCapacities: [] as any[],
     };
   }
 }

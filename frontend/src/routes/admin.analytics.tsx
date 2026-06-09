@@ -104,6 +104,86 @@ function Analytics() {
           </div>
         </div>
       )}
+
+      {/* Program Capacities Summary Grid */}
+      <div className="rounded-2xl border bg-card p-6 shadow-soft space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-lg font-semibold">Program capacities</h3>
+          <span className="text-xs text-muted-foreground">Active Seat Allocations</span>
+        </div>
+        
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : data?.programCapacities?.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b text-muted-foreground font-semibold uppercase tracking-wider">
+                  <th className="pb-3 pr-4">Program Name</th>
+                  <th className="pb-3 px-4 text-center">Total Capacity</th>
+                  <th className="pb-3 px-4 text-center">Admitted</th>
+                  <th className="pb-3 px-4 text-center">Available</th>
+                  <th className="pb-3 pl-4">Occupancy</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.programCapacities.map((prog: any, idx: number) => {
+                  const isNearLimit = prog.occupancyPct >= 90;
+                  const isFull = prog.occupancyPct >= 100;
+                  
+                  return (
+                    <tr key={idx} className="hover:bg-muted/30">
+                      <td className="py-3 pr-4 font-medium text-foreground">{prog.name}</td>
+                      <td className="py-3 px-4 text-center text-muted-foreground">{prog.total}</td>
+                      <td className="py-3 px-4 text-center font-semibold text-foreground">{prog.admitted}</td>
+                      <td className="py-3 px-4 text-center text-muted-foreground">
+                        {prog.available === 0 ? (
+                          <span className="text-destructive font-bold">FULL</span>
+                        ) : (
+                          prog.available
+                        )}
+                      </td>
+                      <td className="py-3 pl-4 min-w-[150px]">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-24 overflow-hidden rounded-full bg-muted shrink-0">
+                            <div
+                              style={{ width: `${Math.min(100, prog.occupancyPct)}%` }}
+                              className={`h-full rounded-full ${
+                                isFull
+                                  ? "bg-destructive"
+                                  : isNearLimit
+                                    ? "bg-amber-500"
+                                    : "bg-emerald-500"
+                              }`}
+                            />
+                          </div>
+                          <span className={`font-bold ${
+                            isFull
+                              ? "text-destructive"
+                              : isNearLimit
+                                ? "text-amber-500"
+                                : "text-emerald-500"
+                          }`}>
+                            {prog.occupancyPct}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            No program capacity data available.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
