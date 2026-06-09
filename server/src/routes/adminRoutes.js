@@ -1,1121 +1,268 @@
 import express from "express";
-import asyncHandler from "../utils/asyncHandler.js";
-import AuditLog from "../models/auditLogModel.js";
-import eventBus from "../utils/eventBus.js"
-import { protect, adminOnly } from "../middleware/authMiddleware.js";
+import bcrypt from "bcryptjs";
 import User from "../models/userModel.js";
-import { Institution, Program, Faculty, Department } from "../models/universityModel.js";
-import { Application } from "../models/applicationModel.js";
-import AdmissionRule from "../models/admissionRuleModel.js";
-import { recalculateRecommendations } from "../services/recommendationService.js";
-import Notification from "../models/notificationModel.js";
-import Message from "../models/messageModel.js";
-import admissionsService from "../services/admissionsService.js";
-
+import asyncHandler from "../utils/asyncHandler.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// @desc    Get admin analytics
-// @route   GET /api/admin/analytics
-// @access  Private/Admin
+// All admin routes require authentication + admin role
+router.use(protect, adminOnly);
+
+// Helper: derive category from role
+function categoryFromRole(role) {
+  if (role === "student") return "student";
+  if (role === "admin" || role === "manager" || role === "schoolAdmin") return "management";
+  return "staff"; // staff, customerCare
+}
+
+// Helper: generate a secure random password
+function generateSecurePassword(length = 12) {
+  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lower = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+  const special = "@#$!%*?&";
+  const all = upper + lower + digits + special;
+
+  let password =
+    upper[Math.floor(Math.random() * upper.length)] +
+    lower[Math.floor(Math.random() * lower.length)] +
+    digits[Math.floor(Math.random() * digits.length)] +
+    special[Math.floor(Math.random() * special.length)];
+
+  for (let i = 4; i < length; i++) {
+    password += all[Math.floor(Math.random() * all.length)];
+  }
+
+  return password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
+}
+
+// @desc    List all users with optional filters
+// @route   GET /api/admin/users
+// @access  Admin only
 router.get(
-  "/analytics",
-  protect,
-  adminOnly,
+  "/users",
   asyncHandler(async (req, res) => {
-    const [studentCount, universityCount, courseCount, applicationCount] = await Promise.all([
-      User.countDocuments({ role: "student" }),
-      Institution.countDocuments({}),
-      Program.countDocuments({}),
-      Application.countDocuments({}),
-    ]);
+    const { role, category, search } = req.query;
 
-    // Applications per month (last 6 months)
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const filter = {};
+    if (role) filter.role = role;
+    if (category) filter.category = category;
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
 
-    const monthlyApps = await Application.aggregate([
-      { $match: { createdAt: { $gte: sixMonthsAgo } } },
-      {
-        $group: {
-          _id: { $month: "$createdAt" },
-          value: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const applicationsTrend = monthlyApps.map((m) => ({
-      month: monthNames[m._id - 1],
-      value: m.value,
-    }));
-
-    // Faculty mix from courses
-    const facultyAgg = await Program.aggregate([
-      { $group: { _id: "$faculty", value: { $sum: 1 } } },
-      { $sort: { value: -1 } },
-      { $limit: 6 },
-    ]);
-    const facultyMix = facultyAgg.map((f) => ({ name: f._id || "Other", value: f.value }));
-
-    // Top universities by application volume
-    const topUnisAgg = await Application.aggregate([
-      { $group: { _id: "$universityId", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 6 },
-      {
-        $lookup: {
-          from: "institutions", // Aggregated lookup against institutions collection
-          localField: "_id",
-          foreignField: "_id",
-          as: "uni",
-        },
-      },
-      { $unwind: { path: "$uni", preserveNullAndEmptyArrays: true } },
-    ]);
-    const topUniversities = topUnisAgg.map((u) => ({
-      name: u.uni?.name || "Unknown",
-      value: u.count,
-    }));
-
-    // Program capacity summary: current admitted vs total capacity
-    const capacityAgg = await Program.find(
-      { totalCapacity: { $gt: 0 } },
-      { name: 1, totalCapacity: 1, currentAdmitted: 1, cutoffMark: 1 }
-    )
-      .sort({ currentAdmitted: -1 })
-      .limit(20);
-
-    const programCapacities = capacityAgg.map((p) => ({
-      name: p.name,
-      total: p.totalCapacity || 0,
-      admitted: p.currentAdmitted || 0,
-      available: Math.max(0, (p.totalCapacity || 0) - (p.currentAdmitted || 0)),
-      occupancyPct: p.totalCapacity > 0 ? Math.round(((p.currentAdmitted || 0) / p.totalCapacity) * 100) : 0,
-    }));
-
-    res.json({
-      success: true,
-      message: "Analytics fetched",
-      data: {
-        totals: {
-          students: studentCount,
-          universities: universityCount,
-          courses: courseCount,
-          applications: applicationCount,
-        },
-        applicationsTrend: applicationsTrend.length > 0 ? applicationsTrend : [],
-        facultyMix: facultyMix.length > 0 ? facultyMix : [],
-        topUniversities: topUniversities.length > 0 ? topUniversities : [],
-        programCapacities,
-      },
-    });
-  })
-);
-
-// @desc    Get all applications in system for review
-// @route   GET /api/admin/applications
-// @access  Private/Admin
-router.get(
-  "/applications",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const applications = await Application.find({})
-      .populate("studentId", "fullName email jambScore olevelSittings subjects")
-      .populate("universityId", "name logo city state")
-      .populate({
-        path: "courseId", // Populate course details
-        select: "name cutoffMark duration facultyId",
-        populate: {
-          path: "facultyId",
-          select: "name",
-        },
-      })
+    const users = await User.find(filter)
+      .select("-password")
       .sort({ createdAt: -1 });
 
-    // Calculate unread chat messages from students for each application
-    const appData = await Promise.all(
-      applications.map(async (app) => {
-        const unreadCount = await Message.countDocuments({
-          applicationId: app._id,
-          senderRole: "student", // messages sent by students
-          read: false,
-        });
-        
-        const appObj = app.toObject();
-        appObj.unreadMessagesCount = unreadCount;
-        return appObj;
-      })
-    );
-
-    res.json({
-      success: true,
-      message: "Admin applications list fetched",
-      data: appData,
-    });
-  })
-);
-
-// @desc    Update application evaluation status
-// @route   PUT /api/admin/applications/:id/status
-// @access  Private/Admin
-router.put(
-  "/applications/:id/status",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { status, notes } = req.body;
-
-    if (!["pending", "reviewed", "accepted", "rejected", "offered", "provisional"].includes(status)) {
-      res.status(400);
-      throw new Error("Invalid application evaluation status");
-    }
-
-    const application = await Application.findById(req.params.id)
-      .populate("universityId", "name")
-      .populate("courseId", "name totalCapacity currentAdmitted");
-
-    if (!application) {
-      res.status(404);
-      throw new Error("Application not found");
-    }
-
-    const previousStatus = application.status;
-    const isNewAdmitted = ["accepted", "offered"].includes(status);
-    const wasAdmitted = ["accepted", "offered"].includes(previousStatus);
-
-    if (isNewAdmitted && !wasAdmitted) {
-      // Check program capacity
-      const program = await Program.findById(application.courseId._id);
-      if (program) {
-        const capacity = program.totalCapacity || 100;
-        const admitted = program.currentAdmitted || 0;
-        if (admitted >= capacity) {
-          res.status(400);
-          throw new Error(`Cannot approve admission: target department "${program.name}" is already at full capacity (${capacity} slots).`);
-        }
-        program.currentAdmitted = admitted + 1;
-        await program.save();
-        console.log(`[Capacity Alloc] Incremented currentAdmitted for "${program.name}" to ${program.currentAdmitted}`);
-      }
-    } else if (wasAdmitted && !isNewAdmitted) {
-      // Decrement program currentAdmitted to release reservation
-      const program = await Program.findById(application.courseId._id);
-      if (program) {
-        program.currentAdmitted = Math.max(0, (program.currentAdmitted || 0) - 1);
-        await program.save();
-        console.log(`[Capacity Release] Decremented currentAdmitted for "${program.name}" to ${program.currentAdmitted}`);
-      }
-    }
-
-    application.status = status;
-    application.auditTrail.push({
-      action: `Status Updated to ${status.charAt(0).toUpperCase() + status.slice(1)}`,
-      performedBy: req.user.email || "administrator",
-      notes: notes || `Application transitioned to ${status} status by administrator.`,
-    });
-
-    const updatedApp = await application.save();
-
-    // Trigger context-rich notification for the student
-    const uniName = application.universityId?.name || "University";
-    const courseName = application.courseId?.name || "Program";
-    let title = "Application Update";
-    let type = "info";
-    let body = `Your application for ${courseName} at ${uniName} has been updated to "${status}".`;
-
-    if (status === "accepted") {
-      title = "Application Accepted! 🎉";
-      type = "success";
-      body = `Congratulations! Your application for ${courseName} at ${uniName} has been ACCEPTED. Review remarks: "${notes || "None"}".`;
-    } else if (status === "rejected") {
-      title = "Application Status Update";
-      type = "error";
-      body = `Your application for ${courseName} at ${uniName} has been rejected at this time. Review remarks: "${notes || "None"}".`;
-    } else if (status === "reviewed") {
-      title = "Application Under Review";
-      type = "warning";
-      body = `Your application for ${courseName} at ${uniName} is now under active review. Review remarks: "${notes || "None"}".`;
-    }
-
-    await Notification.create({
-      userId: application.studentId,
-      title,
-      body,
-      type,
-      link: "/applications",
-    });
-
-    res.json({
-      success: true,
-      message: "Application evaluation status updated successfully",
-      data: updatedApp,
-    });
-  })
-);
-
-// ==========================================
-// INSTITUTIONS CRUD ENDPOINTS
-// ==========================================
-
-// @desc    Create a new institution (school)
-// @route   POST /api/admin/institutions
-// @access  Private/Admin
-router.post(
-  "/institutions",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name, institutionType, ownershipType, state, city, tuition, acceptanceRate, studentPopulation, ranking, tags } = req.body;
-
-    if (!name || !institutionType || !ownershipType || !state || !city) {
-      res.status(400);
-      throw new Error("Please provide all required school details (name, type, ownership, state, city)");
-    }
-
-    const schoolExists = await Institution.findOne({ name });
-    if (schoolExists) {
-      res.status(400);
-      throw new Error("An institution with this name already exists");
-    }
-
-    const newInst = await Institution.create({
-      name,
-      institutionType,
-      ownershipType,
-      state,
-      city,
-      tuition: tuition || "₦150,000/yr",
-      acceptanceRate: Number(acceptanceRate) || 25,
-      studentPopulation: Number(studentPopulation) || 15000,
-      ranking: Number(ranking) || 50,
-      tags: tags || [],
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "School created successfully",
-      data: newInst,
-    });
-  })
-);
-
-// @desc    Update an existing institution (school)
-// @route   PUT /api/admin/institutions/:id
-// @access  Private/Admin
-router.put(
-  "/institutions/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name, institutionType, ownershipType, state, city, tuition, acceptanceRate, studentPopulation, ranking, tags } = req.body;
-
-    const school = await Institution.findById(req.params.id);
-    if (!school) {
-      res.status(404);
-      throw new Error("School not found");
-    }
-
-    // If changing name, ensure uniqueness
-    if (name && name !== school.name) {
-      const nameExists = await Institution.findOne({ name });
-      if (nameExists) {
-        res.status(400);
-        throw new Error("An institution with this name already exists");
-      }
-      school.name = name;
-      school.slug = undefined; // trigger slug regeneration
-    }
-
-    if (institutionType) school.institutionType = institutionType;
-    if (ownershipType) school.ownershipType = ownershipType;
-    if (state) school.state = state;
-    if (city) school.city = city;
-    if (tuition !== undefined) school.tuition = tuition;
-    if (acceptanceRate !== undefined) school.acceptanceRate = Number(acceptanceRate);
-    if (studentPopulation !== undefined) school.studentPopulation = Number(studentPopulation);
-    if (ranking !== undefined) school.ranking = Number(ranking);
-    if (tags !== undefined) school.tags = tags;
-
-    const updatedSchool = await school.save();
-
-    res.json({
-      success: true,
-      message: "School updated successfully",
-      data: updatedSchool,
-    });
-  })
-);
-
-// @desc    Delete an institution (school)
-// @route   DELETE /api/admin/institutions/:id
-// @access  Private/Admin
-router.delete(
-  "/institutions/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const school = await Institution.findById(req.params.id);
-    if (!school) {
-      res.status(404);
-      throw new Error("School not found");
-    }
-
-    // Relationally wipe associated programs, departments, and faculties to ensure database consistency
-    await Promise.all([
-      Program.deleteMany({ institutionId: school._id }),
-      Department.deleteMany({ institutionId: school._id }),
-      Faculty.deleteMany({ institutionId: school._id }),
-      Application.deleteMany({ universityId: school._id }),
-    ]);
-
-    await school.deleteOne();
-
-    res.json({
-      success: true,
-      message: "School and all relationally mapped academic programs successfully deleted",
-    });
-  })
-);
-
-// ==========================================
-// FACULTIES CRUD ENDPOINTS
-// ==========================================
-
-// @desc    Get all faculties (for administrative dropdowns)
-// @route   GET /api/admin/faculties
-// @access  Private/Admin
-router.get(
-  "/faculties",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const faculties = await Faculty.find({}).populate("institutionId", "name");
-    res.json({
-      success: true,
-      data: faculties,
-    });
-  })
-);
-
-// @desc    Create a new faculty
-// @route   POST /api/admin/faculties
-// @access  Private/Admin
-router.post(
-  "/faculties",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { institutionId, name } = req.body;
-
-    if (!institutionId || !name) {
-      res.status(400);
-      throw new Error("Please provide institutionId and faculty name");
-    }
-
-    const school = await Institution.findById(institutionId);
-    if (!school) {
-      res.status(404);
-      throw new Error("Associated school not found");
-    }
-
-    const newFaculty = await Faculty.create({
-      institutionId,
-      name,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Faculty created successfully",
-      data: newFaculty,
-    });
-  })
-);
-
-// @desc    Update a faculty
-// @route   PUT /api/admin/faculties/:id
-// @access  Private/Admin
-router.put(
-  "/faculties/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name } = req.body;
-
-    const faculty = await Faculty.findById(req.params.id);
-    if (!faculty) {
-      res.status(404);
-      throw new Error("Faculty not found");
-    }
-
-    if (name) {
-      faculty.name = name;
-      faculty.slug = undefined; // trigger slug regeneration
-    }
-
-    const updatedFaculty = await faculty.save();
-
-    res.json({
-      success: true,
-      message: "Faculty updated successfully",
-      data: updatedFaculty,
-    });
-  })
-);
-
-// @desc    Delete a faculty
-// @route   DELETE /api/admin/faculties/:id
-// @access  Private/Admin
-router.delete(
-  "/faculties/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const faculty = await Faculty.findById(req.params.id);
-    if (!faculty) {
-      res.status(404);
-      throw new Error("Faculty not found");
-    }
-
-    // Clean up departments, programs, and applications mapped to this faculty
-    await Promise.all([
-      Program.deleteMany({ facultyId: faculty._id }),
-      Department.deleteMany({ facultyId: faculty._id }),
-    ]);
-
-    await faculty.deleteOne();
-
-    res.json({
-      success: true,
-      message: "Faculty and all associated departments and programs deleted successfully",
-    });
-  })
-);
-
-// ==========================================
-// DEPARTMENTS CRUD ENDPOINTS
-// ==========================================
-
-// @desc    Get all departments (for administrative dropdowns)
-// @route   GET /api/admin/departments
-// @access  Private/Admin
-router.get(
-  "/departments",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const departments = await Department.find({})
-      .populate("institutionId", "name")
-      .populate("facultyId", "name");
-    res.json({
-      success: true,
-      data: departments,
-    });
-  })
-);
-
-// @desc    Create a new department
-// @route   POST /api/admin/departments
-// @access  Private/Admin
-router.post(
-  "/departments",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { institutionId, facultyId, name } = req.body;
-
-    if (!institutionId || !facultyId || !name) {
-      res.status(400);
-      throw new Error("Please provide institutionId, facultyId, and department name");
-    }
-
-    const [school, faculty] = await Promise.all([
-      Institution.findById(institutionId),
-      Faculty.findById(facultyId),
-    ]);
-
-    if (!school || !faculty) {
-      res.status(404);
-      throw new Error("Associated school or faculty not found");
-    }
-
-    const newDept = await Department.create({
-      institutionId,
-      facultyId,
-      name,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Department created successfully",
-      data: newDept,
-    });
-  })
-);
-
-// @desc    Update a department
-// @route   PUT /api/admin/departments/:id
-// @access  Private/Admin
-router.put(
-  "/departments/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name } = req.body;
-
-    const department = await Department.findById(req.params.id);
-    if (!department) {
-      res.status(404);
-      throw new Error("Department not found");
-    }
-
-    if (name) {
-      department.name = name;
-      department.slug = undefined; // trigger slug regeneration
-    }
-
-    const updatedDept = await department.save();
-
-    res.json({
-      success: true,
-      message: "Department updated successfully",
-      data: updatedDept,
-    });
-  })
-);
-
-// @desc    Delete a department
-// @route   DELETE /api/admin/departments/:id
-// @access  Private/Admin
-router.delete(
-  "/departments/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const department = await Department.findById(req.params.id);
-    if (!department) {
-      res.status(404);
-      throw new Error("Department not found");
-    }
-
-    // Clean up programs mapped to this department
-    await Program.deleteMany({ departmentId: department._id });
-
-    await department.deleteOne();
-
-    res.json({
-      success: true,
-      message: "Department and all associated programs deleted successfully",
-    });
-  })
-);
-
-// ==========================================
-// PROGRAMS (COURSES) CRUD ENDPOINTS
-// ==========================================
-
-// @desc    Create a new program (course)
-// @route   POST /api/admin/programs
-// @access  Private/Admin
-router.post(
-  "/programs",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const {
-      institutionId,
-      facultyId,
-      departmentId,
-      name,
-      duration,
-      cutoffMark,
-      tuition,
-      requirements,
-      careerPaths,
-      description,
-      totalCapacity,
-    } = req.body;
-
-    if (!institutionId || !facultyId || !departmentId || !name || !cutoffMark) {
-      res.status(400);
-      throw new Error("Please provide institutionId, facultyId, departmentId, name, and cutoffMark");
-    }
-
-    const [school, faculty, department] = await Promise.all([
-      Institution.findById(institutionId),
-      Faculty.findById(facultyId),
-      Department.findById(departmentId),
-    ]);
-
-    if (!school || !faculty || !department) {
-      res.status(404);
-      throw new Error("Associated school, faculty, or department not found");
-    }
-
-    const newProgram = await Program.create({
-      institutionId,
-      facultyId,
-      departmentId,
-      name,
-      duration: duration || "4 years",
-      cutoffMark: Number(cutoffMark),
-      tuition: tuition || "₦150,000/yr",
-      requirements: requirements || [],
-      careerPaths: careerPaths || [],
-      description: description || `Professional degree in ${name}.`,
-      totalCapacity: totalCapacity !== undefined ? Number(totalCapacity) : 100,
-      currentAdmitted: 0,
-      autoAdmission: req.body.autoAdmission || { enabled: false, mode: "batch", autoAcceptThreshold: 85 },
-    });
-
-    const performedBy = {
-      userId: req.user.id,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
+    const grouped = {
+      students: users.filter((u) => u.category === "student"),
+      staff: users.filter((u) => u.category === "staff"),
+      management: users.filter((u) => u.category === "management"),
     };
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: 'PROGRAM_CREATED',
-      entityName: 'Program',
-      entityId: newProgram._id,
-      previousState: null,
-      newState: newProgram,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
+
+    res.json({
+      success: true,
+      data: {
+        all: users,
+        grouped,
+        totals: {
+          students: grouped.students.length,
+          staff: grouped.staff.length,
+          management: grouped.management.length,
+          total: users.length,
+        },
+      },
     });
-    eventBus.emit('PROGRAM_CREATED', { programId: newProgram._id });
+  })
+);
+
+// @desc    Create a new user account (for staff/managers)
+// @route   POST /api/admin/users
+// @access  Admin only
+router.post(
+  "/users",
+  asyncHandler(async (req, res) => {
+    const { fullName, email, role, password: customPassword } = req.body;
+
+    if (!fullName || !email || !role) {
+      res.status(400);
+      throw new Error("fullName, email, and role are required");
+    }
+
+    const validRoles = ["student", "staff", "manager", "customerCare", "schoolAdmin", "admin"];
+    if (!validRoles.includes(role)) {
+      res.status(400);
+      throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
+    }
+
+    const exists = await User.findOne({ email });
+    if (exists) {
+      res.status(409);
+      throw new Error("A user with this email already exists");
+    }
+
+    const plainPassword = customPassword || generateSecurePassword();
+    const category = categoryFromRole(role);
+
+    const user = await User.create({
+      fullName,
+      email,
+      password: plainPassword,
+      role,
+      category,
+      createdByAdmin: true,
+      mustChangePassword: !customPassword,
+      isActive: true,
+    });
 
     res.status(201).json({
       success: true,
-      message: "Program created successfully",
-      data: newProgram,
+      message: "User account created",
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        category: user.category,
+        createdAt: user.createdAt,
+        generatedPassword: plainPassword,
+      },
     });
   })
 );
 
-// @desc    Update a program (course)
-// @route   PUT /api/admin/programs/:id
-// @access  Private/Admin
-router.put(
-  "/programs/:id",
-  protect,
-  adminOnly,
+// @desc    Update a user's role
+// @route   PATCH /api/admin/users/:id/role
+// @access  Admin only
+router.patch(
+  "/users/:id/role",
   asyncHandler(async (req, res) => {
-    const {
-      name,
-      duration,
-      cutoffMark,
-      tuition,
-      requirements,
-      careerPaths,
-      description,
-      autoAdmission,
-      totalCapacity,
-    } = req.body;
+    const { role } = req.body;
 
-    const program = await Program.findById(req.params.id);
-    if (!program) {
+    const validRoles = ["student", "staff", "manager", "customerCare", "schoolAdmin", "admin"];
+    if (!validRoles.includes(role)) {
+      res.status(400);
+      throw new Error(`Invalid role. Must be one of: ${validRoles.join(", ")}`);
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
       res.status(404);
-      throw new Error("Program not found");
+      throw new Error("User not found");
     }
 
-    if (name) {
-      program.name = name;
-      program.slug = undefined; // trigger slug regeneration
+    if (String(user._id) === String(req.user._id) && role !== "admin") {
+      res.status(400);
+      throw new Error("You cannot change your own admin role");
     }
 
-    if (duration !== undefined) program.duration = duration;
-    if (cutoffMark !== undefined) program.cutoffMark = Number(cutoffMark);
-    if (tuition !== undefined) program.tuition = tuition;
-    if (requirements !== undefined) program.requirements = requirements;
-    if (careerPaths !== undefined) program.careerPaths = careerPaths;
-    if (description !== undefined) program.description = description;
-    if (autoAdmission !== undefined) program.autoAdmission = autoAdmission;
-    if (totalCapacity !== undefined) program.totalCapacity = Number(totalCapacity);
-
-    const updatedProgram = await program.save();
-
-    // Create audit log entry for program update
-    await AuditLog.create({
-      actorId: req.user._id,
-      actorRole: req.user.role,
-      action: 'PROGRAM_UPDATED',
-      entityName: 'Program',
-      entityId: updatedProgram._id,
-      previousState: null,
-      newState: updatedProgram,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
-    });
-    // Emit domain event for rule change if applicable
-    eventBus.emit('RULE_CHANGED', { programId: updatedProgram._id });
-
-    const performedBy = {
-      userId: req.user.id,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
-    };
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: 'PROGRAM_CAPACITY_UPDATED',
-      entityName: 'Program',
-      entityId: program._id,
-      previousState: null,
-      newState: { totalCapacity: program.totalCapacity, name: program.name },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
-    });
-    eventBus.emit('PROGRAM_CAPACITY_UPDATED', { programId: program._id });
+    user.role = role;
+    user.category = categoryFromRole(role);
+    await user.save();
 
     res.json({
       success: true,
-      message: "Program capacity updated successfully",
-      data: program,
+      message: "User role updated",
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        category: user.category,
+      },
     });
   })
 );
 
-// @desc    Delete a program (course)
-// @route   DELETE /api/admin/programs/:id
-// @access  Private/Admin
-router.delete(
-  "/programs/:id",
-  protect,
-  adminOnly,
+// @desc    Generate a new password for a user
+// @route   POST /api/admin/users/:id/generate-password
+// @access  Admin only
+router.post(
+  "/users/:id/generate-password",
   asyncHandler(async (req, res) => {
-    const program = await Program.findById(req.params.id);
-    if (!program) {
+    const user = await User.findById(req.params.id).select("+password");
+    if (!user) {
       res.status(404);
-      throw new Error("Program not found");
+      throw new Error("User not found");
     }
 
-    // Clean up applications mapped to this program
-    await Application.deleteMany({ courseId: program._id });
-
-    await program.deleteOne();
-
-    const performedBy = {
-      userId: req.user.id,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
-    };
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: 'PROGRAM_DELETED',
-      entityName: 'Program',
-      entityId: program._id,
-      previousState: null,
-      newState: { name: program.name, institutionId: program.institutionId },
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
-    });
-    eventBus.emit('PROGRAM_DELETED', { programId: program._id });
+    const plainPassword = generateSecurePassword();
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(plainPassword, salt);
+    user.mustChangePassword = true;
+    await user.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
-      message: "Program successfully deleted from catalog",
+      message: "New password generated. Share this with the user — it will not be shown again.",
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        generatedPassword: plainPassword,
+      },
     });
   })
 );
 
-// @desc    Run batch admissions for a program (accept highest-match pending applications)
-// @route   POST /api/admin/programs/:id/run-admissions
-// @access  Private/Admin
-router.post(
-  "/programs/:id/run-admissions",
-  protect,
-  adminOnly,
+// @desc    Toggle user active status
+// @route   PATCH /api/admin/users/:id/status
+// @access  Admin only
+router.patch(
+  "/users/:id/status",
   asyncHandler(async (req, res) => {
-    const programId = req.params.id;
-    const performedBy = req.user.email || "admin";
-    const result = await admissionsService.runBatchAdmissionsForProgram(programId, performedBy);
-    if (result.reason === "program_not_found") {
+    const user = await User.findById(req.params.id);
+    if (!user) {
       res.status(404);
-      throw new Error("Program not found");
+      throw new Error("User not found");
     }
 
-    // Audit log for batch admissions
-    await AuditLog.create({
-      actorId: req.user._id,
-      actorRole: req.user.role,
-      action: 'BATCH_ADMISSIONS_RUN',
-      entityName: 'Program',
-      entityId: programId,
-      previousState: null,
-      newState: result,
-      ipAddress: req.ip,
-      userAgent: req.get('User-Agent') || '',
-    });
-    // Emit event for batch admissions
-    eventBus.emit('BATCH_ADMISSIONS_COMPLETED', { programId, admitted: result.admitted });
-
-    res.json({ success: true, message: `Batch admissions completed. Admitted ${result.admitted} students.`, data: result });
-  })
-);
-
-// @desc    CRUD for Admission Rules
-// @route   GET /api/admin/rules
-// @access  Private/Admin
-router.get(
-  "/rules",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const rules = await AdmissionRule.find({}).populate('createdBy', 'fullName email');
-    res.json({ success: true, data: rules });
-  })
-);
-
-// @desc    Create a new admission rule
-// @route   POST /api/admin/rules
-// @access  Private/Admin
-router.post(
-  "/rules",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name, description, criteria, active } = req.body;
-    if (!name || !criteria) {
+    if (String(user._id) === String(req.user._id)) {
       res.status(400);
-      throw new Error("Name and criteria are required for AdmissionRule");
+      throw new Error("You cannot deactivate your own account");
     }
-    const newRule = await AdmissionRule.create({
-      name,
-      description,
-      criteria,
-      active: active !== undefined ? active : true,
-      createdBy: req.user._id,
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: `User ${user.isActive ? "activated" : "deactivated"}`,
+      data: { _id: user._id, isActive: user.isActive },
     });
-
-    // Audit log
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: "RULE_CREATED",
-      entityName: "AdmissionRule",
-      entityId: newRule._id,
-      previousState: null,
-      newState: newRule,
-      ipAddress: req.ip,
-      userAgent: req.get("User-Agent") || "",
-    });
-
-    // Emit event
-    eventBus.emit("RULE_CREATED", { ruleId: newRule._id });
-
-    res.status(201).json({ success: true, data: newRule });
   })
 );
 
-// @desc    Update an admission rule
-// @route   PUT /api/admin/rules/:id
-// @access  Private/Admin
-router.put(
-  "/rules/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name, description, criteria, active } = req.body;
-    const rule = await AdmissionRule.findById(req.params.id);
-    if (!rule) {
-      res.status(404);
-      throw new Error("AdmissionRule not found");
-    }
-
-    if (name !== undefined) rule.name = name;
-    if (description !== undefined) rule.description = description;
-    if (criteria !== undefined) rule.criteria = criteria;
-    if (active !== undefined) rule.active = active;
-
-    const updatedRule = await rule.save();
-
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: "RULE_UPDATED",
-      entityName: "AdmissionRule",
-      entityId: updatedRule._id,
-      previousState: null,
-      newState: updatedRule,
-      ipAddress: req.ip,
-      userAgent: req.get("User-Agent") || "",
-    });
-
-    eventBus.emit("RULE_UPDATED", { ruleId: updatedRule._id });
-
-    res.json({ success: true, data: updatedRule });
-  })
-);
-
-// @desc    Delete an admission rule
-// @route   DELETE /api/admin/rules/:id
-// @access  Private/Admin
+// @desc    Delete a user account
+// @route   DELETE /api/admin/users/:id
+// @access  Admin only
 router.delete(
-  "/rules/:id",
-  protect,
-  adminOnly,
+  "/users/:id",
   asyncHandler(async (req, res) => {
-    const rule = await AdmissionRule.findById(req.params.id);
-    if (!rule) {
-      res.status(404);
-      throw new Error("AdmissionRule not found");
-    }
-    await rule.deleteOne();
-
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: "RULE_DELETED",
-      entityName: "AdmissionRule",
-      entityId: rule._id,
-      previousState: null,
-      newState: null,
-      ipAddress: req.ip,
-      userAgent: req.get("User-Agent") || "",
-    });
-
-    eventBus.emit("RULE_DELETED", { ruleId: rule._id });
-
-    res.json({ success: true, message: "Admission rule deleted" });
-  })
-);
-
-// @desc    CRUD for Admission Rules
-// @route   GET /api/admin/rules
-// @access  Private/Admin
-router.get(
-  "/rules",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const rules = await AdmissionRule.find({}).populate('createdBy', 'fullName email');
-    res.json({ success: true, data: rules });
-  })
-);
-
-// @desc    Create a new admission rule
-// @route   POST /api/admin/rules
-// @access  Private/Admin
-router.post(
-  "/rules",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name, description, criteria, active } = req.body;
-    if (!name || !criteria) {
+    if (String(req.params.id) === String(req.user._id)) {
       res.status(400);
-      throw new Error("Name and criteria are required for AdmissionRule");
+      throw new Error("You cannot delete your own account");
     }
-    const newRule = await AdmissionRule.create({
-      name,
-      description,
-      criteria,
-      active: active !== undefined ? active : true,
-      createdBy: req.user._id,
-    });
 
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: "RULE_CREATED",
-      entityName: "AdmissionRule",
-      entityId: newRule._id,
-      previousState: null,
-      newState: newRule,
-      ipAddress: req.ip,
-      userAgent: req.get("User-Agent") || "",
-    });
-
-    eventBus.emit("RULE_CREATED", { ruleId: newRule._id });
-
-    res.status(201).json({ success: true, data: newRule });
-  })
-);
-
-// @desc    Update an admission rule
-// @route   PUT /api/admin/rules/:id
-// @access  Private/Admin
-router.put(
-  "/rules/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const { name, description, criteria, active } = req.body;
-    const rule = await AdmissionRule.findById(req.params.id);
-    if (!rule) {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
       res.status(404);
-      throw new Error("AdmissionRule not found");
+      throw new Error("User not found");
     }
-    if (name !== undefined) rule.name = name;
-    if (description !== undefined) rule.description = description;
-    if (criteria !== undefined) rule.criteria = criteria;
-    if (active !== undefined) rule.active = active;
-    const updatedRule = await rule.save();
 
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: "RULE_UPDATED",
-      entityName: "AdmissionRule",
-      entityId: updatedRule._id,
-      previousState: null,
-      newState: updatedRule,
-      ipAddress: req.ip,
-      userAgent: req.get("User-Agent") || "",
+    res.json({
+      success: true,
+      message: `Account for ${user.fullName} has been deleted`,
     });
-
-    eventBus.emit("RULE_UPDATED", { ruleId: updatedRule._id });
-
-    res.json({ success: true, data: updatedRule });
   })
 );
 
-// @desc    Delete an admission rule
-// @route   DELETE /api/admin/rules/:id
-// @access  Private/Admin
-router.delete(
-  "/rules/:id",
-  protect,
-  adminOnly,
-  asyncHandler(async (req, res) => {
-    const rule = await AdmissionRule.findById(req.params.id);
-    if (!rule) {
-      res.status(404);
-      throw new Error("AdmissionRule not found");
-    }
-    await rule.deleteOne();
-
-    await AuditLog.create({
-      actorId: req.user.id,
-      actorRole: req.user.role,
-      action: "RULE_DELETED",
-      entityName: "AdmissionRule",
-      entityId: rule._id,
-      previousState: null,
-      newState: null,
-      ipAddress: req.ip,
-      userAgent: req.get("User-Agent") || "",
-    });
-
-    eventBus.emit("RULE_DELETED", { ruleId: rule._id });
-
-    res.json({ success: true, message: "Admission rule deleted" });
-  })
-);
-router.post('/recalculate/:programId', protect, adminOnly, asyncHandler(async (req, res) => {
-  const { programId } = req.params;
-  await recalculateRecommendations(programId);
-  await AuditLog.create({
-    user: req.user.id,
-    action: 'RECOMMENDATION_RECALCULATED',
-    target: programId,
-    details: 'Recalculated recommendations via admin endpoint',
-  });
-  res.json({ success: true, message: 'Recommendations recalculated for all users.' });
-}));
 export default router;

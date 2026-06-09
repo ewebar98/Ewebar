@@ -858,3 +858,58 @@ export async function deleteAdmissionRule(id: string): Promise<any> {
   return await request<any>(`/admin/rules/${id}`, { method: 'DELETE' });
 }
 
+// ─────────────────────────────────────────────
+// Admin User Management
+// ─────────────────────────────────────────────
+
+export async function getAdminUsers(filters?: { role?: string; category?: string; search?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.role) params.set("role", filters.role);
+  if (filters?.category) params.set("category", filters.category);
+  if (filters?.search) params.set("search", filters.search);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await request<any>(`/admin/users${qs}`);
+  return res;
+}
+
+export async function createAdminUser(data: {
+  fullName: string;
+  email: string;
+  role: string;
+  password?: string;
+}) {
+  const res = await request<any>("/admin/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res;
+}
+
+export async function updateUserRole(userId: string, role: string) {
+  const res = await request<any>(`/admin/users/${userId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+  return res;
+}
+
+export async function generateUserPassword(userId: string) {
+  const res = await request<any>(`/admin/users/${userId}/generate-password`, {
+    method: "POST",
+  });
+  return res;
+}
+
+export async function toggleUserStatus(userId: string) {
+  const res = await request<any>(`/admin/users/${userId}/status`, {
+    method: "PATCH",
+  });
+  return res;
+}
+
+export async function deleteAdminUser(userId: string) {
+  const res = await request<any>(`/admin/users/${userId}`, {
+    method: "DELETE",
+  });
+  return res;
+}

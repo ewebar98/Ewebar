@@ -24,8 +24,25 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "admin", "schoolAdmin"],
+      enum: ["student", "admin", "staff", "manager", "customerCare", "schoolAdmin"],
       default: "student",
+    },
+    category: {
+      type: String,
+      enum: ["student", "staff", "management"],
+      default: "student",
+    },
+    createdByAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
     jambScore: {
       type: Number,

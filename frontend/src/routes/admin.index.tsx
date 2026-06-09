@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
@@ -97,11 +97,19 @@ function AdminOverview() {
             <Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" /><Skeleton className="h-28" />
           </>
         ) : (
-          <>
-            <StatCard label="Students" value={data?.totals.students.toLocaleString() ?? "-"} icon={Users} accent="primary" hint="Registered accounts" />
-            <StatCard label="Universities" value={data?.totals.universities ?? "-"} icon={GraduationCap} accent="success" hint="In database" />
-            <StatCard label="Courses" value={data?.totals.courses ?? "-"} icon={GraduationCap} accent="warning" hint="Active programs" />
-            <StatCard label="Applications" value={data?.totals.applications.toLocaleString() ?? "-"} icon={FileText} hint="Total submitted" />
+        <>
+            <Link to="/admin/users" className="block rounded-2xl ring-transparent hover:ring-2 hover:ring-primary/40 transition-all">
+              <StatCard label="Students" value={data?.totals.students.toLocaleString() ?? "-"} icon={Users} accent="primary" hint="Registered accounts" />
+            </Link>
+            <Link to="/admin/universities" className="block rounded-2xl ring-transparent hover:ring-2 hover:ring-primary/40 transition-all">
+              <StatCard label="Universities" value={data?.totals.universities ?? "-"} icon={GraduationCap} accent="success" hint="In database" />
+            </Link>
+            <Link to="/admin/courses" className="block rounded-2xl ring-transparent hover:ring-2 hover:ring-primary/40 transition-all">
+              <StatCard label="Courses" value={data?.totals.courses ?? "-"} icon={GraduationCap} accent="warning" hint="Active programs" />
+            </Link>
+            <Link to="/admin/applications" className="block rounded-2xl ring-transparent hover:ring-2 hover:ring-primary/40 transition-all">
+              <StatCard label="Applications" value={data?.totals.applications.toLocaleString() ?? "-"} icon={FileText} hint="Total submitted" />
+            </Link>
           </>
         )}
       </div>

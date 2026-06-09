@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-route
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Star, GraduationCap, Wallet, FileText, FolderOpen,
-  Bell, Settings, Brain, Compass, User, Sun, Moon, LogOut, Menu, X, BarChart, MessageSquare,
+  Bell, Settings, Brain, Compass, User, Sun, Moon, LogOut, Menu, X, BarChart, MessageSquare, Users,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -26,6 +26,7 @@ const studentNav = [
 
 const adminNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Overview" },
+  { to: "/admin/users", icon: Users, label: "Users" },
   { to: "/admin/universities", icon: GraduationCap, label: "Universities" },
   { to: "/admin/courses", icon: FileText, label: "Courses" },
   { to: "/admin/applications", icon: FileText, label: "Applications" },

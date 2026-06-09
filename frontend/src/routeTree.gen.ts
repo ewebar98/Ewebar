@@ -27,6 +27,7 @@ import { Route as UniversitiesIndexRouteImport } from './routes/universities.ind
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UniversitiesIdRouteImport } from './routes/universities.$id'
 import { Route as CoursesIdRouteImport } from './routes/courses.$id'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminUniversitiesRouteImport } from './routes/admin.universities'
 import { Route as AdminScholarshipsRouteImport } from './routes/admin.scholarships'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
@@ -124,6 +125,11 @@ const CoursesIdRoute = CoursesIdRouteImport.update({
   path: '/courses/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUniversitiesRoute = AdminUniversitiesRouteImport.update({
   id: '/admin/universities',
   path: '/admin/universities',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
   '/admin/universities': typeof AdminUniversitiesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/courses/$id': typeof CoursesIdRoute
   '/universities/$id': typeof UniversitiesIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
   '/admin/universities': typeof AdminUniversitiesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/courses/$id': typeof CoursesIdRoute
   '/universities/$id': typeof UniversitiesIdRoute
   '/admin': typeof AdminIndexRoute
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
   '/admin/universities': typeof AdminUniversitiesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/courses/$id': typeof CoursesIdRoute
   '/universities/$id': typeof UniversitiesIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/admin/courses'
     | '/admin/scholarships'
     | '/admin/universities'
+    | '/admin/users'
     | '/courses/$id'
     | '/universities/$id'
     | '/admin/'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/admin/courses'
     | '/admin/scholarships'
     | '/admin/universities'
+    | '/admin/users'
     | '/courses/$id'
     | '/universities/$id'
     | '/admin'
@@ -307,6 +318,7 @@ export interface FileRouteTypes {
     | '/admin/courses'
     | '/admin/scholarships'
     | '/admin/universities'
+    | '/admin/users'
     | '/courses/$id'
     | '/universities/$id'
     | '/admin/'
@@ -334,6 +346,7 @@ export interface RootRouteChildren {
   AdminCoursesRoute: typeof AdminCoursesRoute
   AdminScholarshipsRoute: typeof AdminScholarshipsRoute
   AdminUniversitiesRoute: typeof AdminUniversitiesRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   CoursesIdRoute: typeof CoursesIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/universities': {
       id: '/admin/universities'
       path: '/admin/universities'
@@ -546,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCoursesRoute: AdminCoursesRoute,
   AdminScholarshipsRoute: AdminScholarshipsRoute,
   AdminUniversitiesRoute: AdminUniversitiesRoute,
+  AdminUsersRoute: AdminUsersRoute,
   CoursesIdRoute: CoursesIdRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
