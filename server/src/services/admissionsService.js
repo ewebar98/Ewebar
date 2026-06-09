@@ -140,30 +140,75 @@ export async function runBatchAdmissionsForAll() {
 
 }
 
-// Expire stale offers and release reserved slots
+// Expire stale offers, release reserved slots, and auto-promote next waitlisted applicant
 export async function expireStaleOffers() {
   const now = new Date();
-  const staleOffers = await Application.find({ status: "offered", offerExpiresAt: { $lt: now } }).populate("courseId").populate("studentId", "fullName");
+  const staleOffers = await Application.find({ status: "offered", offerExpiresAt: { $lt: now } })
+    .populate("courseId")
+    .populate("studentId", "fullName");
   let released = 0;
+
   for (const app of staleOffers) {
+    // 1. Mark offer as expired
     app.status = "expired";
     app.auditTrail.push({ action: `Offer expired for ${app.courseId?.name}`, performedBy: "system" });
     await app.save();
 
-    // Release reserved slot
+    // 2. Release reserved slot atomically
     await Program.findByIdAndUpdate(app.courseId._id, { $inc: { currentAdmitted: -1 } });
 
+    // 3. Notify student their offer expired
     await Notification.create({
       userId: app.studentId._id,
       title: "Offer Expired",
-      body: `Your offer for ${app.courseId?.name} has expired.`,
+      body: `Your offer for ${app.courseId?.name} has expired. The reserved seat has been released.`,
       type: "error",
       link: "/applications",
     });
+
+    // 4. Auto-promote: find the next pending applicant on the same program (merit order)
+    const program = await Program.findById(app.courseId._id).populate("institutionId", "name");
+    if (program) {
+      const slotsAvailable = (program.totalCapacity || 0) - (program.currentAdmitted || 0);
+      if (slotsAvailable > 0) {
+        const nextApp = await Application.findOne({ courseId: program._id, status: "pending" })
+          .sort({ matchScore: -1, createdAt: 1 })
+          .populate("studentId", "fullName email");
+
+        if (nextApp) {
+          const OFFER_HOURS = program.autoAdmission?.offerExpiryHours || 72;
+          nextApp.status = "offered";
+          nextApp.offerExpiresAt = new Date(Date.now() + OFFER_HOURS * 60 * 60 * 1000);
+          nextApp.auditTrail.push({ action: `Waitlist auto-promoted to ${program.name}`, performedBy: "system" });
+          await nextApp.save();
+
+          await Program.findByIdAndUpdate(program._id, { $inc: { currentAdmitted: 1 } });
+
+          await Notification.create({
+            userId: nextApp.studentId._id,
+            title: "Waitlist Offer! 🎉",
+            body: `Great news! A seat has opened up for ${program.name} at ${program.institutionId?.name || "your chosen institution"}. You have been offered admission. Please confirm within ${OFFER_HOURS} hours.`,
+            type: "success",
+            link: "/applications",
+          });
+
+          await Message.create({
+            applicationId: nextApp._id,
+            senderId: null,
+            senderRole: "system",
+            message: `System: A seat has opened up! You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours.`,
+            read: false,
+          });
+
+          console.log(`[Waitlist] Auto-promoted applicant ${nextApp.studentId?.fullName} to ${program.name}`);
+        }
+      }
+    }
 
     released++;
   }
   return { released };
 }
+
 
 export default { runBatchAdmissionsForProgram, runBatchAdmissionsForAll, expireStaleOffers };

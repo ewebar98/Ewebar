@@ -237,6 +237,7 @@ export interface StudentApplication {
   submitted: string;
   probability: number;
   unreadMessagesCount: number;
+  offerExpiresAt: string | null;
 }
 
 export async function getApplications(): Promise<StudentApplication[]> {
@@ -249,6 +250,7 @@ export async function getApplications(): Promise<StudentApplication[]> {
     submitted: a.createdAt ? new Date(a.createdAt).toISOString().split("T")[0] : "",
     probability: a.matchScore || 85,
     unreadMessagesCount: a.unreadMessagesCount || 0,
+    offerExpiresAt: a.offerExpiresAt ?? null,
   }));
 }
 

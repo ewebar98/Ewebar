@@ -5,7 +5,7 @@ import { PageHeader, Skeleton, Badge, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
 import { getApplications, getApplicationMessages, sendApplicationMessage, markApplicationMessagesAsRead, confirmOfferAcceptance, Message } from "@/services/api";
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, Send, X, Loader2 } from "lucide-react";
+import { MessageCircle, Send, X, Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,6 +15,36 @@ export const Route = createFileRoute("/applications")({
      head: () => ({ meta: [{ title: "Applications — WeBAR" }] }),
   component: () => <AppLayout><Applications /></AppLayout>,
 });
+
+// Live countdown timer showing hours:minutes:seconds until offer expires
+function OfferCountdown({ expiresAt }: { expiresAt: string }) {
+  const [timeLeft, setTimeLeft] = useState("");
+  const [urgent, setUrgent] = useState(false);
+
+  useEffect(() => {
+    const tick = () => {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft("Expired"); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setUrgent(h < 12);
+      setTimeLeft(`${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  return (
+    <div className={`flex items-center gap-1 text-[11px] font-bold mt-1 ${
+      urgent ? "text-destructive animate-pulse" : "text-amber-500"
+    }`}>
+      <Clock className="h-3 w-3" />
+      <span>{timeLeft}</span>
+    </div>
+  );
+}
 
 function Applications() {
   const { data, loading, error, refresh } = useApi("getApplications", getApplications);
@@ -130,9 +160,12 @@ function Applications() {
                   <td className="px-5 py-3 font-semibold text-foreground">{a.university}</td>
                   <td className="px-5 py-3 text-muted-foreground font-medium">{a.course}</td>
                   <td className="px-5 py-3">
-                    <Badge tone={a.status === "Accepted" ? "success" : a.status === "Rejected" ? "destructive" : a.status === "Reviewed" ? "primary" : "warning"}>
+                    <Badge tone={a.status === "Accepted" ? "success" : a.status === "Rejected" ? "destructive" : a.status === "Offered" ? "warning" : a.status === "Reviewed" ? "primary" : "warning"}>
                       {a.status}
                     </Badge>
+                    {a.status === "Offered" && a.offerExpiresAt && (
+                      <OfferCountdown expiresAt={a.offerExpiresAt} />
+                    )}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
