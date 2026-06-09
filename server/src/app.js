@@ -14,6 +14,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import adminRuleRoutes from "./routes/adminRuleRoutes.js";
 import subjectRoutes from "./routes/subjectRoutes.js";
 import { nosqlSanitizer } from "./middleware/nosqlSanitize.js";
 
@@ -43,6 +44,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api", applicationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminRuleRoutes);
 app.use("/api/subjects", subjectRoutes);
 
 // Root Route
