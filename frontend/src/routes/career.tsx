@@ -3,7 +3,7 @@ import { requireRole } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Compass, Briefcase, Lightbulb, TrendingUp, ArrowRight, Send } from "lucide-react";
+import { Compass, Briefcase, Lightbulb, TrendingUp, ArrowRight, Send, Heart, Scale, Sprout } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
@@ -20,10 +20,12 @@ export const Route = createFileRoute("/career")({
 
 // Career paths are general Nigerian tech/professional landscape data — not "fake user data"
 const careerPaths = [
-  { title: "AI/ML Engineer", demand: "High", salary: "₦8M – ₦24M", icon: Lightbulb, skills: ["Python", "Math", "Statistics"], field: "Technology" },
-  { title: "Software Engineer", demand: "Very High", salary: "₦6M – ₦18M", icon: Briefcase, skills: ["JS/TS", "Algorithms", "System Design"], field: "Technology" },
-  { title: "Data Scientist", demand: "High", salary: "₦7M – ₦20M", icon: TrendingUp, skills: ["SQL", "Python", "Stats"], field: "Technology" },
-  { title: "Product Designer", demand: "Growing", salary: "₦5M – ₦15M", icon: Compass, skills: ["Figma", "Research", "Empathy"], field: "Design" },
+  { title: "Software Engineer", demand: "Very High", salary: "₦6M – ₦18M", icon: Briefcase, skills: ["Programming", "Algorithms", "System Design"], field: "Technology" },
+  { title: "Medical Practitioner", demand: "Very High", salary: "₦5M – ₦15M", icon: Heart, skills: ["Diagnostics", "Patient Care", "Biology"], field: "Health Sciences" },
+  { title: "Legal Counsel", demand: "High", salary: "₦4M – ₦12M", icon: Scale, skills: ["Litigation", "Research", "Analytical"], field: "Law" },
+  { title: "Agronomist", demand: "Growing", salary: "₦3M – ₦9M", icon: Sprout, skills: ["Soil Science", "Crop Management", "Agribusiness"], field: "Agriculture" },
+  { title: "Financial Analyst", demand: "High", salary: "₦4M – ₦14M", icon: TrendingUp, skills: ["Accounting", "Excel", "Risk Assessment"], field: "Finance" },
+  { title: "Architect", demand: "High", salary: "₦5M – ₦16M", icon: Compass, skills: ["AutoCAD", "Design", "Project Planning"], field: "Environmental Sciences" },
 ];
 
 function Career() {
@@ -93,7 +95,7 @@ function Career() {
             <h2 className="font-display text-2xl font-bold">
               {topMatch.match && topMatch.match > 60
                 ? `Hi ${firstName}, your top career match is ${topMatch.title}`
-                : `Hi ${firstName}, explore career paths in Nigeria's tech ecosystem`}
+                : `Hi ${firstName}, explore career paths in Nigeria's professional landscape`}
             </h2>
             <p className="mt-2 max-w-xl text-muted-foreground">
               {profile?.interests && profile.interests.length > 0
