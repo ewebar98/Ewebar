@@ -77,7 +77,7 @@ function Discover() {
     if (lasustechIdx !== -1) {
       const lasustechObj = r[lasustechIdx];
       const rest = r.filter((_, idx) => idx !== lasustechIdx);
-      return [lasustechObj, ...rest];
+      r = [lasustechObj, ...rest]; // Assign back to r to ensure subsequent sorting applies to the modified array
     }
     return r;
   }, [unis, q, location, instType, program, courses, sort]);

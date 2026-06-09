@@ -156,7 +156,7 @@ export const getUserApplications = asyncHandler(async (req, res) => {
     .populate("universityId", "name city state logo")
     .populate({
       path: "courseId",
-      select: "name cutoffMark duration facultyId",
+      select: "name cutoffMark duration facultyId requirements", // Added 'requirements' to select
       populate: {
         path: "facultyId",
         select: "name",

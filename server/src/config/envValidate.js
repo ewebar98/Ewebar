@@ -6,7 +6,7 @@ export const validateEnvironment = () => {
   const requiredVars = [
     { name: "MONGO_URI", critical: true },
     { name: "JWT_SECRET", critical: true },
-    { name: "GROQ_API_KEY", critical: false }, // Critical for AI only
+    { name: "GROQ_API_KEY", critical: false }, // Critical for AI only, will use offline fallback if missing
   ];
 
   const missing = [];

@@ -164,7 +164,7 @@ function ManageCourses() {
       setNewFacultyName("");
       setShowQuickFaculty(false);
       await refreshFaculties();
-      setFacultyId(res.data?._id || res._id || "");
+      setFacultyId(res.data?._id || res.data?.id || res._id || res.id || ""); // Ensure all possible ID fields are checked
     } catch (err: any) {
       toast.error(err.message || "Failed to create faculty");
     }
@@ -186,7 +186,7 @@ function ManageCourses() {
       setNewDeptName("");
       setShowQuickDept(false);
       await refreshDepartments();
-      setDeptId(res.data?._id || res._id || "");
+      setDeptId(res.data?._id || res.data?.id || res._id || res.id || ""); // Ensure all possible ID fields are checked
     } catch (err: any) {
       toast.error(err.message || "Failed to create department");
     }

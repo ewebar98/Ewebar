@@ -390,7 +390,7 @@ function Dashboard() {
                   <div className="bg-success/5 border border-success/20 rounded-2xl p-4 text-xs space-y-2">
                     <p className="font-bold text-success-foreground">LASUSTECH Cutoff Met:</p>
                     <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-                      <li>Program Cutoff: {preferredCourseObj.cutoff} (Your Score: {context?.profile?.jambScore})</li>
+                      <li>Program Cutoff: {preferredCourseObj.cutoff} (Your JAMB Score: {context?.profile?.jambScore})</li>
                       <li>Required subjects: {preferredCourseObj.requirements?.join(", ") || "English, Mathematics"}</li>
                     </ul>
                   </div>

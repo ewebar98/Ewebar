@@ -104,7 +104,7 @@ router.get(
       .populate("studentId", "fullName email jambScore waecAggregate")
       .populate("universityId", "name logo city state")
       .populate({
-        path: "courseId",
+        path: "courseId", // Populate course details
         select: "name cutoffMark duration facultyId",
         populate: {
           path: "facultyId",

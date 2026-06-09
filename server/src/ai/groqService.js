@@ -12,7 +12,7 @@ const getGroqInstance = () => {
   }
   return groqInstance;
 };
-
+// This function is for the offline fallback when Groq API is not available
 const generateOfflineResponse = (messages) => {
   const lastMessage = messages[messages.length - 1]?.content || "";
   const query = lastMessage.toLowerCase();
@@ -43,7 +43,7 @@ const generateOfflineResponse = (messages) => {
   };
 };
 
-export const getAIExplanation = async (prompt) => {
+export const getAIExplanation = async (prompt) => { // Used for career guidance
   const groq = getGroqInstance();
   if (!groq) {
     return "Admission to top-tier higher institutions in Nigeria requires excellent O'Level credit matches (minimum of 5 credits including English and Mathematics) and an optimal JAMB UTME score aligning with course benchmarks. (Standard Offline Guide)";
@@ -66,7 +66,7 @@ export const getAIExplanation = async (prompt) => {
 
     return chatCompletion.choices[0].message.content;
   } catch (error) {
-    console.warn("[Groq Explanation 70b Failed] Trying 8b-instant:", error.message);
+    console.warn("[Groq Explanation 70b Failed] Falling back to 8b-instant:", error.message);
     try {
       const chatCompletion = await groq.chat.completions.create({
         messages: [
@@ -84,12 +84,12 @@ export const getAIExplanation = async (prompt) => {
 
       return chatCompletion.choices[0].message.content;
     } catch (error8b) {
-      console.error("[Groq Explanation Failed] Using offline fallback:", error8b.message);
+      console.error("[Groq Explanation All Models Failed] Using offline fallback:", error8b.message);
       return "Admission to top-tier higher institutions in Nigeria requires excellent O'Level credit matches (minimum of 5 credits including English and Mathematics) and an optimal JAMB UTME score aligning with course benchmarks. (Standard Offline Guide)";
     }
   }
 };
-
+// This function is for the interactive chat assistant
 export const chatWithAI = async (messages) => {
   const groq = getGroqInstance();
   if (!groq) {
