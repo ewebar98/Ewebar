@@ -3,8 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { AdminLayout } from "@/layouts/AdminLayout";
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui-kit";
-import { Button, Dialog, DialogHeader, DialogTitle, DialogDescription, DialogContent, DialogFooter, Input, Label } from "@/components/ui-kit";
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import {
   fetchAdmissionRules,
