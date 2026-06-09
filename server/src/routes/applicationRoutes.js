@@ -7,6 +7,7 @@ import {
   sendApplicationMessage,
   markMessagesAsRead,
   evaluateApplication,
+  confirmOfferAcceptance,
 } from "../controllers/applicationController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -15,6 +16,7 @@ const router = express.Router();
 router.get("/scholarships", getScholarships);
 router.get("/applications", protect, getUserApplications);
 router.post("/applications/apply", protect, applyForCourse);
+router.post("/applications/:id/confirm-accept", protect, confirmOfferAcceptance);
 
 // Application real-time admissions support chat routes
 router.get("/applications/:id/messages", protect, getApplicationMessages);

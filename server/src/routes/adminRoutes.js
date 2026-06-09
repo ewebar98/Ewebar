@@ -6,6 +6,7 @@ import { Institution, Program, Faculty, Department } from "../models/universityM
 import { Application } from "../models/applicationModel.js";
 import Notification from "../models/notificationModel.js";
 import Message from "../models/messageModel.js";
+import admissionsService from "../services/admissionsService.js";
 
 const router = express.Router();
 
@@ -613,6 +614,7 @@ router.post(
       requirements: requirements || [],
       careerPaths: careerPaths || [],
       description: description || `Professional degree in ${name}.`,
+      autoAdmission: req.body.autoAdmission || { enabled: false, mode: "batch", autoAcceptThreshold: 85 },
     });
 
     res.status(201).json({
@@ -639,6 +641,7 @@ router.put(
       requirements,
       careerPaths,
       description,
+        autoAdmission,
     } = req.body;
 
     const program = await Program.findById(req.params.id);
@@ -658,6 +661,7 @@ router.put(
     if (requirements !== undefined) program.requirements = requirements;
     if (careerPaths !== undefined) program.careerPaths = careerPaths;
     if (description !== undefined) program.description = description;
+    if (autoAdmission !== undefined) program.autoAdmission = autoAdmission;
 
     const updatedProgram = await program.save();
 
@@ -692,6 +696,26 @@ router.delete(
       success: true,
       message: "Program successfully deleted from catalog",
     });
+  })
+);
+
+// @desc    Run batch admissions for a program (accept highest-match pending applications)
+// @route   POST /api/admin/programs/:id/run-admissions
+// @access  Private/Admin
+router.post(
+  "/programs/:id/run-admissions",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const programId = req.params.id;
+    const performedBy = req.user.email || "admin";
+    const result = await admissionsService.runBatchAdmissionsForProgram(programId, performedBy);
+    if (result.reason === "program_not_found") {
+      res.status(404);
+      throw new Error("Program not found");
+    }
+
+    res.json({ success: true, message: `Batch admissions completed. Admitted ${result.admitted} students.`, data: result });
   })
 );
 

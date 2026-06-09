@@ -10,6 +10,9 @@ import {
   getUniversities, 
   getAdminFaculties, 
   getAdminDepartments, 
+  getCourseById, 
+  getProgramForAdmin,
+  runProgramAdmissions,
   createProgram, 
   updateProgram, 
   deleteProgram,
@@ -50,6 +53,9 @@ function ManageCourses() {
   const [careerPathsStr, setCareerPathsStr] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [autoAdmissionEnabled, setAutoAdmissionEnabled] = useState(false);
+  const [autoAdmissionMode, setAutoAdmissionMode] = useState<"immediate" | "batch">("batch");
+  const [autoAdmissionThreshold, setAutoAdmissionThreshold] = useState(85);
 
   // Quick Add Faculty/Dept Modal state
   const [showQuickFaculty, setShowQuickFaculty] = useState(false);
@@ -58,9 +64,12 @@ function ManageCourses() {
   const [newDeptName, setNewDeptName] = useState("");
 
   const filteredCourses = (courses ?? []).filter(
-    (c) =>
-      c.name.toLowerCase().includes(q.toLowerCase()) ||
-      c.faculty.toLowerCase().includes(q.toLowerCase())
+    (c) => {
+      const name = (c?.name || "").toString().toLowerCase();
+      const faculty = (c?.faculty || "").toString().toLowerCase();
+      const qq = (q || "").toString().toLowerCase();
+      return name.includes(qq) || faculty.includes(qq);
+    }
   );
 
   // Relationally filter faculties and departments based on form selection
@@ -84,24 +93,59 @@ function ManageCourses() {
     setRequirementsStr("English, Mathematics");
     setCareerPathsStr("");
     setDescription("");
+    setAutoAdmissionEnabled(false);
+    setAutoAdmissionMode("batch");
+    setAutoAdmissionThreshold(85);
     setOpen(true);
   };
 
   const handleOpenEdit = (c: any) => {
-    setSelectedCourse(c);
-    setName(c.name);
-    setInstId(c.institutionId || "");
-    
-    // Find matching program to map facultyId and departmentId correctly
-    setDuration(c.duration || "4 years");
-    setCutoffMark(c.cutoff || 180);
-    setTuition(c.tuition || "₦150,000/yr");
-    setDescription(c.description || "");
-    
-    // Set placeholder / empty selections for faculty and dept since we need real IDs
-    setFacultyId("");
-    setDeptId("");
-    setOpen(true);
+    // Fetch the full program details (so we get facultyId/departmentId and real cutoff fields)
+    (async () => {
+      try {
+        setSelectedCourse(c);
+        // If the passed course already contains the necessary IDs use them, else fetch by id
+        if (c?.id) {
+          const program = await getProgramForAdmin(c.id);
+          if (program) {
+            setName(program.name || c.name || "");
+            setInstId(program.institutionId || c.institutionId || "");
+            setFacultyId(program.facultyId?._id || program.facultyId || "");
+            setDeptId(program.departmentId?._id || program.departmentId || "");
+            setDuration(program.duration || c.duration || "4 years");
+            setCutoffMark(program.cutoffMark || c.cutoff || 180);
+            setTuition(program.tuition || c.tuition || "₦150,000/yr");
+            setDescription(program.description || c.description || "");
+            setAutoAdmissionEnabled(program.autoAdmission?.enabled || false);
+            setAutoAdmissionMode(program.autoAdmission?.mode || "batch");
+            setAutoAdmissionThreshold(program.autoAdmission?.autoAcceptThreshold || 85);
+          } else {
+            // Fallback to available values
+            setName(c.name || "");
+            setInstId(c.institutionId || "");
+            setDuration(c.duration || "4 years");
+            setCutoffMark(c.cutoff || 180);
+            setTuition(c.tuition || "₦150,000/yr");
+            setDescription(c.description || "");
+            setFacultyId("");
+            setDeptId("");
+          }
+        }
+      } catch (err: any) {
+        // best effort: populate with existing values
+        setSelectedCourse(c);
+        setName(c.name || "");
+        setInstId(c.institutionId || "");
+        setDuration(c.duration || "4 years");
+        setCutoffMark(c.cutoff || 180);
+        setTuition(c.tuition || "₦150,000/yr");
+        setDescription(c.description || "");
+        setFacultyId("");
+        setDeptId("");
+      } finally {
+        setOpen(true);
+      }
+    })();
   };
 
   const handleQuickAddFaculty = async () => {
@@ -163,6 +207,7 @@ function ManageCourses() {
       duration,
       cutoffMark: Number(cutoffMark),
       tuition,
+      autoAdmission: { enabled: autoAdmissionEnabled, mode: autoAdmissionMode, autoAcceptThreshold: Number(autoAdmissionThreshold) },
       requirements: requirementsStr.split(",").map((r) => r.trim()).filter((r) => r !== ""),
       careerPaths: careerPathsStr.split(",").map((c) => c.trim()).filter((c) => c !== ""),
       description,
@@ -180,6 +225,20 @@ function ManageCourses() {
       refreshCourses();
     } catch (err: any) {
       toast.error(err.message || "Failed to save course details");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRunAdmissions = async (c: any) => {
+    if (!window.confirm(`Run batch admissions now for "${c.name}"?`)) return;
+    try {
+      setSubmitting(true);
+      const res = await runProgramAdmissions(c.id);
+      toast.success(res.message || "Admissions run completed");
+      refreshCourses();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to run admissions");
     } finally {
       setSubmitting(false);
     }
@@ -359,6 +418,29 @@ function ManageCourses() {
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
+
+            <div className="p-3 border rounded-lg bg-muted/30">
+              <Label className="text-sm">Auto Admission (Admin Controlled)</Label>
+              <div className="flex items-center gap-3 mt-2">
+                <input id="autoEnabled" type="checkbox" checked={autoAdmissionEnabled} onChange={(e) => setAutoAdmissionEnabled(e.target.checked)} />
+                <label htmlFor="autoEnabled" className="text-sm">Enable automatic admissions for this program</label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div>
+                  <Label className="text-xs">Mode</Label>
+                  <select value={autoAdmissionMode} onChange={(e) => setAutoAdmissionMode(e.target.value as any)} className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1 text-sm">
+                    <option value="batch">Batch (admin-controlled)</option>
+                    <option value="immediate">Immediate (auto-accept on apply)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs">Immediate Threshold</Label>
+                  <Input type="number" value={autoAdmissionThreshold} onChange={(e) => setAutoAdmissionThreshold(Number(e.target.value))} className="h-9" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Immediate mode will auto-accept applicants whose computed match score is at or above the threshold and slots are available.</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
@@ -399,6 +481,13 @@ function ManageCourses() {
                     title="Edit Course"
                   >
                     <Pencil className="h-4 w-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleRunAdmissions(c)} 
+                    className="rounded-md p-1.5 text-muted-foreground hover:bg-accent/10 hover:text-foreground transition-colors"
+                    title="Run Admissions"
+                  >
+                    <Plus className="h-4 w-4" />
                   </button>
                   <button 
                     onClick={() => handleDelete(c)} 

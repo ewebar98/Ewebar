@@ -144,6 +144,11 @@ export async function getCourseById(id: string): Promise<Course | null> {
   };
 }
 
+// Admin-only: return raw program document with all fields (for editing advanced config)
+export async function getProgramForAdmin(id: string): Promise<any> {
+  return await request<any>(`/courses/${id}`);
+}
+
 export async function getRecommendations() {
   const res = await request<any[]>("/recommendations");
   return res.map((r) => ({
@@ -762,4 +767,15 @@ export async function deleteProgram(id: string): Promise<any> {
   });
 }
 
+export async function runProgramAdmissions(programId: string) {
+  return await request<any>(`/admin/programs/${programId}/run-admissions`, {
+    method: "POST",
+  });
+}
+
+export async function confirmOfferAcceptance(applicationId: string) {
+  return await request<any>(`/applications/${applicationId}/confirm-accept`, {
+    method: "POST",
+  });
+}
 

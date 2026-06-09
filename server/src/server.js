@@ -23,6 +23,7 @@ validateEnvironment();
 import app from "./app.js";
 import connectDB from "./config/db.js";
 import Subject from "./models/subjectModel.js";
+import admissionsService from "./services/admissionsService.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -73,4 +74,28 @@ app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   // Engage self-ping keep-alive loop for Render deployments
   keepAlive();
+
+  // Schedule automatic batch admissions every hour
+  const HOUR_MS = 60 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      console.log("[Admissions Scheduler] Running batch admissions for all configured programs...");
+      const res = await admissionsService.runBatchAdmissionsForAll();
+      console.log(`[Admissions Scheduler] Completed. Programs processed: ${res.programsProcessed}, total admitted: ${res.totalAdmitted}`);
+    } catch (err) {
+      console.error("[Admissions Scheduler] Error running batch admissions:", err.message || err);
+    }
+  }, HOUR_MS);
+
+  // Also schedule offer expiry cleanup every 15 minutes
+  const FIFTEEN_MIN = 15 * 60 * 1000;
+  setInterval(async () => {
+    try {
+      console.log("[Admissions Scheduler] Expiring stale offers...");
+      const res = await admissionsService.expireStaleOffers();
+      console.log(`[Admissions Scheduler] Offer expiry completed. Released: ${res.released}`);
+    } catch (err) {
+      console.error("[Admissions Scheduler] Error expiring offers:", err.message || err);
+    }
+  }, FIFTEEN_MIN);
 });

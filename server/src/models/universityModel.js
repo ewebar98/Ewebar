@@ -233,6 +233,23 @@ const programSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Auto admission configuration controlled by admin
+    autoAdmission: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      mode: {
+        type: String,
+        enum: ["immediate", "batch"],
+        default: "batch",
+      },
+      // When in immediate mode, only auto-accept applicants with matchScore >= this threshold
+      autoAcceptThreshold: {
+        type: Number,
+        default: 85,
+      },
+    },
     requirements: [String],
     careerPaths: [String],
     description: String,

@@ -70,6 +70,53 @@ export const applyForCourse = asyncHandler(async (req, res) => {
     documents: documents || [],
   });
 
+  // Auto-offer logic (immediate mode) — make a reserved offer atomically
+  try {
+    if (program.autoAdmission && program.autoAdmission.enabled && program.autoAdmission.mode === "immediate") {
+      const threshold = program.autoAdmission.autoAcceptThreshold || 85;
+      if (calculatedMatchScore >= threshold) {
+        // Attempt to atomically reserve a slot by incrementing currentAdmitted when slots remain
+        const updatedProgram = await Program.findOneAndUpdate(
+          { _id: program._id, $expr: { $lt: ["$currentAdmitted", "$totalCapacity"] } },
+          { $inc: { currentAdmitted: 1 } },
+          { new: true }
+        );
+
+        if (updatedProgram) {
+          const OFFER_HOURS = program.autoAdmission.offerExpiryHours || 72;
+          application.status = "offered";
+          application.offerExpiresAt = new Date(Date.now() + OFFER_HOURS * 60 * 60 * 1000);
+          application.auditTrail.push({
+            action: `Offered (immediate) to ${program.name}`,
+            performedBy: "system",
+            notes: `AutoAcceptThreshold=${threshold}; Expires in ${OFFER_HOURS} hours`,
+          });
+          await application.save();
+
+          // Notify student about the offer
+          await Notification.create({
+            userId: req.user._id,
+            title: "Admission Offer",
+            body: `You have been offered admission to ${program.name} at ${university.name}. Please confirm within ${OFFER_HOURS} hours to secure your place.`,
+            type: "success",
+            link: "/applications",
+          });
+
+          // Create an admissions message in the application thread
+          await Message.create({
+            applicationId: application._id,
+            senderId: null,
+            senderRole: "system",
+            message: `System: You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours to secure your place.`,
+            read: false,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    // non-fatal: log but do not block application submission
+    console.error("Auto-offer error:", err);
+  }
   // Trigger application submission notification
   await Notification.create({
     userId: req.user._id,
@@ -383,4 +430,72 @@ export const evaluateApplication = asyncHandler(async (req, res) => {
     message: "Application evaluated successfully",
     data: application,
   });
+});
+
+// @desc    Confirm an offered admission (student accepts the offer)
+// @route   POST /api/applications/:id/confirm-accept
+// @access  Private (student)
+export const confirmOfferAcceptance = asyncHandler(async (req, res) => {
+  const applicationId = req.params.id;
+  const application = await Application.findById(applicationId).populate("courseId").populate("universityId");
+  if (!application) {
+    res.status(404);
+    throw new Error("Application not found");
+  }
+
+  if (application.studentId.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to accept this offer");
+  }
+
+  if (application.status !== "offered") {
+    res.status(400);
+    throw new Error("No active offer to accept for this application");
+  }
+
+  if (application.offerExpiresAt && new Date() > application.offerExpiresAt) {
+    // Offer expired; mark expired and release slot
+    application.status = "expired";
+    application.auditTrail.push({ action: `Offer expired for ${application.courseId?.name}`, performedBy: "system" });
+    await application.save();
+
+    // Decrement program currentAdmitted to release reservation
+    await Program.findByIdAndUpdate(application.courseId._id, { $inc: { currentAdmitted: -1 } });
+
+    await Notification.create({
+      userId: req.user._id,
+      title: "Offer Expired",
+      body: `Your admission offer for ${application.courseId?.name} has expired. We will attempt to run admissions again where applicable.`,
+      type: "error",
+      link: "/applications",
+    });
+
+    res.status(400).json({ success: false, message: "Offer has expired" });
+    return;
+  }
+
+  // Accept the offer
+  application.status = "accepted";
+  application.acceptedAt = new Date();
+  application.auditTrail.push({ action: `Offer accepted for ${application.courseId?.name}`, performedBy: req.user.email || "student" });
+  await application.save();
+
+  // Notify student and admins
+  await Notification.create({
+    userId: req.user._id,
+    title: "Offer Confirmed",
+    body: `You have confirmed your acceptance for ${application.courseId?.name}. Congratulations!`,
+    type: "success",
+    link: "/applications",
+  });
+
+  await Message.create({
+    applicationId: application._id,
+    senderId: req.user._id,
+    senderRole: req.user.role,
+    message: `Student has accepted the offer for ${application.courseId?.name}.`,
+    read: false,
+  });
+
+  res.json({ success: true, message: "Offer accepted successfully", data: application });
 });

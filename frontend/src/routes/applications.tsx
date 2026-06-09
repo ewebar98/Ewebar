@@ -3,7 +3,7 @@ import { requireRole } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Skeleton, Badge, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
-import { getApplications, getApplicationMessages, sendApplicationMessage, markApplicationMessagesAsRead, Message } from "@/services/api";
+import { getApplications, getApplicationMessages, sendApplicationMessage, markApplicationMessagesAsRead, confirmOfferAcceptance, Message } from "@/services/api";
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Send, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -144,23 +144,44 @@ function Applications() {
                   </td>
                   <td className="px-5 py-3 text-muted-foreground">{a.submitted}</td>
                   <td className="px-5 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-lg gap-1.5 relative text-xs hover:border-primary/50 transition-all"
-                      onClick={() => {
-                        setActiveAppId(a.id);
-                        setLoadingMessages(true);
-                      }}
-                    >
-                      <MessageCircle className="h-3.5 w-3.5 text-primary" />
-                      <span>Admissions Help</span>
-                      {a.unreadMessagesCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground animate-pulse shadow-sm">
-                          {a.unreadMessagesCount}
-                        </span>
+                    <div className="flex items-center justify-end gap-2">
+                      {a.status === "Offered" && (
+                        <Button
+                          size="sm"
+                          className="rounded-lg gap-1.5 text-xs bg-gradient-primary"
+                          onClick={async () => {
+                            if (!window.confirm("Confirm acceptance of this offer?")) return;
+                            try {
+                              await confirmOfferAcceptance(a.id);
+                              toast.success("Offer accepted. Congratulations!");
+                              refresh();
+                            } catch (err: any) {
+                              toast.error(err.message || "Failed to accept offer");
+                            }
+                          }}
+                        >
+                          Accept Offer
+                        </Button>
                       )}
-                    </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-lg gap-1.5 relative text-xs hover:border-primary/50 transition-all"
+                        onClick={() => {
+                          setActiveAppId(a.id);
+                          setLoadingMessages(true);
+                        }}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 text-primary" />
+                        <span>Admissions Help</span>
+                        {a.unreadMessagesCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground animate-pulse shadow-sm">
+                            {a.unreadMessagesCount}
+                          </span>
+                        )}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -22,9 +22,17 @@ const applicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "reviewed", "accepted", "rejected"],
+      enum: ["pending", "reviewed", "offered", "accepted", "rejected", "expired"],
       default: "pending",
       index: true,
+    },
+    // When an offer is made, expiry timestamp for student to confirm acceptance
+    offerExpiresAt: {
+      type: Date,
+    },
+    // When student confirms acceptance
+    acceptedAt: {
+      type: Date,
     },
     matchScore: {
       type: Number,
