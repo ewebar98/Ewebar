@@ -59,7 +59,7 @@ export const mockProfile = {
 };
 
 export const mockChatHistory = [
-  { role: "assistant" as const, content: "Hi Ada! I'm your AI admission assistant. Ask me about programs or career paths." },
+  { role: "assistant" as const, content: "Hi Ada! I'm your admission counselor. Ask me about programs or career paths." },
   { role: "user" as const, content: "What's the best CS school for me?" },
   { role: "assistant" as const, content: "Based on your JAMB score of 268, UNILAG (94% match) and Covenant (88%) are your strongest options. Want me to draft an application?" },
 ];

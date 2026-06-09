@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { searchSubjects, Subject } from "../services/api";
-import { Search, ChevronDown, Check, Sparkles, Loader2, X } from "lucide-react";
+import { Search, ChevronDown, Check, Star, Loader2, X } from "lucide-react";
 
 interface SearchableSubjectSelectProps {
   value: string;
@@ -251,7 +251,7 @@ export const SearchableSubjectSelect: React.FC<SearchableSubjectSelectProps> = (
                                 <div className="flex items-center gap-1.5 mt-2.5 w-full">
                                   {sub.isCoreSubject && (
                                     <span className="flex items-center gap-0.5 rounded-full bg-primary/20 text-primary px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide">
-                                      <Sparkles className="h-2 w-2" />
+                                      <Star className="h-2 w-2" />
                                       Core
                                     </span>
                                   )}

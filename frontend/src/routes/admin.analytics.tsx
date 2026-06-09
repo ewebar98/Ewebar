@@ -11,7 +11,7 @@ import {
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Analytics — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Analytics | WeBAR" }] }),
   component: () => <AppLayout variant="admin"><Analytics /></AppLayout>,
 });
 
@@ -33,28 +33,28 @@ function Analytics() {
           <>
             <StatCard
               label="Total students"
-              value={data?.totals?.students?.toLocaleString() ?? "—"}
+              value={data?.totals?.students?.toLocaleString() ?? "-"}
               icon={Users}
               accent="primary"
               hint="Registered accounts"
             />
             <StatCard
               label="Universities"
-              value={data?.totals?.universities ?? "—"}
+              value={data?.totals?.universities ?? "-"}
               icon={GraduationCap}
               accent="success"
               hint="In database"
             />
             <StatCard
               label="Courses"
-              value={data?.totals?.courses ?? "—"}
+              value={data?.totals?.courses ?? "-"}
               icon={FileText}
               accent="warning"
               hint="Active programs"
             />
             <StatCard
               label="Applications"
-              value={data?.totals?.applications?.toLocaleString() ?? "—"}
+              value={data?.totals?.applications?.toLocaleString() ?? "-"}
               icon={TrendingUp}
               accent="destructive"
               hint="Total submitted"

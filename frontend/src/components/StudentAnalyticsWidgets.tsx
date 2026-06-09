@@ -25,7 +25,7 @@ export function StudentAnalyticsWidgets() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-lg font-semibold">Your performance</h3>
-          <p className="text-xs text-muted-foreground">Live insights from your AI admission profile</p>
+          <p className="text-xs text-muted-foreground">Live insights from your admission profile</p>
         </div>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />

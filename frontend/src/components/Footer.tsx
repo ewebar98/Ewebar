@@ -21,7 +21,7 @@ export function Footer() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><Link to="/recommendations" className="hover:text-foreground">Recommendations</Link></li>
             {/* <li><Link to="/scholarships" className="hover:text-foreground">Scholarships</Link></li> */}
-            <li><Link to="/assistant" className="hover:text-foreground">AI Assistant</Link></li>
+            <li><Link to="/assistant" className="hover:text-foreground">Assistant</Link></li>
           </ul>
         </div>
         <div>

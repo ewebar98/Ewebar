@@ -13,7 +13,7 @@ import { chatWithAssistant } from "@/services/api";
 
 export const Route = createFileRoute("/assistant")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Assistant | WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Admissions Adviser | WeBAR" }] }),
   component: () => <AppLayout><Assistant /></AppLayout>,
 });
 
@@ -39,7 +39,7 @@ function Assistant() {
     {
       id: uid(),
       role: "assistant",
-      content: `Hi ${firstName}! I'm your intelligent admission counselor. Ask me about programs, JAMB strategy, or career paths.`,
+      content: `Hi ${firstName}! I'm your admission counselor. Ask me about programs, JAMB strategy, or career paths.`,
       ts: Date.now(),
     },
   ]);
@@ -185,7 +185,7 @@ function Assistant() {
   return (
     <div className="flex h-[calc(100vh-9rem)] flex-col">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <PageHeader title="Assistant" subtitle="Your 24/7 AI admission counselor." />
+        <PageHeader title="Admissions Adviser" subtitle="Ask questions and get recommendations for your university entry." />
         <div className="mb-6 flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={copyTranscript} className="gap-2">
             <Copy className="h-3.5 w-3.5" /> Copy

@@ -28,7 +28,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@
 
 export const Route = createFileRoute("/admin/courses")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Manage Course Catalog — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Manage Course Catalog | WeBAR" }] }),
   component: () => <AppLayout variant="admin"><ManageCourses /></AppLayout>,
 });
 

@@ -163,9 +163,9 @@ const buildExplainability = (student, program, details, matchPercentage) => {
 
   // JAMB cutoff check
   if (details.cutoffStatus === "met") {
-    breakdown.push({ type: "PASS", field: "UTME Score", message: `${student.jambScore} — Meets program cutoff of ${program.cutoffMark}` });
+    breakdown.push({ type: "PASS", field: "UTME Score", message: `Score of ${student.jambScore} meets the program cutoff of ${program.cutoffMark}` });
   } else {
-    breakdown.push({ type: "FAIL", field: "UTME Score", message: `${student.jambScore} — Below required cutoff of ${program.cutoffMark}` });
+    breakdown.push({ type: "FAIL", field: "UTME Score", message: `Score of ${student.jambScore} is below the required cutoff of ${program.cutoffMark}` });
   }
 
   // Stream alignment

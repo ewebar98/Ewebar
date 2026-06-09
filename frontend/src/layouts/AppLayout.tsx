@@ -2,7 +2,7 @@ import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-route
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Star, GraduationCap, Wallet, FileText, FolderOpen,
-  Bell, Settings, Brain, Compass, User, Sun, Moon, LogOut, Menu, X, BarChart,
+  Bell, Settings, Brain, Compass, User, Sun, Moon, LogOut, Menu, X, BarChart, MessageSquare,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -18,7 +18,7 @@ const studentNav = [
   { to: "/documents", icon: FolderOpen, label: "Documents" },
   { to: "/applications", icon: FileText, label: "Applications" },
   { to: "/career", icon: Compass, label: "Career" },
-  { to: "/assistant", icon: Brain, label: "Assistant" },
+  { to: "/assistant", icon: MessageSquare, label: "Assistant" },
   { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/profile", icon: User, label: "Profile" },
   { to: "/settings", icon: Settings, label: "Settings" },

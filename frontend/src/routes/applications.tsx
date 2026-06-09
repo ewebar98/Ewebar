@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/applications")({
   beforeLoad: requireRole("student"),
-     head: () => ({ meta: [{ title: "Applications — WeBAR" }] }),
+     head: () => ({ meta: [{ title: "Applications | WeBAR" }] }),
   component: () => <AppLayout><Applications /></AppLayout>,
 });
 

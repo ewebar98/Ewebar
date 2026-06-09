@@ -14,7 +14,7 @@ import {
 
 export const Route = createFileRoute("/admin/")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Admin — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Admin | WeBAR" }] }),
   component: () => <AppLayout variant="admin"><AdminOverview /></AppLayout>,
 });
 
@@ -98,10 +98,10 @@ function AdminOverview() {
           </>
         ) : (
           <>
-            <StatCard label="Students" value={data?.totals.students.toLocaleString() ?? "—"} icon={Users} accent="primary" hint="Registered accounts" />
-            <StatCard label="Universities" value={data?.totals.universities ?? "—"} icon={GraduationCap} accent="success" hint="In database" />
-            <StatCard label="Courses" value={data?.totals.courses ?? "—"} icon={GraduationCap} accent="warning" hint="Active programs" />
-            <StatCard label="Applications" value={data?.totals.applications.toLocaleString() ?? "—"} icon={FileText} hint="Total submitted" />
+            <StatCard label="Students" value={data?.totals.students.toLocaleString() ?? "-"} icon={Users} accent="primary" hint="Registered accounts" />
+            <StatCard label="Universities" value={data?.totals.universities ?? "-"} icon={GraduationCap} accent="success" hint="In database" />
+            <StatCard label="Courses" value={data?.totals.courses ?? "-"} icon={GraduationCap} accent="warning" hint="Active programs" />
+            <StatCard label="Applications" value={data?.totals.applications.toLocaleString() ?? "-"} icon={FileText} hint="Total submitted" />
           </>
         )}
       </div>
@@ -116,7 +116,7 @@ function AdminOverview() {
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Applications trend</p>
             <p className="font-display text-2xl font-bold">
-              {seriesByRange.at(-1)?.value.toLocaleString() ?? "—"}
+              {seriesByRange.at(-1)?.value.toLocaleString() ?? "-"}
               <span className="ml-2 text-sm font-medium text-muted-foreground">latest</span>
             </p>
           </div>

@@ -51,7 +51,7 @@ function Recommendations() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Your recommendations" subtitle="Programs ranked by AI match score." />
+      <PageHeader title="Your recommendations" subtitle="Programs matched to your profile and academic results." />
 
       {isError && (
         <ErrorAlert

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/universities/$id")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "University — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "University Details | WeBAR" }] }),
   component: () => <AppLayout><UniversityDetails /></AppLayout>,
 });
 

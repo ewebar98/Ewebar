@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  Sparkles, GraduationCap, Wallet, Brain, FileScan, ArrowRight,
+  GraduationCap, Wallet, Brain, FileScan, ArrowRight,
   CheckCircle2, Star, Users, Trophy, Globe2,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -41,7 +41,7 @@ const stats = [
 const testimonials = [
   { name: "Tunde A.", role: "UNILAG, Computer Science", quote: "WeBAR matched me with three programs I'd never considered. I got into my top choice." },
   { name: "Aisha B.", role: "Covenant, Engineering", quote: "The WeBAR advisor tool alone saved me months of searching." },
-  { name: "Chinedu O.", role: "OAU, Medicine", quote: "The AI assistant felt like talking to a real counselor. Confidence-building and honest." },
+  { name: "Chinedu O.", role: "OAU, Medicine", quote: "The admissions counselor was extremely helpful and gave me honest advice." },
 ];
 
 function Landing() {
@@ -90,7 +90,7 @@ function Landing() {
               transition={{ delay: 0.25 }}
               className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary"
             >
-              <Sparkles className="h-3.5 w-3.5 animate-pulse text-success" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
               <span>In partnership with <strong>LASUSTECH</strong> for direct admissions matching</span>
             </motion.div>
             <motion.div

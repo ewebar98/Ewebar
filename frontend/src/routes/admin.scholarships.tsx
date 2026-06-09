@@ -30,7 +30,7 @@ import {
 
 export const Route = createFileRoute("/admin/scholarships")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Manage Scholarships — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Manage Scholarships | WeBAR" }] }),
   component: () => <AppLayout variant="admin"><Manage /></AppLayout>,
 });
 

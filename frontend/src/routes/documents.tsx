@@ -10,7 +10,6 @@ import {
   Loader2,
   ScanLine,
   Eye,
-  Sparkles,
   Plus,
   Trash2,
   Save,
@@ -698,7 +697,7 @@ function Documents() {
               Drag & drop WAEC, NECO, GCE or JAMB results slips (PDF, JPG, PNG up to 10MB).
             </p>
             <p className="text-xs text-primary/80 font-medium mt-1 flex items-center justify-center gap-1">
-              <Sparkles className="h-3.5 w-3.5" /> High-precision AI OCR will extract and pre-fill your verification records.
+              <CheckCircle2 className="h-3.5 w-3.5" /> Document scanning will automatically extract and pre-fill your verification records.
             </p>
             <label className="mt-5 inline-block">
               <input type="file" multiple className="hidden" onChange={(e) => e.target.files && handleFiles(e.target.files)} />
@@ -729,7 +728,7 @@ function Documents() {
                       )}
                       {d.status === "ocr" && (
                         <p className="mt-1 flex items-center gap-1 text-[11px] text-warning">
-                          <ScanLine className="h-3 w-3 animate-pulse" /> Extracting academic scores via AI OCR…
+                          <ScanLine className="h-3 w-3 animate-pulse" /> Extracting academic scores…
                         </p>
                       )}
                     </div>
@@ -1345,7 +1344,7 @@ function Documents() {
             {/* JAMB Pathway Advisor */}
             <div className="rounded-3xl border bg-card p-5 shadow-soft space-y-4">
               <h4 className="font-display text-sm font-bold text-foreground flex items-center gap-1.5">
-                <Sparkles className="h-4.5 w-4.5 text-secondary" /> Academic Pathway Adviser
+                <GraduationCap className="h-4.5 w-4.5 text-secondary" /> Academic Pathway Adviser
               </h4>
               <div className="space-y-2 text-xs">
                 <div className="py-1">
@@ -1380,10 +1379,10 @@ function Documents() {
             {/* Quick Upload Action */}
             <div className="rounded-3xl border bg-gradient-hero p-5 text-card-foreground shadow-soft relative overflow-hidden flex flex-col justify-between">
               <div>
-                <Sparkles className="h-6 w-6 text-primary animate-pulse" />
-                <h4 className="font-display font-bold text-sm mt-2 text-foreground">Skip Manual Typing?</h4>
+                <FileText className="h-6 w-6 text-primary animate-pulse" />
+                <h4 className="font-display font-bold text-sm mt-2 text-foreground">Skip Manual Typing</h4>
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Upload your results certificates and let our premium, localized AI OCR extract and format all your scores in 2 seconds.
+                  Upload your result certificates and let the system automatically extract and format your scores.
                 </p>
               </div>
               <Button

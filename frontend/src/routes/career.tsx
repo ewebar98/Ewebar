@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/career")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Career Guidance — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Career Guidance | WeBAR" }] }),
   component: () => <AppLayout><Career /></AppLayout>,
 });
 
@@ -74,7 +74,7 @@ function Career() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Career guidance" subtitle="AI-mapped career paths based on your profile." />
+      <PageHeader title="Career guidance" subtitle="Recommended career paths based on your profile." />
 
       {profileErr && (
         <ErrorAlert
@@ -92,8 +92,8 @@ function Career() {
           <>
             <h2 className="font-display text-2xl font-bold">
               {topMatch.match && topMatch.match > 60
-                ? `Hi ${firstName} — your top career match: ${topMatch.title}`
-                : `Hi ${firstName} — explore career paths in Nigeria's tech ecosystem`}
+                ? `Hi ${firstName}, your top career match is ${topMatch.title}`
+                : `Hi ${firstName}, explore career paths in Nigeria's tech ecosystem`}
             </h2>
             <p className="mt-2 max-w-xl text-muted-foreground">
               {profile?.interests && profile.interests.length > 0
@@ -142,15 +142,15 @@ function Career() {
               onClick={() => setInterest(p.title)}
               className="mt-4 flex items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
-              Ask AI about this path <ArrowRight className="h-3 w-3" />
+              Learn more about this path <ArrowRight className="h-3 w-3" />
             </button>
           </motion.div>
         ))}
       </div>
 
-      {/* AI Career Guidance section */}
+      {/* Career Guidance section */}
       <div className="rounded-2xl border bg-card p-6 shadow-soft">
-        <h3 className="mb-3 font-display text-lg font-semibold">Ask the AI about any career</h3>
+        <h3 className="mb-3 font-display text-lg font-semibold">Ask about any career</h3>
         <p className="mb-4 text-sm text-muted-foreground">
           Get specific guidance on career paths, required courses, and top universities in Nigeria.
         </p>
@@ -162,7 +162,7 @@ function Career() {
             onKeyDown={(e) => e.key === "Enter" && handleAskAI()}
           />
           <Button onClick={handleAskAI} disabled={asking || !interest.trim()} className="bg-gradient-primary gap-2">
-            {asking ? "Asking..." : <><Send className="h-4 w-4" /> Ask AI</>}
+            {asking ? "Asking..." : <><Send className="h-4 w-4" /> Ask Counselor</>}
           </Button>
         </div>
         {guidance && (

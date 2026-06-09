@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/notifications")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Notifications — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Notifications | WeBAR" }] }),
   component: () => <AppLayout><Notifications /></AppLayout>,
 });
 
@@ -145,7 +145,7 @@ function Notifications() {
         <EmptyState 
           icon={Bell} 
           title={filter === "unread" ? "You're all caught up!" : "No notifications yet"} 
-          hint={filter === "unread" ? "No unread alerts in your queue." : "Critical updates regarding your application status, OCR documents, and AI advisor notes will appear here."}
+          hint={filter === "unread" ? "No unread alerts in your queue." : "Critical updates regarding your application status, OCR documents, and advisor notes will appear here."}
         />
       )}
 

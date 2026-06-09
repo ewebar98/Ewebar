@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef } from "react";
-import { Search, Eye, FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck, ChevronRight, X, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
+import { Search, Eye, FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck, ChevronRight, X, MessageCircle, Send, Loader2 } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/admin/applications")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Admissions Evaluation — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Admissions Evaluation | WeBAR" }] }),
   component: () => <AppLayout variant="admin"><EvaluateApplications /></AppLayout>,
 });
 
@@ -140,7 +140,7 @@ function EvaluateApplications() {
       case "offered":
         return <Badge tone="warning"><Clock className="mr-1 h-3 w-3" />Offered</Badge>;
       case "provisional":
-        return <Badge tone="primary" className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0"><Sparkles className="mr-1 h-3 w-3" />Provisional</Badge>;
+        return <Badge tone="primary" className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0"><ShieldCheck className="mr-1 h-3 w-3" />Provisional</Badge>;
       default:
         return <Badge tone="warning"><Clock className="mr-1 h-3 w-3" />Pending</Badge>;
     }

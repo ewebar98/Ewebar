@@ -81,7 +81,7 @@ function Profile() {
       const res = await ocrExtractResult(file);
       setExtracted(res);
       if (res.score > 0) {
-        toast.success(`Extracted ${res.examType} result — score: ${res.score}`);
+        toast.success(`Extracted ${res.examType} result with score of ${res.score}`);
       } else {
         toast.info(`Document uploaded. OCR extraction is processing.`);
       }
@@ -140,8 +140,8 @@ function Profile() {
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-primary text-2xl font-bold text-primary-foreground">
               {initials}
             </div>
-            <h3 className="mt-3 font-display text-lg font-semibold">{data.name || "—"}</h3>
-            <p className="text-sm text-muted-foreground">{data.email || "—"}</p>
+            <h3 className="mt-3 font-display text-lg font-semibold">{data.name || "-"}</h3>
+            <p className="text-sm text-muted-foreground">{data.email || "-"}</p>
           </div>
           <div className="mt-6 space-y-3 text-sm">
             {data.phone && <div className="flex justify-between"><span className="text-muted-foreground">Phone</span><span>{data.phone}</span></div>}

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { 
   Star, GraduationCap, Bell, FileText, TrendingUp, ArrowRight,
   CheckCircle, Circle, ClipboardList, UserCheck, ShieldCheck, Zap,
-  Loader2, AlertCircle, Sparkles
+  Loader2, AlertCircle
 } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, StatCard, Badge, ErrorAlert } from "@/components/ui-kit";
@@ -271,7 +271,7 @@ function Dashboard() {
       <div className="rounded-3xl border bg-card p-6 shadow-soft space-y-6">
         <div>
           <h3 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <GraduationCap className="h-5 w-5 text-primary" />
             LASUSTECH Admission Walkthrough Hub
           </h3>
           <p className="text-xs text-muted-foreground">Complete each step to directly apply to Lagos State University of Science and Technology.</p>
@@ -538,7 +538,7 @@ function Dashboard() {
         <div className="lg:col-span-2 space-y-4">
           {preferredCourseObj && eligibility?.eligible ? (
             <div className="rounded-2xl border border-success/20 bg-success/5 p-6 shadow-soft text-center h-full flex flex-col justify-center items-center min-h-[200px]">
-              <Sparkles className="h-10 w-10 text-success mb-3 animate-pulse" />
+              <CheckCircle className="h-10 w-10 text-success mb-3 animate-pulse" />
               <h4 className="font-display text-base font-bold text-success-foreground">You are eligible for direct application!</h4>
               <p className="mt-2 text-xs text-muted-foreground max-w-md leading-relaxed">
                 You meet all prerequisites and cutoffs for your preferred program: <b>{preferredCourseObj.name}</b>. Please proceed to submit your application directly using the Admission Walkthrough Hub above.
