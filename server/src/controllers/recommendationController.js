@@ -23,7 +23,7 @@ export const getRecommendations = asyncHandler(async (req, res) => {
     const jambScore = Number(req.user.jambScore) || 0;
     const hasInvalidCachedCourse = cachedRec.recommendedCourses.some((r) => {
       const cutoffMark = Number(r.courseId?.cutoffMark) || 200;
-      return cutoffMark > jambScore || r.explanation?.startsWith("Ineligible");
+      return cutoffMark > jambScore;
     });
 
     if (!isStale && !hasInvalidCachedCourse) {
@@ -48,7 +48,9 @@ export const getRecommendations = asyncHandler(async (req, res) => {
               slotsAvailable: 100,
             },
             matchScore: r.matchPercentage,
-            reason: r.explanation,
+            breakdown: r.breakdown || [],
+            confidence: r.confidence || "Medium",
+            recourseActions: r.recourseActions || [],
           };
         });
 
@@ -71,7 +73,9 @@ export const getRecommendations = asyncHandler(async (req, res) => {
       recommendedCourses: rawRecs.map((r) => ({
         courseId: r.course._id,
         matchPercentage: r.matchPercentage,
-        explanation: r.explanation,
+        breakdown: r.breakdown,
+        confidence: r.confidence,
+        recourseActions: r.recourseActions,
       })),
       matchPercentage: rawRecs.length > 0 ? rawRecs[0].matchPercentage : 0,
     },
@@ -91,7 +95,9 @@ export const getRecommendations = asyncHandler(async (req, res) => {
       slotsAvailable: 100,
     },
     matchScore: r.matchPercentage,
-    reason: r.explanation,
+    breakdown: r.breakdown,
+    confidence: r.confidence,
+    recourseActions: r.recourseActions,
   }));
 
   // Audit log for recommendation generation

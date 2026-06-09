@@ -160,7 +160,9 @@ export async function getRecommendations() {
     match: r.matchScore ?? null,
     cutoff: r.courseId?.cutoffMark ?? null,
     slots: r.courseId?.slotsAvailable || 100,
-    reason: r.reason || "Excellent match based on your interests and score.",
+    breakdown: (r.breakdown || []) as { type: "PASS" | "FAIL" | "WARN"; field: string; message: string }[],
+    confidence: (r.confidence || "Medium") as "High" | "Medium" | "Low",
+    recourseActions: (r.recourseActions || []) as { code: string; type: string; message: string; actionLink: string }[],
   }));
 }
 

@@ -154,6 +154,96 @@ export const calculateMatchScore = (student, program) => {
 };
 
 /**
+ * Generates structured explainability breakdown and recourse actions
+ * per the Explainability Framework & Personalized Recourse System spec.
+ */
+const buildExplainability = (student, program, details, matchPercentage) => {
+  // --- Decision Breakdown ---
+  const breakdown = [];
+
+  // JAMB cutoff check
+  if (details.cutoffStatus === "met") {
+    breakdown.push({ type: "PASS", field: "UTME Score", message: `${student.jambScore} — Meets program cutoff of ${program.cutoffMark}` });
+  } else {
+    breakdown.push({ type: "FAIL", field: "UTME Score", message: `${student.jambScore} — Below required cutoff of ${program.cutoffMark}` });
+  }
+
+  // Stream alignment
+  if (details.streamMismatch) {
+    breakdown.push({ type: "FAIL", field: "Stream Alignment", message: "Stream mismatch detected. Your subjects do not align with the science/technical requirements of this program." });
+  } else {
+    breakdown.push({ type: "PASS", field: "Stream Alignment", message: "Subject stream is aligned with program requirements." });
+  }
+
+  // Missing O'Level subjects
+  if (details.missingOlevelSubjects.length === 0) {
+    breakdown.push({ type: "PASS", field: "O'Level Prerequisites", message: "All required O'Level credit passes are verified." });
+  } else {
+    const borderline = details.missingOlevelSubjects.length === 1;
+    breakdown.push({
+      type: borderline ? "WARN" : "FAIL",
+      field: "O'Level Prerequisites",
+      message: `Missing credit pass in: ${details.missingOlevelSubjects.join(", ")}.`,
+    });
+  }
+
+  // JAMB subjects
+  if (details.missingJambSubjects.length === 0) {
+    breakdown.push({ type: "PASS", field: "JAMB Subjects", message: "All required JAMB subjects are present." });
+  } else {
+    breakdown.push({ type: "WARN", field: "JAMB Subjects", message: `Missing JAMB subjects: ${details.missingJambSubjects.join(", ")}.` });
+  }
+
+  // Interest alignment
+  if (details.interestMatched) {
+    breakdown.push({ type: "PASS", field: "Interest Alignment", message: "Program aligns with your stated interests." });
+  }
+
+  // Confidence level per spec
+  const confidence = matchPercentage >= 80 ? "High" : matchPercentage >= 50 ? "Medium" : "Low";
+
+  // --- Recourse Actions ---
+  const recourseActions = [];
+
+  if (student.jambScore < 200 && !details.jambMatched) {
+    recourseActions.push({
+      code: "REWRITE_JAMB",
+      type: "critical",
+      message: `Your UTME score of ${student.jambScore} is below the 200 threshold required for admission. We recommend registering for the next JAMB UTME and targeting a score of 200+.`,
+      actionLink: "/profile",
+    });
+  } else if (details.cutoffStatus === "unmet") {
+    const pointsNeeded = program.cutoffMark - student.jambScore;
+    recourseActions.push({
+      code: "CHANGE_OF_COURSE",
+      type: "advisory",
+      message: `Your UTME score (${student.jambScore}) is ${pointsNeeded} points below the ${program.cutoffMark} cutoff for ${program.name}. Consider changing your preferred program to a related course with a lower cutoff.`,
+      actionLink: "/recommendations",
+    });
+  }
+
+  if (details.missingOlevelSubjects.length > 0) {
+    recourseActions.push({
+      code: "OLEVEL_RESIT",
+      type: "error",
+      message: `You do not have a verified O'Level credit pass in: ${details.missingOlevelSubjects.join(", ")}. We recommend registering for the WAEC/NECO GCE Nov/Dec exams to obtain these credits.`,
+      actionLink: "/documents",
+    });
+  }
+
+  if (details.streamMismatch) {
+    recourseActions.push({
+      code: "STREAM_CORRECTION",
+      type: "critical",
+      message: "A subject stream mismatch was detected. Your subject combination fits the Arts/Commercial stream, but your preferred course requires Science prerequisites. We suggest exploring courses matching your subject stream.",
+      actionLink: "/recommendations",
+    });
+  }
+
+  return { breakdown, confidence, recourseActions };
+};
+
+/**
  * Generates academic recommendations using indexed database pre-filtering.
  */
 export const generateRecommendations = async (user) => {
@@ -183,28 +273,14 @@ export const generateRecommendations = async (user) => {
   const recommendations = programs
     .map((program) => {
       const { matchPercentage, details } = calculateMatchScore(user, program);
-      
-      let explanation = "";
-      if (details.streamMismatch) {
-        explanation = `Ineligible: Stream mismatch. This is a science/technical program, but you have no science subjects in JAMB.`;
-      } else if (details.cutoffStatus === "unmet") {
-        explanation = `Ineligible: Your JAMB score (${user.jambScore}) is below the required cutoff of ${program.cutoffMark} for ${program.name}.`;
-      } else if (details.missingJambSubjects.length > 0 || details.missingOlevelSubjects.length > 0) {
-        const missing = [];
-        if (details.missingJambSubjects.length > 0) missing.push(...details.missingJambSubjects.map(s => `${s} (JAMB)`));
-        if (details.missingOlevelSubjects.length > 0) missing.push(...details.missingOlevelSubjects.map(s => `${s} (O'Level)`));
-        explanation = `Ineligible: Missing prerequisites: ${missing.join(", ")}.`;
-      } else {
-        explanation = `Eligible: You meet all cutoffs and prerequisites.`;
-        if (details.interestMatched) {
-          explanation += ` Aligns with your interests in "${user.interests.slice(0, 3).join(", ")}".`;
-        }
-      }
+      const { breakdown, confidence, recourseActions } = buildExplainability(user, program, details, matchPercentage);
 
       return {
         course: program,
         matchPercentage,
-        explanation,
+        breakdown,
+        confidence,
+        recourseActions,
         prerequisitesMet: details.prerequisitesMet,
         details,
       };
