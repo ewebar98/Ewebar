@@ -150,8 +150,8 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdmissionRulesRoute = AdminAdmissionRulesRouteImport.update({
-  id: '/admin/admission-rules',
-  path: '/admin/admission-rules',
+  id: '/admin/admissionRules',
+  path: '/admin/admissionRules',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -170,8 +170,8 @@ export interface FileRoutesByFullPath {
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
   '/universities': typeof UniversitiesRouteWithChildren
+  '/admin/admissionRules': typeof AdminAdmissionRulesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
@@ -195,8 +195,8 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
+  '/admin/admissionRules': typeof AdminAdmissionRulesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
@@ -222,8 +222,8 @@ export interface FileRoutesById {
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
   '/universities': typeof UniversitiesRouteWithChildren
+  '/admin/admissionRules': typeof AdminAdmissionRulesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
-  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
@@ -250,8 +250,8 @@ export interface FileRouteTypes {
     | '/scholarships'
     | '/settings'
     | '/universities'
+    | '/admin/admissionRules'
     | '/admin/analytics'
-    | '/admin/admission-rules'
     | '/admin/applications'
     | '/admin/courses'
     | '/admin/scholarships'
@@ -275,8 +275,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/scholarships'
     | '/settings'
+    | '/admin/admissionRules'
     | '/admin/analytics'
-    | '/admin/admission-rules'
     | '/admin/applications'
     | '/admin/courses'
     | '/admin/scholarships'
@@ -301,8 +301,8 @@ export interface FileRouteTypes {
     | '/scholarships'
     | '/settings'
     | '/universities'
+    | '/admin/admissionRules'
     | '/admin/analytics'
-    | '/admin/admission-rules'
     | '/admin/applications'
     | '/admin/courses'
     | '/admin/scholarships'
@@ -328,8 +328,8 @@ export interface RootRouteChildren {
   ScholarshipsRoute: typeof ScholarshipsRoute
   SettingsRoute: typeof SettingsRoute
   UniversitiesRoute: typeof UniversitiesRouteWithChildren
-  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminAdmissionRulesRoute: typeof AdminAdmissionRulesRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCoursesRoute: typeof AdminCoursesRoute
   AdminScholarshipsRoute: typeof AdminScholarshipsRoute
@@ -501,10 +501,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/admission-rules': {
-      id: '/admin/admission-rules'
-      path: '/admin/admission-rules'
-      fullPath: '/admin/admission-rules'
+    '/admin/admissionRules': {
+      id: '/admin/admissionRules'
+      path: '/admin/admissionRules'
+      fullPath: '/admin/admissionRules'
       preLoaderRoute: typeof AdminAdmissionRulesRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -540,8 +540,8 @@ const rootRouteChildren: RootRouteChildren = {
   ScholarshipsRoute: ScholarshipsRoute,
   SettingsRoute: SettingsRoute,
   UniversitiesRoute: UniversitiesRouteWithChildren,
-  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminAdmissionRulesRoute: AdminAdmissionRulesRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCoursesRoute: AdminCoursesRoute,
   AdminScholarshipsRoute: AdminScholarshipsRoute,

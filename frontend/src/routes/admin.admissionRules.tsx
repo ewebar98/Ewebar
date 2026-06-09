@@ -20,7 +20,7 @@ interface AdmissionRule {
   criteria: any; // Adjust based on actual schema
 }
 
-export const Route = createFileRoute("/admin/admission-rules")({
+export const Route = createFileRoute("/admin/admissionRules")({
   beforeLoad: async () => {
     // Only admin users can access (assume requireRole middleware works globally)
     return {};
