@@ -402,10 +402,16 @@ export async function uploadDocument(file: File, type?: string, sittingNumber?: 
   };
 }
 
-export async function ocrExtractResult(file: File) {
+export async function ocrExtractResult(file: File, type?: string) {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await request<any>("/users/ocr-extract", {
+  
+  let url = "/users/ocr-extract";
+  if (type) {
+    url += `?type=${type}`;
+  }
+  
+  const res = await request<any>(url, {
     method: "POST",
     body: formData,
   });

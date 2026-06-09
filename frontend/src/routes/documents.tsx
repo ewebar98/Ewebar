@@ -445,7 +445,7 @@ function Documents() {
 
     try {
       const uploaded = await uploadDocument(file, type, sittingNumber);
-      const ocr = await ocrExtractResult(file);
+      const ocr = await ocrExtractResult(file, type);
       handleOcrPopulate(ocr, type, sittingNumber);
       refreshProfile();
       toast.success("Document uploaded and processed successfully!");
@@ -475,7 +475,7 @@ function Documents() {
         setDocs((d) => d.map((x) => (x.id === id ? { ...x, status: "ocr", progress: 100, url: uploaded.url } : x)));
 
         // Trigger OCR extraction
-        const ocr = await ocrExtractResult(file); // This is where the mock data comes from
+        const ocr = await ocrExtractResult(file, type); // This is where the mock data comes from
         setDocs((d) => d.map((x) => (x.id === id ? { ...x, status: "ready" } : x)));
         refreshDocs();
 
