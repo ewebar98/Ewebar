@@ -15,7 +15,7 @@ import { updateProfile } from "@/services/api";
 
 export const Route = createFileRoute("/settings")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Settings — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Settings — Intellipath" }] }),
   component: () => <AppLayout><Settings /></AppLayout>,
 });
 

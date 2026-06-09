@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+coimport { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +13,7 @@ import { chatWithAssistant } from "@/services/api";
 
 export const Route = createFileRoute("/assistant")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Assistant | WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Assistant | Intellipath" }] }),
   component: () => <AppLayout><Assistant /></AppLayout>,
 });
 

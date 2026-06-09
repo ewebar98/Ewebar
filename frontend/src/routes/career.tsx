@@ -52,7 +52,7 @@ function Career() {
     setAsking(true);
     setGuidance(null);
     try {
-      const token = localStorage.getItem("WeBAR.token");
+      const token = localStorage.getItem("Intellipath.token");
       const res = await fetch(`${BACKEND_URL}/api/ai/career-guidance`, {
         method: "POST",
         headers: {

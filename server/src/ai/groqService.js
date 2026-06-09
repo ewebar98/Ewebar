@@ -20,21 +20,21 @@ const generateOfflineResponse = (messages) => {
   let responseText = "";
 
   if (query.includes("hi") || query.includes("hello") || query.includes("hey")) {
-    responseText = "Yo bro! I'm Ada, your admission guide. What course are we looking at today, or is there a school you want to check out?";
+    responseText = "[OFFLINE] Yo bro! I'm Ada. I'm currently running on limited local logic. What course are we looking at today?";
   } else if (query.includes("unilag") || query.includes("covenant") || query.includes("ui") || query.includes("oau") || query.includes("cut-off") || query.includes("score")) {
-    responseText = "Universities baseline is 150-200, but competitive fields (like Law, Medicine, Engineering) at top schools like UNILAG, UI, and Covenant require a JAMB score of 240-280+. What is your score, bro?";
+    responseText = "[OFFLINE] Baseline is 150-200, but top schools like UNILAG/UI need 250+. What did you score?";
   } else if (query.includes("jamb") || query.includes("utme") || query.includes("waec") || query.includes("neco")) {
-    responseText = "You need at least 5 O'Level credits (A1-C6) including English and Maths, plus the correct 4 JAMB subjects. Tell me your desired course and I'll lay out the exact combination, bro!";
+    responseText = "[OFFLINE] You need 5 O'Level credits including English and Maths. Tell me your course for the combination!";
   } else if (query.includes("computer science") || query.includes("software engineering") || query.includes("cs")) {
-    responseText = "For Computer Science, aim for a JAMB score of 230+. Focus on English, Maths, Physics, and Chemistry. Top options are FUTA, UNILAG, and Covenant. What school interests you, bro?";
+    responseText = "[OFFLINE] CS needs 230+ in JAMB. Focus on English, Maths, Physics, and Chemistry.";
   } else if (query.includes("medicine") || query.includes("surgery") || query.includes("mbbs")) {
-    responseText = "Medicine requires a killer JAMB score of 270+ and English, Biology, Chemistry, and Physics. UI and UNILAG are top tier. Are you currently preparing for these?";
+    responseText = "[OFFLINE] Medicine needs 270+ and Bio/Chem/Phys. It is very competitive!";
   } else if (query.includes("law") || query.includes("llb")) {
-    responseText = "For Law, Literature-in-English, English, Government, and Arts are key. Target 250+ in JAMB. UI, OAU, and UNILAG are the best options. What's your target, bro?";
+    responseText = "[OFFLINE] Law needs Literature and Government. Target 250+.";
   } else if (query.includes("engineering") || query.includes("mechanical") || query.includes("electrical") || query.includes("civil")) {
-    responseText = "Engineering calls for English, Maths, Physics, and Chemistry. Target 230+ for top schools like FUTA, UI, and Covenant. Which branch of Engineering are you looking at, bro?";
+    responseText = "[OFFLINE] Engineering needs Maths/Phys/Chem and a target of 230+.";
   } else {
-    responseText = "I got you! Just keep your combination correct: English, Maths, and your 3 major departmental electives. What specific admission questions do you have for me, bro?";
+    responseText = "[OFFLINE] Keep your combination correct (Eng/Maths + 3 electives). Any other questions?";
   }
 
   return {

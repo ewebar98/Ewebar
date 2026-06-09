@@ -18,26 +18,37 @@ export const getRecommendations = asyncHandler(async (req, res) => {
   if (cachedRec) {
     const isStale = Date.now() - new Date(cachedRec.updatedAt).getTime() > CACHE_AGE_LIMIT;
 
-    if (!isStale) {
+    const jambScore = Number(req.user.jambScore) || 0;
+    const hasInvalidCachedCourse = cachedRec.recommendedCourses.some((r) => {
+      const cutoffMark = Number(r.courseId?.cutoffMark) || 200;
+      return cutoffMark > jambScore || r.explanation?.startsWith("Ineligible");
+    });
+
+    if (!isStale && !hasInvalidCachedCourse) {
       console.log(`\x1b[36m[Cache Hit] Serving recommendations for user ${req.user._id} from MongoDB cache.\x1b[0m`);
       
-      const data = cachedRec.recommendedCourses.map((r) => {
-        const program = r.courseId;
-        const institutionName = program?.institutionId?.name || "Unknown University";
-        const institutionId = program?.institutionId?._id || "";
-        return {
-          _id: `${req.user._id}_${program?._id}`,
-          universityId: { _id: institutionId, name: institutionName },
-          courseId: {
-            _id: program?._id,
-            courseName: program?.name,
-            cutoffMark: program?.cutoffMark || 200,
-            slotsAvailable: 100,
-          },
-          matchScore: r.matchPercentage,
-          reason: r.explanation,
-        };
-      });
+      const data = cachedRec.recommendedCourses
+        .filter((r) => {
+          const cutoffMark = Number(r.courseId?.cutoffMark) || 200;
+          return cutoffMark <= jambScore;
+        })
+        .map((r) => {
+          const program = r.courseId;
+          const institutionName = program?.institutionId?.name || "Unknown University";
+          const institutionId = program?.institutionId?._id || "";
+          return {
+            _id: `${req.user._id}_${program?._id}`,
+            universityId: { _id: institutionId, name: institutionName },
+            courseId: {
+              _id: program?._id,
+              courseName: program?.name,
+              cutoffMark: program?.cutoffMark || 200,
+              slotsAvailable: 100,
+            },
+            matchScore: r.matchPercentage,
+            reason: r.explanation,
+          };
+        });
 
       return res.json({
         success: true,

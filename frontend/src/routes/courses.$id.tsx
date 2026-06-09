@@ -9,7 +9,7 @@ import { Clock, BookOpen, Target } from "lucide-react";
 
 export const Route = createFileRoute("/courses/$id")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Course — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Course — Intellipath" }] }),
   component: () => <AppLayout><CourseDetails /></AppLayout>,
 });
 

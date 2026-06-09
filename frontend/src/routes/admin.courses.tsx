@@ -84,7 +84,7 @@ function ManageCourses() {
   const handleOpenAdd = () => {
     setSelectedCourse(null);
     setName("");
-    setInstId(schools && schools.length > 0 ? schools[0].id : "");
+    setInstId(""); // Default to empty, require selection
     setFacultyId("");
     setDeptId("");
     setDuration("4 years");

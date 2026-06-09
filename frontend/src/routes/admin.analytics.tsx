@@ -11,7 +11,7 @@ import {
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Analytics — Admin" }] }),
+  head: () => ({ meta: [{ title: "Analytics — Intellipath" }] }),
   component: () => <AppLayout variant="admin"><Analytics /></AppLayout>,
 });
 

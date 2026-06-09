@@ -6,13 +6,13 @@ import { useState } from "react";
 import { ChevronDown, Search, Star } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton, ErrorAlert } from "@/components/ui-kit";
-import { getRecommendations } from "@/services/api";
+import { getProfile, getRecommendations } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/recommendations")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Recommendations | WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Recommendations | Intellipath" }] }),
   component: () => <AppLayout><Recommendations /></AppLayout>,
 });
 
@@ -21,6 +21,11 @@ function Recommendations() {
     queryKey: ["recommendations"],
     queryFn: getRecommendations,
     staleTime: 5 * 60 * 1000, // 5 minutes cache lifetime
+  });
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
+    staleTime: 5 * 60 * 1000,
   });
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "high">("all");
@@ -57,10 +62,16 @@ function Recommendations() {
           <div className="md:col-span-2 rounded-2xl border border-dashed p-12 text-center bg-card shadow-soft">
             <Star className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-semibold text-foreground">
-              {q || filter === "high" ? "No recommendations match your filter" : "No recommendations yet"}
+              {q || filter === "high" ? "No recommendations match your filter" : "No eligible recommendations for your current JAMB score"}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {q ? `Try a different search term or clear the filter.` : filter === "high" ? "No programs currently score 85%+ for your profile." : "Update your profile with your JAMB score and interests to get matched."}
+              {q
+                ? `Try a different search term or clear the filter.`
+                : filter === "high"
+                  ? "No programs currently score 85%+ for your profile."
+                  : profile?.jambScore
+                    ? `Your JAMB score is ${profile.jambScore}. Please consider applying for JAMB again and target at least 200 or above for stronger course options.`
+                    : "Update your profile with your JAMB score and interests to get matched."}
             </p>
           </div>
         )}

@@ -47,9 +47,9 @@ function ManageUnis() {
     setStateStr("");
     setCityStr("");
     setTuitionStr("₦150,000/yr");
-    setAcceptanceRateNum(25);
-    setStudentPopulationNum(15000);
-    setRankingNum(10);
+    setAcceptanceRateNum(0); // Default to 0 or null
+    setStudentPopulationNum(0); // Default to 0 or null
+    setRankingNum(0); // Default to 0 or null
     setTagsStr("NUC, University");
     setOpen(true);
   };

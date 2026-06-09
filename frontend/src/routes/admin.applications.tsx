@@ -472,9 +472,9 @@ function EvaluateApplications() {
                                     : "bg-card text-foreground rounded-bl-none border border-border/50"
                                 }`}>
                                   {!isSelf && (
-                                    <div className="flex items-center gap-1.5 mb-1.5 border-b pb-1 border-border/20">
-                                      <span className="font-extrabold text-[9px] text-primary uppercase tracking-wide">Applicant (Student)</span>
-                                      <span className="text-[7px] font-bold bg-muted-foreground/15 text-muted-foreground px-1 py-0.5 rounded uppercase">STUDENT</span>
+                                    <div className="flex items-center gap-1.5 mb-1.5 border-b pb-1 border-border/20"> 
+                                      <span className="font-extrabold text-[9px] text-primary uppercase tracking-wide">{m.senderRole === "system" ? "System Message" : "Applicant (Student)"}</span>
+                                      {m.senderRole !== "system" && <span className="text-[7px] font-bold bg-muted-foreground/15 text-muted-foreground px-1 py-0.5 rounded uppercase">STUDENT</span>}
                                     </div>
                                   )}
                                   <p className="whitespace-pre-wrap leading-relaxed">{m.message}</p>

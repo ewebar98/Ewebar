@@ -18,7 +18,7 @@ const DiscoverRouteComponent = () => (
 
 export const Route = createFileRoute("/universities/")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Discover Universities — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Discover Universities — Intellipath" }] }),
   component: DiscoverRouteComponent,
 });
 

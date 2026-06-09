@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/notifications")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Notifications — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Notifications — Intellipath" }] }),
   component: () => <AppLayout><Notifications /></AppLayout>,
 });
 

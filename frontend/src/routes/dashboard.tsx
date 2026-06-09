@@ -21,19 +21,6 @@ import { useApi } from "@/hooks/useApi";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
-const FALLBACK_LASUSTECH_COURSES = [
-  "Agricultural Science",
-  "Biochemistry",
-  "Microbiology",
-  "Computer Science",
-  "Accounting",
-  "Business Administration",
-  "Mass Communication",
-  "Civil and Environmental Engineering",
-  "Mechanical Engineering",
-  "Electrical and Electronics Engineering"
-];
-
 const normalizeSubject = (name: string) => {
   if (!name) return "";
   const n = name.toLowerCase().trim();
@@ -120,7 +107,7 @@ const DashboardRouteComponent = () => (
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Dashboard | WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Dashboard | Intellipath" }] }),
   component: DashboardRouteComponent,
 });
 
@@ -247,7 +234,7 @@ function Dashboard() {
       >
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
-            <p className="text-sm text-primary-foreground/80 font-medium">Welcome back to WeBAR,</p>
+            <p className="text-sm text-primary-foreground/80 font-medium">Welcome back to Intellipath,</p>
             <h2 className="mt-1 font-display text-2xl font-bold md:text-3xl">{firstName}</h2>
             <p className="mt-2 max-w-md text-sm text-primary-foreground/85">
               {recs && recs.length > 0

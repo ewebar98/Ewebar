@@ -14,7 +14,7 @@ import {
 
 export const Route = createFileRoute("/admin/")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Admin — WeBAR" }] }),
+  head: () => ({ meta: [{ title: "Admin — Intellipath" }] }),
   component: () => <AppLayout variant="admin"><AdminOverview /></AppLayout>,
 });
 

@@ -14,19 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { NIGERIAN_STATES, STATE_LGA_MAPPING } from "@/constants/nigerianStatesLgas";
 
-const FALLBACK_LASUSTECH_COURSES = [
-  "Agricultural Science",
-  "Biochemistry",
-  "Microbiology",
-  "Computer Science",
-  "Accounting",
-  "Business Administration",
-  "Mass Communication",
-  "Civil and Environmental Engineering",
-  "Mechanical Engineering",
-  "Electrical and Electronics Engineering"
-];
-
 const ProfileRouteComponent = () => (
   <AppLayout>
     <Profile />
@@ -270,13 +257,13 @@ function Profile() {
                   onChange={(e) => setForm((f) => ({ ...f, preferredCourse: e.target.value }))}
                 >
                   <option value="">Select Course</option>
-                  {Array.from(new Set(
-                    lasustechCourses.length > 0 
-                      ? lasustechCourses.map(c => c.name) 
-                      : FALLBACK_LASUSTECH_COURSES
-                  )).sort().map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
+                  {lasustechCourses.length > 0 ? (
+                    Array.from(new Set(lasustechCourses.map(c => c.name))).sort().map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No courses available</option>
+                  )}
                 </select>
               </div>
 

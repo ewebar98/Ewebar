@@ -40,20 +40,7 @@ import { useApi } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { SearchableSubjectSelect } from "@/components/SearchableSubjectSelect";
 import { useQueryClient } from "@tanstack/react-query";
-import { NIGERIAN_STATES, STATE_LGA_MAPPING } from "@/constants/nigerianStatesLgas";
-
-const FALLBACK_LASUSTECH_COURSES = [
-  "Agricultural Science",
-  "Biochemistry",
-  "Microbiology",
-  "Computer Science",
-  "Accounting",
-  "Business Administration",
-  "Mass Communication",
-  "Civil and Environmental Engineering",
-  "Mechanical Engineering",
-  "Electrical and Electronics Engineering"
-];
+import { NIGERIAN_STATES, STATE_LGA_MAPPING } from "@/constants/nigerianStatesLgas"; // Keep this import
 
 const DocumentsRouteComponent = () => (
   <AppLayout>
@@ -166,11 +153,7 @@ function Documents() {
   );
 
   const lasustechCourses = lasustechData?.courses || [];
-  const courseOptions = Array.from(new Set(
-    lasustechCourses.length > 0 
-      ? lasustechCourses.map(c => c.name) 
-      : FALLBACK_LASUSTECH_COURSES
-  )).sort();
+  const courseOptions = Array.from(new Set(lasustechCourses.map(c => c.name))).sort();
 
   // Upload/OCR status list
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -409,7 +392,7 @@ function Documents() {
         setDocs((d) => d.map((x) => (x.id === id ? { ...x, status: "ocr", progress: 100, url: uploaded.url } : x)));
 
         // Trigger OCR extraction
-        const ocr = await ocrExtractResult(file);
+        const ocr = await ocrExtractResult(file); // This is where the mock data comes from
         setDocs((d) => d.map((x) => (x.id === id ? { ...x, status: "ready" } : x)));
         refreshDocs();
 
@@ -417,7 +400,7 @@ function Documents() {
         handleOcrPopulate(ocr);
         setActiveTab("verification");
       } catch (err: any) {
-        setDocs((d) => d.map((x) => (x.id === id ? { ...x, status: "error" } : x)));
+        setDocs((d) => d.map((x) => (x.id === id ? { ...x, status: "error", progress: 100 } : x))); // Ensure progress is 100 on error
         toast.error(`Processing failed: ${err.message || "Unknown error"}`);
       }
     }
@@ -561,6 +544,14 @@ function Documents() {
       }
       if (jambAdvisory.scoreMismatch && jambScore > 0) {
         toast.warning("Warning: The sum of your JAMB subject scores does not match your total JAMB score.");
+      }
+      
+      if (!combinedOLevelInfo.meetsCore) {
+        throw new Error("You do not meet the core O'Level prerequisites (English, Maths, and Civic Education credits).");
+      }
+
+      if (combinedOLevelInfo.isEconomicsViolated) {
+        throw new Error("Invalid O'Level subject combination detected for WAEC 2026 regulations.");
       }
 
       // Check O'level metadata

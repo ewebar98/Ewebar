@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "WeBAR | University Admission Platform" },
+      { title: "Intellipath | University Admission Platform" },
       { name: "description", content: "Discover universities, get personalized admission recommendations, and plan your future career." },
     ],
   }),
@@ -39,8 +39,8 @@ const stats = [
 ];
 
 const testimonials = [
-  { name: "Tunde A.", role: "UNILAG, Computer Science", quote: "WeBAR matched me with three programs I'd never considered. I got into my top choice." },
-  { name: "Aisha B.", role: "Covenant, Engineering", quote: "The career advisor tool alone saved me months of searching and helped me choose the right path." },
+  { name: "Tunde A.", role: "UNILAG, Computer Science", quote: "Intellipath matched me with three programs I'd never considered. I got into my top choice." },
+  { name: "Aisha B.", role: "Covenant, Engineering", quote: "The Intellipath advisor tool alone saved me months of searching." },
   { name: "Chinedu O.", role: "OAU, Medicine", quote: "The AI assistant felt like talking to a real counselor. Confidence-building and honest." },
 ];
 
@@ -82,7 +82,7 @@ function Landing() {
               transition={{ delay: 0.2 }}
               className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg"
             >
-              WeBAR analyses your results, interests, and goals to recommend programs that fit you.
+              Intellipath analyses your results, interests, and goals to recommend programs that fit you.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}

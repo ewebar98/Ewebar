@@ -11,7 +11,7 @@ export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper request wrapper for JSON fetch calls
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("WeBAR.token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("Intellipath.token") : null;
 
   const headers = new Headers(options.headers);
   if (!(options.body instanceof FormData)) {
@@ -46,11 +46,11 @@ export interface University {
   id: string;
   name: string;
   location: string;
-  ranking: number;
-  students: number;
-  acceptance: number;
-  tuition: string;
-  logo: string;
+  ranking: number | null;
+  students: number | null;
+  acceptance: number | null;
+  tuition: string | null;
+  logo: string | null;
   tags: string[];
   type?: string;
   courses?: Course[];
@@ -61,11 +61,11 @@ export interface Course {
   name: string;
   faculty: string;
   department?: string;
-  duration: string;
-  cutoff: number;
-  description: string;
+  duration: string | null;
+  cutoff: number | null;
+  description: string | null;
   institutionId?: string;
-  tuition?: string;
+  tuition?: string | null;
   requirements?: string[];
 }
 
@@ -75,11 +75,11 @@ export async function getUniversities(): Promise<University[]> {
     id: u._id,
     name: u.name,
     location: `${u.state}, ${u.city}`,
-    ranking: u.ranking || 1,
-    students: u.studentPopulation || 15000,
-    acceptance: u.acceptanceRate || 25,
-    tuition: u.tuition || "₦150,000/yr",
-    logo: u.logo || "",
+    ranking: u.ranking ?? null,
+    students: u.studentPopulation ?? null,
+    acceptance: u.acceptanceRate ?? null,
+    tuition: u.tuition ?? null,
+    logo: u.logo ?? null,
     tags: u.tags || [],
     type: u.institutionType,
   }));
@@ -92,21 +92,21 @@ export async function getUniversityById(id: string): Promise<University | null> 
     id: u._id,
     name: u.name,
     location: `${u.state}, ${u.city}`,
-    ranking: u.ranking || 1,
-    students: u.studentPopulation || 15000,
-    acceptance: u.acceptanceRate || 25,
-    tuition: u.tuition || "₦150,000/yr",
-    logo: u.logo || "",
+    ranking: u.ranking ?? null,
+    students: u.studentPopulation ?? null,
+    acceptance: u.acceptanceRate ?? null,
+    tuition: u.tuition ?? null,
+    logo: u.logo ?? null,
     tags: u.tags || [],
     type: u.institutionType,
     courses: u.courses?.map((c: any) => ({
       id: c._id,
       name: c.name,
-      faculty: c.facultyId?.name || "Sciences",
-      department: c.departmentId?.name || "General Department",
-      duration: c.duration || "4 years",
-      cutoff: c.cutoffMark || 200,
-      description: c.description || `Explore the ${c.name} program.`,
+      faculty: c.facultyId?.name ?? "N/A",
+      department: c.departmentId?.name ?? "N/A",
+      duration: c.duration ?? "N/A",
+      cutoff: c.cutoffMark ?? 0,
+      description: c.description ?? `Explore the ${c.name} program.`,
       institutionId: u._id,
       requirements: c.requirements || [],
     })) || [],
@@ -118,9 +118,9 @@ export async function getCourses(): Promise<Course[]> {
   return res.map((c) => ({
     id: c._id,
     name: c.name,
-    faculty: c.facultyId?.name || "Sciences",
-    duration: c.duration || "4 years",
-    cutoff: c.cutoffMark || 200,
+    faculty: c.facultyId?.name ?? null,
+    duration: c.duration ?? null,
+    cutoff: c.cutoffMark ?? null,
     description: c.description || `Explore the ${c.name} program. Requirements: ${c.requirements?.join(", ") || "English, Mathematics"}.`,
     institutionId: c.institutionId?._id || c.institutionId || "",
     tuition: c.tuition || "₦150,000/yr",
@@ -134,9 +134,9 @@ export async function getCourseById(id: string): Promise<Course | null> {
   return {
     id: c._id,
     name: c.name,
-    faculty: c.facultyId?.name || "Sciences",
-    duration: c.duration || "4 years",
-    cutoff: c.cutoffMark || 200,
+    faculty: c.facultyId?.name ?? null,
+    duration: c.duration ?? null,
+    cutoff: c.cutoffMark ?? null,
     description: c.description || `Explore the ${c.name} program. Requirements: ${c.requirements?.join(", ") || "English, Mathematics"}.`,
     institutionId: c.institutionId?._id || c.institutionId || "",
     tuition: c.tuition || "₦150,000/yr",
@@ -153,9 +153,9 @@ export async function getRecommendations() {
   const res = await request<any[]>("/recommendations");
   return res.map((r) => ({
     id: r._id,
-    university: r.universityId?.name || "University of Lagos",
-    universityId: r.universityId?._id || "",
-    course: r.courseId?.courseName || "Computer Science",
+    university: r.universityId?.name ?? null,
+    universityId: r.universityId?._id ?? null,
+    course: r.courseId?.courseName ?? null,
     courseId: r.courseId?._id || "",
     match: r.matchScore ?? null,
     cutoff: r.courseId?.cutoffMark ?? null,
@@ -187,7 +187,7 @@ export async function getNotifications() {
       id: n._id,
       title: n.title,
       body: n.body,
-      time: n.time || new Date(n.createdAt).toLocaleDateString(),
+      time: n.time || (n.createdAt ? new Date(n.createdAt).toLocaleDateString() : null), // Explicitly handle missing createdAt
       read: n.read || false,
       type: n.type || "info",
       link: n.link || "",
@@ -224,10 +224,10 @@ export async function getApplications(): Promise<StudentApplication[]> {
   const res = await request<any[]>("/applications");
   return res.map((a) => ({
     id: a._id,
-    university: a.universityId?.name || "University",
-    course: a.courseId?.name || "Course", // Map from name property
+    university: a.universityId?.name ?? null,
+    course: a.courseId?.name ?? null, // Map from name property
     status: a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : "Pending",
-    submitted: a.createdAt ? new Date(a.createdAt).toISOString().split("T")[0] : "N/A",
+    submitted: a.createdAt ? new Date(a.createdAt).toISOString().split("T")[0] : null,
     probability: a.matchScore || 85,
     unreadMessagesCount: a.unreadMessagesCount || 0,
   }));
@@ -281,7 +281,7 @@ export async function updateProfile(data: any) {
     phone: u.phone || "",
     dob: u.dob || "",
     state: u.preferredLocation || "",
-    gender: u.gender || "",
+    gender: u.gender ?? null,
     jambScore: u.jambScore || 0,
     waecAggregate: u.waecAggregate || "",
     interests: u.interests || [],
@@ -366,8 +366,8 @@ export async function getUploadedDocuments() {
     name: d.name,
     url: d.url,
     uploadedAt: d.uploadedAt,
-    status: "ready" as const,
-    size: 1024 * 128,
+    status: "ready" as const, // This is a client-side status
+    size: d.size || 0, // Fetch actual size from backend
   }));
 }
 
@@ -423,10 +423,10 @@ export async function getAdminApplications(): Promise<AdminApplication[]> {
   return res.map((a) => ({
     id: a._id,
     student: {
-      name: a.studentId?.fullName || "Student",
-      email: a.studentId?.email || "student@example.com",
+      name: a.studentId?.fullName ?? null,
+      email: a.studentId?.email ?? null,
       jambScore: a.studentId?.jambScore || 0,
-      waecAggregate: a.studentId?.waecAggregate || "Not uploaded",
+      waecAggregate: a.studentId?.waecAggregate ?? null,
     },
     university: {
       id: a.universityId?._id || "",
@@ -435,9 +435,9 @@ export async function getAdminApplications(): Promise<AdminApplication[]> {
       location: a.universityId?._id ? `${a.universityId.city}, ${a.universityId.state}` : "",
     },
     course: {
-      id: a.courseId?._id || "",
-      name: a.courseId?.name || "Course",
-      faculty: a.courseId?.facultyId?.name || "Sciences",
+      id: a.courseId?._id ?? null,
+      name: a.courseId?.name ?? null,
+      faculty: a.courseId?.facultyId?.name ?? null,
       cutoff: a.courseId?.cutoffMark || 200,
       duration: a.courseId?.duration || "4 years",
     },
@@ -448,7 +448,7 @@ export async function getAdminApplications(): Promise<AdminApplication[]> {
       action: trail.action,
       performedBy: trail.performedBy,
       timestamp: trail.timestamp ? new Date(trail.timestamp).toLocaleString() : new Date().toLocaleString(),
-      notes: trail.notes,
+      notes: trail.notes ?? null,
     })) || [],
     submitted: a.createdAt ? new Date(a.createdAt).toISOString().split("T")[0] : "N/A",
     unreadMessagesCount: a.unreadMessagesCount || 0,
@@ -474,7 +474,7 @@ export async function chatWithAssistant(history: { role: "user" | "assistant"; c
   // The AI controller returns { role, content } or just the string
   const content = typeof responseData === "string"
     ? responseData
-    : responseData?.content || "Sorry, I could not generate a response.";
+    : responseData?.content ?? "Sorry, I could not generate a response."; // Keep a fallback for AI content
 
   return {
     role: "assistant" as const,
@@ -521,8 +521,8 @@ export async function getStudentAnalytics(range: "7d" | "30d" | "90d" = "30d") {
 
     // Build faculty match from recommendations
     const facultyMap: Record<string, number[]> = {};
-    recs.forEach((r) => {
-      const key = r.course || "Other";
+    recs.forEach((r: any) => { // r is any here, but should be Recommendation type
+      const key = r.course ?? "Other";
       if (!facultyMap[key]) facultyMap[key] = [];
       facultyMap[key].push(r.match);
     });
@@ -573,7 +573,7 @@ export interface Message {
   id: string;
   applicationId: string;
   senderId: {
-    _id: string;
+    _id: string | null;
     fullName: string;
     email: string;
   };
@@ -590,7 +590,7 @@ export async function getApplicationMessages(applicationId: string): Promise<Mes
     applicationId: m.applicationId,
     senderId: {
       _id: m.senderId?._id || "",
-      fullName: m.senderId?.fullName || "System",
+      fullName: m.senderId?.fullName || (m.senderRole === "system" ? "System" : "Unknown"),
       email: m.senderId?.email || "",
     },
     senderRole: m.senderRole,
@@ -610,7 +610,7 @@ export async function sendApplicationMessage(applicationId: string, message: str
     applicationId: m.applicationId,
     senderId: {
       _id: m.senderId?._id || "",
-      fullName: m.senderId?.fullName || "System",
+      fullName: m.senderId?.fullName || (m.senderRole === "system" ? "System" : "Unknown"), // More specific
       email: m.senderId?.email || "",
     },
     senderRole: m.senderRole,
@@ -778,4 +778,3 @@ export async function confirmOfferAcceptance(applicationId: string) {
     method: "POST",
   });
 }
-

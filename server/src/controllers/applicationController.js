@@ -54,11 +54,13 @@ export const applyForCourse = asyncHandler(async (req, res) => {
   const cutoff = program.cutoffMark || 200;
 
   // Admission match probability calculation logic
-  let calculatedMatchScore = 85; 
+  let calculatedMatchScore = 0; 
   if (jamb >= cutoff) {
     calculatedMatchScore = Math.min(98, 85 + Math.round((jamb - cutoff) * 0.8));
+  } else if (jamb >= cutoff - 20) {
+    calculatedMatchScore = Math.max(10, 60 - Math.round((cutoff - jamb) * 2));
   } else {
-    calculatedMatchScore = Math.max(30, 85 - Math.round((cutoff - jamb) * 1.5));
+    calculatedMatchScore = Math.max(5, 30 - Math.round((cutoff - jamb) * 1.5));
   }
 
   // 3. Create persistent Application document with selected documents
@@ -115,6 +117,19 @@ export const applyForCourse = asyncHandler(async (req, res) => {
     }
   } catch (err) {
     // non-fatal: log but do not block application submission
+    application.auditTrail.push({
+      action: "Auto-offer processing failed",
+      performedBy: "system",
+      notes: `Error: ${err.message}`,
+    });
+    await Notification.create({
+      userId: req.user._id,
+      title: "Auto-Admission Offer Failed",
+      body: `An issue occurred while processing your immediate admission offer for ${program.name} at ${university.name}. Your application is now under manual review.`,
+      type: "error",
+      link: "/applications",
+    });
+    await application.save();
     console.error("Auto-offer error:", err);
   }
   // Trigger application submission notification
@@ -401,7 +416,7 @@ export const evaluateApplication = asyncHandler(async (req, res) => {
         applicationId,
         senderId: req.user._id, // Admin's ID
         senderRole: req.user.role,
-        message: aiResponse,
+        message: typeof aiResponse === "string" ? aiResponse : aiResponse.content,
         read: false,
       });
 
@@ -418,9 +433,9 @@ export const evaluateApplication = asyncHandler(async (req, res) => {
 
   // Add to audit trail
   application.auditTrail.push({
-    action: \`Application evaluated: \${status}\`,
+    action: `Application evaluated: ${status}`,
     performedBy: req.user.email || "admin",
-    notes: actionReason ? \`Reason: \${actionReason}\` : "",
+    notes: actionReason ? `Reason: ${actionReason}` : "",
   });
 
   await application.save();

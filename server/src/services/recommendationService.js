@@ -152,6 +152,8 @@ export const calculateMatchScore = (student, program) => {
  * Generates academic recommendations using indexed database pre-filtering.
  */
 export const generateRecommendations = async (user) => {
+  const jambScore = Number(user.jambScore) || 0;
+
   // Constrain recommendations strictly to LASUSTECH
   const lasustech = await Institution.findOne({
     $or: [
@@ -165,6 +167,7 @@ export const generateRecommendations = async (user) => {
   if (lasustech) {
     query.institutionId = lasustech._id;
   }
+  query.cutoffMark = { $lte: jambScore };
 
   const programs = await Program.find(query)
     .populate("institutionId")
@@ -174,7 +177,6 @@ export const generateRecommendations = async (user) => {
   const recommendations = programs
     .map((program) => {
       const { matchPercentage, details } = calculateMatchScore(user, program);
-      const institutionName = program.institutionId?.name || "Unknown University";
       
       let explanation = "";
       if (details.streamMismatch) {
@@ -201,10 +203,9 @@ export const generateRecommendations = async (user) => {
         details,
       };
     })
-    // Sort so eligible courses with highest match come first
+    // Only courses the applicant can actually apply for should be recommended.
+    .filter((r) => r.prerequisitesMet)
     .sort((a, b) => {
-      if (a.prerequisitesMet && !b.prerequisitesMet) return -1;
-      if (!a.prerequisitesMet && b.prerequisitesMet) return 1;
       return b.matchPercentage - a.matchPercentage;
     });
 
