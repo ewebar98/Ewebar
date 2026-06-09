@@ -13,7 +13,7 @@ import { chatWithAssistant } from "@/services/api";
 
 export const Route = createFileRoute("/assistant")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Assistant | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Assistant | WeBAR" }] }),
   component: () => <AppLayout><Assistant /></AppLayout>,
 });
 

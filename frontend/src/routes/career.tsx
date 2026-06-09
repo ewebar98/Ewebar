@@ -28,7 +28,7 @@ const careerPaths = [
 
 function Career() {
   const { user } = useAuth();
-  const { data: profile, loading: profileLoading, error: profileErr, refresh: refreshProfile } = useApi(getProfile);
+  const { data: profile, loading: profileLoading, error: profileErr, refresh: refreshProfile } = useApi("getProfile", getProfile);
   const [interest, setInterest] = useState("");
   const [guidance, setGuidance] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -52,7 +52,7 @@ function Career() {
     setAsking(true);
     setGuidance(null);
     try {
-      const token = localStorage.getItem("Intellipath.token");
+      const token = localStorage.getItem("webar.token");
       const res = await fetch(`${BACKEND_URL}/api/ai/career-guidance`, {
         method: "POST",
         headers: {

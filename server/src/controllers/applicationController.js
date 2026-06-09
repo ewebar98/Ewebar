@@ -19,6 +19,95 @@ export const getScholarships = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Create a new scholarship
+// @route   POST /api/scholarships
+// @access  Private/Admin
+export const createScholarship = asyncHandler(async (req, res) => {
+  const { name, sponsor, amount, deadline, category, eligibility } = req.body;
+
+  if (!name || !sponsor || !amount || !deadline || !category) {
+    res.status(400);
+    throw new Error("Please provide all required scholarship fields");
+  }
+
+  const scholarship = await Scholarship.create({
+    name,
+    sponsor,
+    amount,
+    deadline,
+    category,
+    eligibility: eligibility || [],
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Scholarship created successfully",
+    data: scholarship,
+  });
+});
+
+// @desc    Update a scholarship
+// @route   PUT /api/scholarships/:id
+// @access  Private/Admin
+export const updateScholarship = asyncHandler(async (req, res) => {
+  const scholarship = await Scholarship.findById(req.params.id);
+
+  if (!scholarship) {
+    res.status(404);
+    throw new Error("Scholarship not found");
+  }
+
+  const updatedScholarship = await Scholarship.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true, runValidators: true }
+  );
+
+  res.json({
+    success: true,
+    message: "Scholarship updated successfully",
+    data: updatedScholarship,
+  });
+});
+
+// @desc    Delete a scholarship
+// @route   DELETE /api/scholarships/:id
+// @access  Private/Admin
+export const deleteScholarship = asyncHandler(async (req, res) => {
+  const scholarship = await Scholarship.findById(req.params.id);
+
+  if (!scholarship) {
+    res.status(404);
+    throw new Error("Scholarship not found");
+  }
+
+  await scholarship.deleteOne();
+
+  res.json({
+    success: true,
+    message: "Scholarship removed successfully",
+  });
+});
+
+// @desc    Apply for a scholarship (mock response for external scholarships)
+// @route   POST /api/scholarships/:id/apply
+// @access  Private (Student)
+export const applyForScholarship = asyncHandler(async (req, res) => {
+  const scholarship = await Scholarship.findById(req.params.id);
+
+  if (!scholarship) {
+    res.status(404);
+    throw new Error("Scholarship not found");
+  }
+
+  // Currently we just return success without saving an Application doc for scholarships
+  // since most of these direct to external portals or only need local UI acknowledgement.
+  res.status(200).json({
+    success: true,
+    message: "Successfully initiated application for scholarship",
+  });
+});
+
 // @desc    Apply for a course
 // @route   POST /api/applications/apply
 // @access  Private

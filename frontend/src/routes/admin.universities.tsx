@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin/universities")({
 });
 
 function ManageUnis() {
-  const { data, loading, refresh } = useApi(getUniversities);
+  const { data, loading, refresh } = useApi("getUniversities", getUniversities);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedUni, setSelectedUni] = useState<any | null>(null);
@@ -284,7 +284,7 @@ function ManageUnis() {
                   </td>
                   <td className="px-5 py-4 text-muted-foreground">{u.location}</td>
                   <td className="px-5 py-4 font-medium text-foreground">{u.tuition}</td>
-                  <td className="px-5 py-4 text-muted-foreground">{u.students.toLocaleString()}</td>
+                  <td className="px-5 py-4 text-muted-foreground">{(u.students || 0).toLocaleString()}</td>
                   <td className="px-5 py-4">
                     <div className="flex justify-end gap-1.5">
                       <button 

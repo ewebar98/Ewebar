@@ -72,7 +72,7 @@ const applicationSchema = new mongoose.Schema(
 );
 
 // Pre-save hook to automatically initialize audit trail on creation
-applicationSchema.pre("save", function () {
+applicationSchema.pre("save", function (next) {
   if (this.isNew && this.auditTrail.length === 0) {
     this.auditTrail.push({
       action: "Application Created & Submitted",
@@ -80,6 +80,7 @@ applicationSchema.pre("save", function () {
       notes: `Initial program application matching score is ${this.matchScore}%`,
     });
   }
+  next();
 });
 
 export const Application = mongoose.model("Application", applicationSchema);

@@ -78,19 +78,22 @@ const checkEligibility = (profile: any, course: any) => {
   });
   
   // 3. Stream alignment check
-  const scienceSubjects = ["physics", "chemistry", "biology", "agricultural science"];
+  const scienceSubjects = ["physics", "chemistry", "biology", "agricultural science", "further mathematics"];
   const artCommSubjects = ["literature", "government", "economics", "commerce", "history"];
   
-  const isScienceCourse = courseRequirements.some((r: string) => scienceSubjects.includes(r));
-  const isArtCommCourse = courseRequirements.some((r: string) => artCommSubjects.includes(r));
+  const isScienceCourse = courseRequirements.some((r: string) => scienceSubjects.includes(r)) ||
+                          ["science", "engineering", "technology", "agriculture", "medical", "architecture"].some(word => course.name.toLowerCase().includes(word));
   
-  const studentScienceCount = studentJambSubjects.filter((s: string) => scienceSubjects.includes(s)).length;
-  const studentArtCommCount = studentJambSubjects.filter((s: string) => artCommSubjects.includes(s)).length;
+  const studentScienceJambCount = studentJambSubjects.filter((s: string) => scienceSubjects.includes(s)).length;
+  const studentScienceOlevelCount = Object.keys(studentOlevelMap).filter((s: string) => scienceSubjects.includes(s)).length;
+  const studentArtCommJambCount = studentJambSubjects.filter((s: string) => artCommSubjects.includes(s)).length;
   
-  if (isScienceCourse && studentScienceCount === 0 && studentJambSubjects.length > 0) {
-    errors.push("Incompatible stream: This is a Science program, but you took no science subjects in JAMB.");
-  } else if (isArtCommCourse && studentArtCommCount === 0 && studentJambSubjects.length > 0) {
-    errors.push("Incompatible stream: This is an Arts/Commercial program, but you took no arts/commercial subjects in JAMB.");
+  if (isScienceCourse) {
+    if ((studentScienceJambCount === 0 && studentJambSubjects.length > 0) || 
+        (studentScienceOlevelCount === 0 && Object.keys(studentOlevelMap).length > 0) ||
+        (studentArtCommJambCount >= 2)) {
+      errors.push("Strict Subject Combination Error: You are registered as an Arts/Commercial student. You cannot apply for a Science program.");
+    }
   }
   
   return {
@@ -107,7 +110,7 @@ const DashboardRouteComponent = () => (
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Dashboard | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Dashboard | WeBAR" }] }),
   component: DashboardRouteComponent,
 });
 
@@ -129,17 +132,18 @@ function Dashboard() {
   });
 
   // Fetch LASUSTECH courses dynamically to enable quick application submission
-  const { data: schools } = useApi(getUniversities);
+  const { data: schools } = useApi("getUniversities", getUniversities);
   const lasustechUni = schools?.find(
     (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
   );
 
   const { data: lasustechData } = useApi(
+    "getLasustech",
     () => (lasustechUni ? getUniversityById(lasustechUni.id) : Promise.resolve(null)),
     [lasustechUni?.id]
   );
 
-  const lasustechCourses = lasustechData?.courses || [];
+  const lasustechCourses = (lasustechData as any)?.courses || [];
 
   const recs = context?.recommendations || [];
   const notifs = context?.notifications || [];
@@ -234,7 +238,7 @@ function Dashboard() {
       >
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
-            <p className="text-sm text-primary-foreground/80 font-medium">Welcome back to Intellipath,</p>
+            <p className="text-sm text-primary-foreground/80 font-medium">Welcome back to WeBAR,</p>
             <h2 className="mt-1 font-display text-2xl font-bold md:text-3xl">{firstName}</h2>
             <p className="mt-2 max-w-md text-sm text-primary-foreground/85">
               {recs && recs.length > 0
@@ -428,10 +432,10 @@ function Dashboard() {
                   
                   <div className="border-t pt-4 space-y-3">
                     <p className="text-xs font-semibold text-foreground">Recommended Alternative Courses (You meet prerequisites):</p>
-                    {recs && recs.filter((r: any) => r.matchScore >= 40 && (r.course?.name || r.course) !== preferredCourseObj.name).length > 0 ? (
+                    {recs && recs.filter((r: any) => r.matchPercentage >= 40 && (r.course?.name || r.course) !== preferredCourseObj.name).length > 0 ? (
                       <div className="grid gap-3">
                         {recs
-                          .filter((r: any) => r.matchScore >= 40 && (r.course?.name || r.course) !== preferredCourseObj.name)
+                          .filter((r: any) => r.matchPercentage >= 40 && (r.course?.name || r.course) !== preferredCourseObj.name)
                           .slice(0, 2)
                           .map((r: any) => {
                             const altName = r.course?.name || r.course;
@@ -454,7 +458,18 @@ function Dashboard() {
                           })}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground italic">No alternative matches found based on your subject combination. Update your academic locker or consult WeBAR advisor.</p>
+                      <div className="rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs">
+                        <p className="font-bold text-warning-foreground mb-1">No Alternative Matches Available</p>
+                        {context?.profile?.jambScore && context.profile.jambScore < 200 ? (
+                          <p className="text-muted-foreground leading-relaxed">
+                            Your JAMB UTME score of <b>{context.profile.jambScore}</b> does not meet the minimum cutoff for any programs at LASUSTECH. We strongly recommend that you prepare to sit for JAMB again next year and aim for a score of <b>200 or above</b>.
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground leading-relaxed">
+                            No alternative matches found based on your subjects and score. Please update your academic locker or choose a different preferred program.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -521,56 +536,78 @@ function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recommendations */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display text-lg font-semibold">Top matches at LASUSTECH</h3>
-            <Link to="/recommendations" className="text-sm text-primary hover:underline">View all <ArrowRight className="inline h-3 w-3" /></Link>
-          </div>
-          <div className="space-y-3">
-            {lr && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
-            {!lr && recs?.length === 0 && (
-              <div className="rounded-2xl border bg-card p-8 text-center shadow-soft">
-                <GraduationCap className="mx-auto h-10 w-10 text-muted-foreground/40" />
-                <p className="mt-3 text-sm font-medium">No matches yet</p>
-                <p className="mt-1 text-xs text-muted-foreground">Ensure your JAMB & WAEC aggregate meets LASUSTECH cutoffs to display recommendations.</p>
+          {preferredCourseObj && eligibility?.eligible ? (
+            <div className="rounded-2xl border border-success/20 bg-success/5 p-6 shadow-soft text-center h-full flex flex-col justify-center items-center min-h-[200px]">
+              <Sparkles className="h-10 w-10 text-success mb-3 animate-pulse" />
+              <h4 className="font-display text-base font-bold text-success-foreground">You are eligible for direct application!</h4>
+              <p className="mt-2 text-xs text-muted-foreground max-w-md leading-relaxed">
+                You meet all prerequisites and cutoffs for your preferred program: <b>{preferredCourseObj.name}</b>. Please proceed to submit your application directly using the Admission Walkthrough Hub above.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg font-semibold">Top matches at LASUSTECH</h3>
+                <Link to="/recommendations" className="text-sm text-primary hover:underline">View all <ArrowRight className="inline h-3 w-3" /></Link>
               </div>
-            )}
-            {recs?.slice(0, 3).map((r: any, i) => {
-              const uniName = r.course?.institutionId?.name || r.university || "Lagos State University of Science and Technology";
-              const courseName = r.course?.name || r.course || "Program";
-              const pct = r.matchPercentage || r.match || null;
-              const cutoffVal = r.course?.cutoffMark || r.cutoff || null;
-
-              return (
-                <motion.div
-                  key={r.course?.id || r.id || i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  className="rounded-2xl border bg-card p-4 shadow-soft"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <GraduationCap className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{uniName}</p>
-                        <p className="text-xs text-muted-foreground">{courseName}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {pct !== null ? (
-                        <p className="font-display text-xl font-bold text-primary">{pct}%</p>
+              <div className="space-y-3">
+                {lr && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+                {!lr && recs?.length === 0 && (
+                  <div className="rounded-2xl border bg-card p-8 text-center shadow-soft border-destructive/20">
+                    <AlertCircle className="mx-auto h-10 w-10 text-destructive/60 animate-bounce mb-3" />
+                    <p className="text-sm font-bold text-foreground">No Compatible Programs Found</p>
+                    <p className="mt-2 text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+                      {context?.profile?.jambScore && context.profile.jambScore < 200 ? (
+                        <span>
+                          Your JAMB UTME score of <b>{context.profile.jambScore}</b> is insufficient to qualify for any programs at LASUSTECH. We strongly advise that you prepare to sit for JAMB again next year and aim for a score of <b>200 or above</b>.
+                        </span>
                       ) : (
-                        <p className="text-xs text-muted-foreground italic">No score yet</p>
+                        <span>
+                          Ensure your academic results meet LASUSTECH prerequisite cutoffs and subject stream requirements to display eligible matches.
+                        </span>
                       )}
-                      {cutoffVal !== null && <Badge tone="success">Cutoff: {cutoffVal}</Badge>}
-                    </div>
+                    </p>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                )}
+                {recs?.slice(0, 3).map((r: any, i) => {
+                  const uniName = r.course?.institutionId?.name || r.university || "Lagos State University of Science and Technology";
+                  const courseName = r.course?.name || r.course || "Program";
+                  const pct = r.matchPercentage || r.match || null;
+                  const cutoffVal = r.course?.cutoffMark || r.cutoff || null;
+
+                  return (
+                    <motion.div
+                      key={r.course?.id || r.id || i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      className="rounded-2xl border bg-card p-4 shadow-soft"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <GraduationCap className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{uniName}</p>
+                            <p className="text-xs text-muted-foreground">{courseName}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {pct !== null ? (
+                            <p className="font-display text-xl font-bold text-primary">{pct}%</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">No score yet</p>
+                          )}
+                          {cutoffVal !== null && <Badge tone="success">Cutoff: {cutoffVal}</Badge>}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Side widgets */}

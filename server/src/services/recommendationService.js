@@ -1,4 +1,4 @@
-git commit -m "Finalized Intellipath system audit and fixes"
+git commit -m "Finalized WeBAR system audit and fixes"
 import { Program, Institution } from "../models/universityModel.js";
 
 /**
@@ -81,21 +81,23 @@ export const calculateMatchScore = (student, program) => {
   });
 
   // 3. Stream Alignment Check
-  const programScienceSubjects = ["physics", "chemistry", "biology", "agricultural science"];
+  const programScienceSubjects = ["physics", "chemistry", "biology", "agricultural science", "further mathematics"];
   const programArtCommSubjects = ["literature", "government", "economics", "commerce", "history"];
 
-  const hasScienceRequirement = programRequirements.some((r) => programScienceSubjects.includes(r));
-  const hasArtCommRequirement = programRequirements.some((r) => programArtCommSubjects.includes(r));
+  const isScienceCourse = programRequirements.some((r) => programScienceSubjects.includes(r)) ||
+                          ["science", "engineering", "technology", "agriculture", "medical", "architecture"].some(word => program.name?.toLowerCase().includes(word));
 
-  const studentScienceCount = studentJambSubjectNames.filter((s) => programScienceSubjects.includes(s)).length;
-  const studentArtCommCount = studentJambSubjectNames.filter((s) => programArtCommSubjects.includes(s)).length;
+  const studentScienceJambCount = studentJambSubjectNames.filter((s) => programScienceSubjects.includes(s)).length;
+  const studentScienceOlevelCount = Object.keys(studentOlevelSubjectMap).filter((s) => programScienceSubjects.includes(s)).length;
+  const studentArtCommJambCount = studentJambSubjectNames.filter((s) => programArtCommSubjects.includes(s)).length;
 
-  if (hasScienceRequirement && studentScienceCount === 0 && studentJambSubjectNames.length > 0) {
-    matches.streamMismatch = true;
-    matches.missingPrerequisites.push("Science Stream Match");
-  } else if (hasArtCommRequirement && studentArtCommCount === 0 && studentJambSubjectNames.length > 0) {
-    matches.streamMismatch = true;
-    matches.missingPrerequisites.push("Arts/Commercial Stream Match");
+  if (isScienceCourse) {
+    if ((studentScienceJambCount === 0 && studentJambSubjectNames.length > 0) ||
+        (studentScienceOlevelCount === 0 && Object.keys(studentOlevelSubjectMap).length > 0) ||
+        (studentArtCommJambCount >= 2)) {
+      matches.streamMismatch = true;
+      matches.missingPrerequisites.push("Strict Subject Combination Match (Arts student applying for Science)");
+    }
   }
 
   // Calculate O'level score component (35 points)

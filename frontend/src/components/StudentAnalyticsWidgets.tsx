@@ -14,7 +14,7 @@ type Range = "7d" | "30d" | "90d";
 
 export function StudentAnalyticsWidgets() {
   const [range, setRange] = useState<Range>("30d");
-  const { data, loading } = useApi(() => getStudentAnalytics(range), [range]);
+  const { data, loading } = useApi("getStudentAnalytics", () => getStudentAnalytics(range), [range]);
 
   return (
     <motion.section

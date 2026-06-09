@@ -11,7 +11,7 @@ export const BASE_URL = `${BACKEND_URL}/api`;
 
 // Helper request wrapper for JSON fetch calls
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("Intellipath.token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("webar.token") : null;
 
   const headers = new Headers(options.headers);
   if (!(options.body instanceof FormData)) {
@@ -164,17 +164,36 @@ export async function getRecommendations() {
   }));
 }
 
+// ==========================================
+// SCHOLARSHIPS API
+// ==========================================
 export async function getScholarships() {
   const res = await request<any[]>("/scholarships");
   return res.map((s) => ({
-    id: s._id,
-    name: s.title,
-    amount: s.coverage || "₦500,000",
+    id: s._id || s.id,
+    name: s.name || s.title,
+    amount: s.amount || s.coverage || "₦500,000",
     deadline: s.deadline ? new Date(s.deadline).toISOString().split("T")[0] : "2026-08-30",
-    eligibility: s.eligibility ? [s.eligibility] : ["All Applicants"],
+    eligibility: s.eligibility && s.eligibility.length > 0 ? s.eligibility : ["All Applicants"],
     sponsor: s.sponsor || "Private Sponsor",
     category: s.category || "Merit",
   }));
+}
+
+export async function createScholarship(data: any) {
+  return await request<any>("/scholarships", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function updateScholarship(id: string, data: any) {
+  return await request<any>(`/scholarships/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
+
+export async function deleteScholarship(id: string) {
+  return await request<any>(`/scholarships/${id}`, { method: "DELETE" });
+}
+
+export async function applyForScholarship(id: string) {
+  return await request<any>(`/scholarships/${id}/apply`, { method: "POST" });
 }
 
 export async function getNotifications() {
@@ -224,14 +243,16 @@ export async function getApplications(): Promise<StudentApplication[]> {
   const res = await request<any[]>("/applications");
   return res.map((a) => ({
     id: a._id,
-    university: a.universityId?.name ?? null,
-    course: a.courseId?.name ?? null, // Map from name property
+    university: a.universityId?.name ?? "Unknown",
+    course: a.courseId?.name ?? "Unknown",
     status: a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : "Pending",
-    submitted: a.createdAt ? new Date(a.createdAt).toISOString().split("T")[0] : null,
+    submitted: a.createdAt ? new Date(a.createdAt).toISOString().split("T")[0] : "",
     probability: a.matchScore || 85,
     unreadMessagesCount: a.unreadMessagesCount || 0,
   }));
 }
+
+// Removed duplicate AdminApplication and Message interfaces
 
 export async function getProfile() {
   const u = await request<any>("/users/profile");
@@ -243,7 +264,6 @@ export async function getProfile() {
     state: u.preferredLocation || "",
     gender: u.gender || "",
     jambScore: u.jambScore || 0,
-    waecAggregate: u.waecAggregate || "",
     interests: u.interests || [],
     preferredUniversities: u.preferredUniversities || [],
     bio: u.bio || "",
@@ -262,7 +282,6 @@ export async function updateProfile(data: any) {
   if (data.jambScore !== undefined && data.jambScore !== "") payload.jambScore = Number(data.jambScore);
   if (data.interests !== undefined) payload.interests = data.interests;
   if (data.state !== undefined) payload.preferredLocation = data.state;
-  if (data.waecAggregate !== undefined) payload.waecAggregate = data.waecAggregate;
   if (data.subjects !== undefined) payload.subjects = data.subjects;
   if (data.jambSubjects !== undefined) payload.jambSubjects = data.jambSubjects;
   if (data.olevelSittings !== undefined) payload.olevelSittings = data.olevelSittings;
@@ -283,7 +302,6 @@ export async function updateProfile(data: any) {
     state: u.preferredLocation || "",
     gender: u.gender ?? null,
     jambScore: u.jambScore || 0,
-    waecAggregate: u.waecAggregate || "",
     interests: u.interests || [],
     preferredUniversities: u.preferredUniversities || [],
     bio: u.bio || "",
@@ -387,10 +405,12 @@ export async function submitApplication(universityId: string, courseId: string, 
 export interface AdminApplication {
   id: string;
   student: {
+    id: string;
     name: string;
     email: string;
     jambScore: number;
-    waecAggregate: string;
+    olevelSittings: any[];
+    subjects: any[];
   };
   university: {
     id: string;
@@ -407,7 +427,7 @@ export interface AdminApplication {
   };
   status: "pending" | "reviewed" | "accepted" | "rejected";
   matchScore: number;
-  documents: { name: string; url: string }[];
+  documents: { name: string; url: string; uploadedAt?: string }[];
   auditTrail: {
     action: string;
     performedBy: string;
@@ -423,10 +443,12 @@ export async function getAdminApplications(): Promise<AdminApplication[]> {
   return res.map((a) => ({
     id: a._id,
     student: {
+      id: a.studentId?._id || "",
       name: a.studentId?.fullName ?? null,
       email: a.studentId?.email ?? null,
       jambScore: a.studentId?.jambScore || 0,
-      waecAggregate: a.studentId?.waecAggregate ?? null,
+      olevelSittings: a.studentId?.olevelSittings || [],
+      subjects: a.studentId?.subjects || [],
     },
     university: {
       id: a.universityId?._id || "",
@@ -577,7 +599,7 @@ export interface Message {
     fullName: string;
     email: string;
   };
-  senderRole: "student" | "admin" | "schoolAdmin";
+  senderRole: "student" | "admin" | "schoolAdmin" | "system";
   message: string;
   read: boolean;
   createdAt: string;

@@ -6,13 +6,14 @@ import { Search, Wallet, Calendar, Trophy, ChevronRight, RotateCcw } from "lucid
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton, EmptyState, ErrorAlert } from "@/components/ui-kit";
 import { useApi } from "@/hooks/useApi";
-import { getScholarships } from "@/services/api";
+import { getScholarships, applyForScholarship } from "@/services/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/scholarships")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Scholarships | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Scholarships | WeBAR" }] }),
   component: () => <AppLayout><Scholarships /></AppLayout>,
 });
 
@@ -110,15 +111,28 @@ function scoreScholarship(s: Scholarship, q: Quiz): number {
 }
 
 function Scholarships() {
-  const { data, loading, error, refresh } = useApi(getScholarships);
+  const { data, loading, error, refresh } = useApi("getScholarships", getScholarships);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("All");
   const [quizOpen, setQuizOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<Quiz>>({});
   const [submitted, setSubmitted] = useState<Quiz | null>(null);
+  const [applyingTo, setApplyingTo] = useState<string | null>(null);
 
   const cats = ["All", "Merit", "STEM", "Need", "Tech"];
+
+  const handleApply = async (id: string) => {
+    try {
+      setApplyingTo(id);
+      await applyForScholarship(id);
+      toast.success("Successfully initiated application! You will be redirected to the sponsor's portal.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to apply for scholarship");
+    } finally {
+      setApplyingTo(null);
+    }
+  };
 
   const enriched = useMemo(() => {
     const list = (data ?? [])
@@ -241,11 +255,18 @@ function Scholarships() {
             <p className="mt-1 text-xs text-muted-foreground">{s.sponsor}</p>
             <p className="mt-3 font-display text-xl font-bold gradient-text">{s.amount}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {s.eligibility.map((e) => <Badge key={e}>{e}</Badge>)}
+              {s.eligibility.map((e: string) => <Badge key={e}>{e}</Badge>)}
             </div>
             <div className="mt-auto flex items-center justify-between pt-4">
               <Countdown deadline={s.deadline} />
-              <Button size="sm" className="bg-gradient-primary">Apply</Button>
+              <Button
+                size="sm"
+                className="bg-gradient-primary"
+                onClick={() => handleApply(s.id)}
+                disabled={applyingTo === s.id}
+              >
+                {applyingTo === s.id ? "Applying..." : "Apply"}
+              </Button>
             </div>
           </motion.div>
         ))}

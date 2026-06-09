@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/recommendations")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Recommendations | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Recommendations | WeBAR" }] }),
   component: () => <AppLayout><Recommendations /></AppLayout>,
 });
 
@@ -47,6 +47,15 @@ function Recommendations() {
         />
       )}
 
+      {profile?.preferredCourse && (
+        <div className="rounded-2xl border p-4 bg-muted/20 text-xs">
+          <p className="font-semibold text-foreground">Preferred Program: {profile.preferredCourse}</p>
+          <p className="text-muted-foreground mt-1">
+            If you meet all the prerequisite cutoffs and subject requirements, you can apply directly to your preferred course. The list below highlights alternative matching programs.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -70,7 +79,9 @@ function Recommendations() {
                 : filter === "high"
                   ? "No programs currently score 85%+ for your profile."
                   : profile?.jambScore
-                    ? `Your JAMB score is ${profile.jambScore}. Please consider applying for JAMB again and target at least 200 or above for stronger course options.`
+                    ? profile.jambScore < 200
+                      ? `Your JAMB score is ${profile.jambScore}. Since there are no eligible courses at LASUSTECH matching this score, we strongly recommend preparing to sit for JAMB again to target 200 or above for university eligibility.`
+                      : `Your JAMB score is ${profile.jambScore}. Please consider checking your academic locker and ensure correct subject combinations are configured.`
                     : "Update your profile with your JAMB score and interests to get matched."}
             </p>
           </div>

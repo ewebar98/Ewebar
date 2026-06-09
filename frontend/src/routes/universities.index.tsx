@@ -18,7 +18,7 @@ const DiscoverRouteComponent = () => (
 
 export const Route = createFileRoute("/universities/")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Discover Universities — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Discover Universities — WeBAR" }] }),
   component: DiscoverRouteComponent,
 });
 
@@ -67,8 +67,8 @@ function Discover() {
     }
     
     if (sort === "name") r = [...r].sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "acceptance") r = [...r].sort((a, b) => b.acceptance - a.acceptance);
-    if (sort === "students") r = [...r].sort((a, b) => b.students - a.students);
+    if (sort === "acceptance") r = [...r].sort((a, b) => (b.acceptance || 0) - (a.acceptance || 0));
+    if (sort === "students") r = [...r].sort((a, b) => (b.students || 0) - (a.students || 0));
 
     // Push LASUSTECH to the top of the list if it matches filters
     const lasustechIdx = r.findIndex(
@@ -228,7 +228,7 @@ function Discover() {
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
                 <div className="rounded-lg bg-muted/50 p-2">
                   <Users className="mb-1 h-3 w-3 text-muted-foreground" />
-                  <p className="font-semibold">{(u.students / 1000).toFixed(0)}k</p>
+                  <p className="font-semibold">{((u.students || 0) / 1000).toFixed(0)}k</p>
                   <p className="text-muted-foreground">students</p>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-2">
@@ -238,7 +238,7 @@ function Discover() {
                 </div>
                 <div className="rounded-lg bg-muted/50 p-2">
                   <Award className="mb-1 h-3 w-3 text-muted-foreground" />
-                  <p className="font-semibold text-[11px]">{u.tuition.split("/")[0]}</p>
+                  <p className="font-semibold text-[11px]">{u.tuition ? u.tuition.split("/")[0] : ""}</p>
                   <p className="text-muted-foreground">tuition</p>
                 </div>
               </div>

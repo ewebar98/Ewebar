@@ -39,7 +39,7 @@ export async function runBatchAdmissionsForProgram(programId, performedBy = "sys
           {
             userId: app.studentId._id,
             title: "Admission Offer",
-            body: `You have been offered admission to ${program.name} at ${program.institutionId?.name || "your chosen institution"}. Please confirm within ${OFFER_HOURS} hours.",
+            body: `You have been offered admission to ${program.name} at ${program.institutionId?.name || "your chosen institution"}. Please confirm within ${OFFER_HOURS} hours.`,
             type: "success",
             link: "/applications",
           },
@@ -50,7 +50,7 @@ export async function runBatchAdmissionsForProgram(programId, performedBy = "sys
             applicationId: app._id,
             senderId: null,
             senderRole: "system",
-            message: `System: You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours.",
+            message: `System: You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours.`,
             read: false,
           },
         ], { session });
@@ -98,7 +98,7 @@ export async function runBatchAdmissionsForProgram(programId, performedBy = "sys
         await Notification.create({
           userId: app.studentId._id,
           title: "Admission Offer",
-          body: `You have been offered admission to ${program.name} at ${program.institutionId?.name || "your chosen institution"}. Please confirm within ${OFFER_HOURS} hours.",
+          body: `You have been offered admission to ${program.name} at ${program.institutionId?.name || "your chosen institution"}. Please confirm within ${OFFER_HOURS} hours.`,
           type: "success",
           link: "/applications",
         });
@@ -107,7 +107,7 @@ export async function runBatchAdmissionsForProgram(programId, performedBy = "sys
           applicationId: app._id,
           senderId: null,
           senderRole: "system",
-          message: `System: You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours.",
+          message: `System: You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours.`,
           read: false,
         });
 

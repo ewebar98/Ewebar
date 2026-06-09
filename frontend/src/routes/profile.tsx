@@ -27,23 +27,24 @@ export const Route = createFileRoute("/profile")({
 });
 
 function Profile() {
-  const { data, loading, error } = useApi(getProfile);
+  const { data, loading, error } = useApi("getProfile", getProfile);
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState<Awaited<ReturnType<typeof ocrExtractResult>> | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Fetch LASUSTECH courses dynamically
-  const { data: schools } = useApi(getUniversities);
+  const { data: schools } = useApi("getUniversities", getUniversities);
   const lasustechUni = schools?.find(
     (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
   );
 
   const { data: lasustechData } = useApi(
+    "getLasustech",
     () => (lasustechUni ? getUniversityById(lasustechUni.id) : Promise.resolve(null)),
     [lasustechUni?.id]
   );
 
-  const lasustechCourses = lasustechData?.courses || [];
+  const lasustechCourses = (lasustechData as any)?.courses || [];
 
   // Local form state
   const [form, setForm] = useState({
@@ -258,7 +259,7 @@ function Profile() {
                 >
                   <option value="">Select Course</option>
                   {lasustechCourses.length > 0 ? (
-                    Array.from(new Set(lasustechCourses.map(c => c.name))).sort().map((c) => (
+                    (Array.from(new Set(lasustechCourses.map((c: any) => c.name))).sort() as string[]).map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))
                   ) : (

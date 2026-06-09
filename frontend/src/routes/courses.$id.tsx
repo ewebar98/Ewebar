@@ -9,13 +9,13 @@ import { Clock, BookOpen, Target } from "lucide-react";
 
 export const Route = createFileRoute("/courses/$id")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Course — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Course — WeBAR" }] }),
   component: () => <AppLayout><CourseDetails /></AppLayout>,
 });
 
 function CourseDetails() {
   const { id } = Route.useParams();
-  const { data: c, loading, error, refresh } = useApi(() => getCourseById(id), [id]);
+  const { data: c, loading, error, refresh } = useApi("getCourseById", () => getCourseById(id), [id]);
   if (error) {
     return (
       <div className="py-12">

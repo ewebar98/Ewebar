@@ -1,4 +1,4 @@
-# Intellipath Backend
+# WeBAR Backend
 
 Scalable, intelligent backend service for university admissions.
 

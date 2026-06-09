@@ -14,7 +14,7 @@ import {
 
 export const Route = createFileRoute("/admin/")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Admin — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Admin — WeBAR" }] }),
   component: () => <AppLayout variant="admin"><AdminOverview /></AppLayout>,
 });
 
@@ -23,7 +23,7 @@ const COLORS = ["oklch(0.52 0.21 277)", "oklch(0.7 0.15 162)", "oklch(0.78 0.16 
 type Range = "7d" | "30d" | "90d";
 
 function AdminOverview() {
-  const { data, loading, error, refresh } = useApi(getAnalytics);
+  const { data, loading, error, refresh } = useApi("getAnalytics", getAnalytics);
   const [range, setRange] = useState<Range>("30d");
   const [faculty, setFaculty] = useState<string>("All");
 

@@ -75,10 +75,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Intellipath | University Admission Platform" },
+      { title: "WeBAR | University Admission Platform" },
       { name: "description", content: "Discover universities, get personalized admission recommendations, and plan your career." },
-      { name: "author", content: "Intellipath" },
-      { property: "og:title", content: "Intellipath | University Admission Platform" },
+      { name: "author", content: "WeBAR" },
+      { property: "og:title", content: "WeBAR | University Admission Platform" },
       { property: "og:description", content: "Intelligent university admission and career guidance for students." },
       {
         rel: "preconnect",

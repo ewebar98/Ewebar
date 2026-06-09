@@ -12,12 +12,12 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/applications")({
   beforeLoad: requireRole("student"),
-     head: () => ({ meta: [{ title: "Applications — Intellipath" }] }),
+     head: () => ({ meta: [{ title: "Applications — WeBAR" }] }),
   component: () => <AppLayout><Applications /></AppLayout>,
 });
 
 function Applications() {
-  const { data, loading, error, refresh } = useApi(getApplications);
+  const { data, loading, error, refresh } = useApi("getApplications", getApplications);
   const [activeAppId, setActiveAppId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);

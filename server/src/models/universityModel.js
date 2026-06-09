@@ -93,13 +93,14 @@ const institutionSchema = new mongoose.Schema(
 );
 
 // Slugify institution name (Synchronous promise-less validate hook)
-institutionSchema.pre("validate", function () {
+institutionSchema.pre("validate", function (next) {
   if (this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
+  next();
 });
 
 // High performance compound text search index for Institution
@@ -133,13 +134,14 @@ const facultySchema = new mongoose.Schema(
   }
 );
 
-facultySchema.pre("validate", function () {
+facultySchema.pre("validate", function (next) {
   if (this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
+  next();
 });
 
 export const Faculty = mongoose.model("Faculty", facultySchema);
@@ -173,13 +175,14 @@ const departmentSchema = new mongoose.Schema(
   }
 );
 
-departmentSchema.pre("validate", function () {
+departmentSchema.pre("validate", function (next) {
   if (this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
+  next();
 });
 
 export const Department = mongoose.model("Department", departmentSchema);
@@ -259,13 +262,14 @@ const programSchema = new mongoose.Schema(
   }
 );
 
-programSchema.pre("validate", function () {
+programSchema.pre("validate", function (next) {
   if (this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
+  next();
 });
 
 // High performance compound text search index

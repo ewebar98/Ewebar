@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin/applications")({
 });
 
 function EvaluateApplications() {
-  const { data: applications, loading, refresh } = useApi(getAdminApplications);
+  const { data: applications, loading, refresh } = useApi("getAdminApplications", getAdminApplications);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<AdminApplication | null>(null);
 
@@ -304,15 +304,38 @@ function EvaluateApplications() {
                         <p className="text-xs text-muted-foreground">Email</p>
                         <p className="font-semibold truncate">{selectedApp.student.email}</p>
                       </div>
-                      <div>
+                      <div className="col-span-2">
                         <p className="text-xs text-muted-foreground">JAMB Aggregate Score</p>
                         <p className="font-semibold">{selectedApp.student.jambScore}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">WAEC Average Grade</p>
-                        <p className="font-semibold">{selectedApp.student.waecAggregate || "Not Uploaded"}</p>
-                      </div>
                     </div>
+
+                    {selectedApp.student.olevelSittings && selectedApp.student.olevelSittings.length > 0 ? (
+                      <div className="mt-4 pt-3 border-t space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Verified O'Level Results</p>
+                        {selectedApp.student.olevelSittings.map((sitting: any, sIdx: number) => (
+                          <div key={sIdx} className="bg-card rounded-xl border p-3 text-xs space-y-2">
+                            <div className="flex justify-between font-semibold border-b pb-1 text-muted-foreground">
+                              <span>Sitting #{sitting.sittingNumber || (sIdx + 1)}: {sitting.examType} ({sitting.examYear})</span>
+                              <span>No: {sitting.examNumber || sitting.candidateNumber || "N/A"}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              {sitting.subjects && sitting.subjects.map((sub: any, subIdx: number) => (
+                                <div key={subIdx} className="flex justify-between bg-muted/30 px-2 py-1 rounded">
+                                  <span className="truncate">{sub.name}</span>
+                                  <span className="font-bold text-primary">{sub.grade}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-4 pt-3 border-t">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Verified O'Level Results</p>
+                        <p className="text-xs text-muted-foreground italic">No O'Level results verified or uploaded yet.</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="rounded-2xl border p-4">

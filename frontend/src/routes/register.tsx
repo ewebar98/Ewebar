@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/register")({
-  head: () => ({ meta: [{ title: "Create account | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Create account | WeBAR" }] }),
   component: Register,
 });
 
@@ -80,7 +80,7 @@ function Register() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
               <GraduationCap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold">Intellipath</span>
+            <span className="font-display font-bold">WeBAR</span>
           </Link>
           <div>
             <h1 className="font-display text-2xl font-bold">Create your account</h1>

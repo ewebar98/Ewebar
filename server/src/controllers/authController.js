@@ -72,24 +72,3 @@ const generateToken = (id) => {
     expiresIn: "30d",
   });
 };
-
-// @desc    Temporary endpoint to patch admin
-// @route   GET /api/auth/patch-admin
-// @access  Public
-export const patchAdmin = asyncHandler(async (req, res) => {
-  const existingAdmin = await User.findOne({ email: "hennycolour@gmail.com" });
-  if (existingAdmin) {
-    existingAdmin.password = "Lasustech123@";
-    await existingAdmin.save();
-    return res.json({ success: true, message: "Admin password updated successfully" });
-  }
-
-  await User.create({
-    fullName: "Henny Colour",
-    email: "hennycolour@gmail.com",
-    password: "Lasustech123@",
-    role: "admin",
-  });
-
-  res.json({ success: true, message: "New admin created successfully" });
-});

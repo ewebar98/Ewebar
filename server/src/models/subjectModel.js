@@ -72,7 +72,7 @@ const subjectSchema = new mongoose.Schema(
 );
 
 // Automatic slug and searchableText pre-validation pre-hook
-subjectSchema.pre("validate", function () {
+subjectSchema.pre("validate", function (next) {
   if (this.name) {
     if (!this.slug) {
       this.slug = this.name
@@ -101,6 +101,7 @@ subjectSchema.pre("validate", function () {
     // Deduplicate and join
     this.searchableText = Array.from(new Set(searchTerms)).join(" ");
   }
+  next();
 });
 
 // High performance compound text search index

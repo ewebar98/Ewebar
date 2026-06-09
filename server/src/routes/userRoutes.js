@@ -78,9 +78,6 @@ router.put(
       user.jambScore = req.body.jambScore !== undefined ? req.body.jambScore : user.jambScore;
       user.interests = req.body.interests || user.interests;
       user.preferredLocation = req.body.preferredLocation || user.preferredLocation;
-      if (req.body.waecAggregate !== undefined) {
-        user.waecAggregate = req.body.waecAggregate;
-      }
       if (req.body.subjects !== undefined) {
         user.subjects = req.body.subjects;
       }
@@ -110,7 +107,7 @@ router.put(
       console.log(`[Cache Invalidate] Cleared recommendation cache for user ${req.user._id} due to profile update.`);
 
       // Send confirmation notification
-      if (req.body.jambScore !== undefined || req.body.waecAggregate !== undefined || req.body.olevelSittings !== undefined) {
+      if (req.body.jambScore !== undefined || req.body.olevelSittings !== undefined) {
         await Notification.create({
           userId: req.user._id,
           title: "Academic Results Confirmed",

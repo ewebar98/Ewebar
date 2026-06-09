@@ -28,6 +28,11 @@ export const aiChat = asyncHandler(async (req, res) => {
 export const careerGuidance = asyncHandler(async (req, res) => {
   const { interest } = req.body;
   
+  if (!interest) {
+    res.status(400);
+    throw new Error("Please provide a career interest");
+  }
+
   const prompt = `Based on my interest in ${interest}, what are the best career paths and universities in Nigeria?`;
   
   const response = await chatWithAI([{ role: "user", content: prompt }]);

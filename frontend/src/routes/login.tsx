@@ -9,20 +9,20 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in | Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Sign in | WeBAR" }] }),
   component: Login,
 });
 
 function Login() {
   const [rememberMe, setRememberMe] = useState(() => {
     if (typeof window !== "undefined") {
-      return !!localStorage.getItem("Intellipath.rememberedEmail");
+      return !!localStorage.getItem("webar.rememberedEmail");
     }
     return false;
   });
   const [email, setEmail] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("Intellipath.rememberedEmail") || "";
+      return localStorage.getItem("webar.rememberedEmail") || "";
     }
     return "";
   });
@@ -39,9 +39,9 @@ function Login() {
       const u = await login(email, password);
       
       if (rememberMe) {
-        localStorage.setItem("Intellipath.rememberedEmail", email);
+        localStorage.setItem("webar.rememberedEmail", email);
       } else {
-        localStorage.removeItem("Intellipath.rememberedEmail");
+        localStorage.removeItem("webar.rememberedEmail");
       }
 
       toast.success(`Welcome, ${u.name}`);
@@ -65,13 +65,13 @@ function Login() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
               <GraduationCap className="h-5 w-5" />
             </div> 
-            <span className="font-display text-lg font-bold">Intellipath</span>
+            <span className="font-display text-lg font-bold">WeBAR</span>
           </Link>
           <div>
             <h2 className="font-display text-3xl font-bold leading-tight">Welcome back to your future.</h2>
             <p className="mt-3 text-primary-foreground/80">Pick up where you left off. Your recommendations are waiting.</p>
           </div>
-          <p className="text-xs text-primary-foreground/60">© Intellipath</p>
+          <p className="text-xs text-primary-foreground/60">© WeBAR</p>
         </div> 
       </div>
 

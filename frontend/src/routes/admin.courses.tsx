@@ -32,10 +32,10 @@ export const Route = createFileRoute("/admin/courses")({
 });
 
 function ManageCourses() {
-  const { data: courses, loading: loadingCourses, refresh: refreshCourses } = useApi(getCourses);
-  const { data: schools } = useApi(getUniversities);
-  const { data: faculties, refresh: refreshFaculties } = useApi(getAdminFaculties);
-  const { data: departments, refresh: refreshDepartments } = useApi(getAdminDepartments);
+  const { data: courses, loading: loadingCourses, refresh: refreshCourses } = useApi("getCourses", getCourses);
+  const { data: schools } = useApi("getUniversities", getUniversities);
+  const { data: faculties, refresh: refreshFaculties } = useApi("getAdminFaculties", getAdminFaculties);
+  const { data: departments, refresh: refreshDepartments } = useApi("getAdminDepartments", getAdminDepartments);
 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -465,8 +465,8 @@ function ManageCourses() {
                   </p>
                 </div>
                 <div className="shrink-0">
-                  <Badge tone={c.cutoff >= 200 ? "primary" : c.cutoff >= 150 ? "success" : "warning"}>
-                    Cutoff {c.cutoff}
+                  <Badge tone={(c.cutoff ?? 0) >= 200 ? "primary" : (c.cutoff ?? 0) >= 150 ? "success" : "warning"}>
+                    Cutoff {c.cutoff ?? "N/A"}
                   </Badge>
                 </div>
               </div>

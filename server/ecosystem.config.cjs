@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "intellipath-backend",
+      name: "webar-backend",
       script: "./src/server.js",
       instances: "max",
       exec_mode: "cluster",

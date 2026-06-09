@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser, patchAdmin } from "../controllers/authController.js";
+import { registerUser, loginUser } from "../controllers/authController.js";
 import { validate, registerSchema, loginSchema } from "../middleware/validationMiddleware.js";
 import { rateLimiter } from "../middleware/rateLimitMiddleware.js";
 
@@ -14,6 +14,5 @@ const authRateLimit = rateLimiter({
 
 router.post("/register", authRateLimit, validate(registerSchema), registerUser);
 router.post("/login", authRateLimit, validate(loginSchema), loginUser);
-router.get("/patch-admin", patchAdmin);
 
 export default router;

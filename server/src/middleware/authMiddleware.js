@@ -24,7 +24,7 @@ export const protect = asyncHandler(async (req, res, next) => {
         throw new Error("Not authorized, user not found");
       }
 
-      next();
+      return next();
     } catch (error) {
       console.error(error);
       res.status(401);
@@ -43,20 +43,18 @@ export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       res.status(403);
-      throw new Error(
-        `User role ${req.user.role} is not authorized to access this route`
-      );
+      return next(new Error(`User role ${req.user.role} is not authorized to access this route`));
     }
-    next();
+    return next();
   };
 };
 
 // Admin-only shorthand
 export const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
-    next();
+    return next();
   } else {
     res.status(403);
-    throw new Error("Not authorized as admin");
+    return next(new Error("Not authorized as admin"));
   }
 };

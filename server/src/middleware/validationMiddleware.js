@@ -91,10 +91,6 @@ export const profileUpdateSchema = z.object({
       .string()
       .max(100, "Preferred location is too long")
       .optional(),
-    waecAggregate: z
-      .string()
-      .max(100, "WAEC aggregate score is too long")
-      .optional(),
     stateOfOrigin: z.string().optional(),
     lga: z.string().optional(),
     preferredCourse: z.string().optional(),

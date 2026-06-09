@@ -11,12 +11,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/notifications")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "Notifications — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Notifications — WeBAR" }] }),
   component: () => <AppLayout><Notifications /></AppLayout>,
 });
 
 function Notifications() {
-  const { data, loading, error, refresh } = useApi(getNotifications);
+  const { data, loading, error, refresh } = useApi("getNotifications", getNotifications);
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | "unread">("all");
 

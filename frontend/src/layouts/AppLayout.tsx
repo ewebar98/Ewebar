@@ -42,14 +42,11 @@ export function AppLayout({ variant = "student", children }: { variant?: "studen
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Fetch real notifications for students
-  const { data: notifications } = useApi(
-    async () => {
-      if (variant === "admin" || !user) return [];
-      return await getNotifications();
-    },
-    [user?.id, variant]
-  );
-  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
+  const { data: notifications } = useApi("getNotifications", async () => {
+    if (variant === "admin" || !user) return [];
+    return await getNotifications();
+  }, [user?.id, variant]);
+  const unreadCount = (notifications as any[])?.filter((n: any) => !n.read).length || 0;
 
   const handleLogout = () => {
     logout();

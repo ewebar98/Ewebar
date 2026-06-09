@@ -11,7 +11,7 @@ const connectDB = async () => {
   }
 
   const uri = process.env.MONGODB_URI;
-  const fallbackUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/intellipath";
+  const fallbackUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/webar";
 
   try {
     if (!uri) {

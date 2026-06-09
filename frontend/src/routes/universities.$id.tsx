@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/universities/$id")({
   beforeLoad: requireRole("student"),
-  head: () => ({ meta: [{ title: "University — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "University — WeBAR" }] }),
   component: () => <AppLayout><UniversityDetails /></AppLayout>,
 });
 
@@ -74,7 +74,7 @@ function UniversityDetails() {
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.department && c.department.toLowerCase().includes(q)) ||
-        c.description.toLowerCase().includes(q)
+        (c.description || "").toLowerCase().includes(q)
     );
   }, [universityCourses, searchQuery]);
 
@@ -122,7 +122,7 @@ function UniversityDetails() {
   const hasJambScore = studentJambScore !== null && studentJambScore > 0;
 
   // Compute cutoff eligibility
-  const isCutoffMet = hasJambScore && selectedCourse ? studentJambScore >= selectedCourse.cutoff : false;
+  const isCutoffMet = hasJambScore && selectedCourse ? studentJambScore >= (selectedCourse.cutoff || 0) : false;
 
   // Handle checking document locker items
   const toggleDoc = (url: string) => {
@@ -182,7 +182,7 @@ function UniversityDetails() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: "Students", value: uni.students.toLocaleString(), icon: Users },
+          { label: "Students", value: (uni.students || 0).toLocaleString(), icon: Users },
           { label: "Acceptance", value: `${uni.acceptance}%`, icon: TrendingUp },
           { label: "Tuition", value: uni.tuition, icon: Award },
         ].map((s) => (
@@ -274,7 +274,7 @@ function UniversityDetails() {
                                   <Badge
                                     tone={isEligible === null ? "default" : isEligible ? "success" : "default"}
                                   >
-                                    UTME Cutoff: {c.cutoff}
+                                    UTME Cutoff: {c.cutoff ?? "N/A"}
                                   </Badge>
                                 </div>
                                 <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1.5 font-medium">
@@ -498,9 +498,9 @@ function UniversityDetails() {
                       </p>
                       <h4 className="font-display text-4xl font-bold gradient-text mt-1">
                         {selectedCourse
-                          ? studentJambScore >= selectedCourse.cutoff
-                            ? `${Math.min(98, 85 + Math.round((studentJambScore - selectedCourse.cutoff) * 0.8))}%`
-                            : `${Math.max(30, 85 - Math.round((selectedCourse.cutoff - studentJambScore) * 1.5))}%`
+                          ? studentJambScore >= (selectedCourse.cutoff || 0)
+                            ? `${Math.min(98, 85 + Math.round((studentJambScore - (selectedCourse.cutoff || 0)) * 0.8))}%`
+                            : `${Math.max(30, 85 - Math.round(((selectedCourse.cutoff || 0) - studentJambScore) * 1.5))}%`
                           : "85%"}
                       </h4>
                     </div>

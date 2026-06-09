@@ -101,7 +101,7 @@ router.get(
   adminOnly,
   asyncHandler(async (req, res) => {
     const applications = await Application.find({})
-      .populate("studentId", "fullName email jambScore waecAggregate")
+      .populate("studentId", "fullName email jambScore olevelSittings subjects")
       .populate("universityId", "name logo city state")
       .populate({
         path: "courseId", // Populate course details

@@ -123,8 +123,8 @@ function Documents() {
   const [activeTab, setActiveTab] = useState<"verification" | "locker">("verification");
 
   // Api Hooks
-  const { data: profile, loading: profileLoading, refresh: refreshProfile } = useApi(getProfile);
-  const { data: backendDocs, loading: docsLoading, refresh: refreshDocs } = useApi(getUploadedDocuments);
+  const { data: profile, loading: profileLoading, refresh: refreshProfile } = useApi("getProfile", getProfile);
+  const { data: backendDocs, loading: docsLoading, refresh: refreshDocs } = useApi("getUploadedDocuments", getUploadedDocuments);
 
   // Form State
   const [olevelSittings, setOlevelSittings] = useState<OLevelSitting[]>([createDefaultSitting(1)]);
@@ -142,18 +142,19 @@ function Documents() {
   const [preferredCourse, setPreferredCourse] = useState<string>("");
 
   // Fetch LASUSTECH courses dynamically for preferred course dropdown
-  const { data: schools } = useApi(getUniversities);
+  const { data: schools } = useApi("getUniversities", getUniversities);
   const lasustechUni = schools?.find(
     (u) => u.name.includes("Lagos State University of Science") || u.name.includes("LASUSTECH")
   );
 
   const { data: lasustechData } = useApi(
+    "getLasustech",
     () => (lasustechUni ? getUniversityById(lasustechUni.id) : Promise.resolve(null)),
     [lasustechUni?.id]
   );
 
-  const lasustechCourses = lasustechData?.courses || [];
-  const courseOptions = Array.from(new Set(lasustechCourses.map(c => c.name))).sort();
+  const lasustechCourses = (lasustechData as any)?.courses || [];
+  const courseOptions = Array.from(new Set(lasustechCourses.map((c: any) => c.name))).sort() as string[];
 
   // Upload/OCR status list
   const [docs, setDocs] = useState<Doc[]>([]);

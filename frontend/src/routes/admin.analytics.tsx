@@ -11,12 +11,12 @@ import {
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireRole("admin"),
-  head: () => ({ meta: [{ title: "Analytics — Intellipath" }] }),
+  head: () => ({ meta: [{ title: "Analytics — WeBAR" }] }),
   component: () => <AppLayout variant="admin"><Analytics /></AppLayout>,
 });
 
 function Analytics() {
-  const { data, loading } = useApi(getAnalytics);
+  const { data, loading } = useApi("getAnalytics", getAnalytics);
 
   return (
     <div className="space-y-6">

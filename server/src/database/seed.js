@@ -17,7 +17,7 @@ const seedData = async () => {
       console.log(`Connected to primary database: ${conn.connection.db.databaseName}`);
     } catch (err) {
       console.warn(`Primary database connection failed: ${err.message}. Trying fallback...`);
-      conn = await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/intellipath", { serverSelectionTimeoutMS: 5000 });
+      conn = await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/webar", { serverSelectionTimeoutMS: 5000 });
       console.log(`Connected to fallback database: ${conn.connection.db.databaseName}`);
     }
 

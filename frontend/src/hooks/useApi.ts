@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-export function useApi<T>(fn: () => Promise<T>, deps: unknown[] = []) {
+export function useApi<T>(key: string, fn: () => Promise<T>, deps: unknown[] = []) {
   // Generate a strictly unique and stable query key based on function code string and dependency inputs
   const fnKey = fn.toString().replace(/\s+/g, "");
   const queryKey = [fnKey, ...deps];

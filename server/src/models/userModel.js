@@ -33,10 +33,6 @@ const userSchema = new mongoose.Schema(
     },
     interests: [String],
     preferredLocation: String,
-    waecAggregate: {
-      type: String,
-      default: "",
-    },
     stateOfOrigin: {
       type: String,
       default: "",
