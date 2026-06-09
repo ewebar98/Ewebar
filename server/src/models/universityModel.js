@@ -225,6 +225,14 @@ const programSchema = new mongoose.Schema(
       type: String,
       default: "₦150,000/yr",
     },
+    totalCapacity: {
+      type: Number,
+      default: 100, // Default capacity
+    },
+    currentAdmitted: {
+      type: Number,
+      default: 0,
+    },
     requirements: [String],
     careerPaths: [String],
     description: String,

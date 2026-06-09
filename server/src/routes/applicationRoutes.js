@@ -6,6 +6,7 @@ import {
   getApplicationMessages,
   sendApplicationMessage,
   markMessagesAsRead,
+  evaluateApplication,
 } from "../controllers/applicationController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -19,5 +20,6 @@ router.post("/applications/apply", protect, applyForCourse);
 router.get("/applications/:id/messages", protect, getApplicationMessages);
 router.post("/applications/:id/messages", protect, sendApplicationMessage);
 router.put("/applications/:id/messages/read", protect, markMessagesAsRead);
+router.put("/applications/:id/evaluate", protect, evaluateApplication);
 
 export default router;

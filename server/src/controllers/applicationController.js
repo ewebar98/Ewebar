@@ -5,6 +5,7 @@ import User from "../models/userModel.js";
 import Notification from "../models/notificationModel.js";
 import Message from "../models/messageModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { chatWithAI } from "../ai/groqService.js";
 
 // @desc    Get all scholarships
 // @route   GET /api/scholarships
@@ -296,3 +297,90 @@ export const markMessagesAsRead = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Evaluate application (e.g. reject due to capacity and suggest alternatives)
+// @route   PUT /api/applications/:id/evaluate
+// @access  Private/Admin
+export const evaluateApplication = asyncHandler(async (req, res) => {
+  const applicationId = req.params.id;
+  const { status, actionReason } = req.body;
+
+  const application = await Application.findById(applicationId)
+    .populate("studentId", "fullName email jambScore interests preferredLocation")
+    .populate("universityId", "name")
+    .populate("courseId", "name facultyId cutoffMark");
+
+  if (!application) {
+    res.status(404);
+    throw new Error("Application not found");
+  }
+
+  // Update status
+  if (status) {
+    application.status = status;
+  }
+
+  // If rejected due to capacity, trigger AI alternative recommendations
+  if (status === "rejected" && actionReason === "capacity") {
+    const student = application.studentId;
+    const currentCourse = application.courseId;
+
+    // 1. Query for Real Alternatives in the DB
+    // Programs in the same faculty, where cutoff is met, with available capacity
+    const alternatives = await Program.find({
+      facultyId: currentCourse.facultyId,
+      _id: { $ne: currentCourse._id },
+      cutoffMark: { $lte: student.jambScore || 200 },
+      $expr: { $lt: ["$currentAdmitted", "$totalCapacity"] }
+    }).limit(3).select("name cutoffMark duration careerPaths description");
+
+    if (alternatives.length > 0) {
+      // 2. Build strict prompt for Groq AI
+      const prompt = `
+        You are an expert academic advisor. An admin has marked the department "${currentCourse.name}" as full.
+        The student "${student.fullName}" (JAMB Score: ${student.jambScore}, Interests: ${student.interests.join(", ")}) applied but cannot be admitted.
+        
+        CRITICAL RULES:
+        1. DO NOT say "you are rejected due to capacity".
+        2. Use a soft, statistical tone. For example: "Based on recent admission trends and capacity, you have a 90% chance of not entering the ${currentCourse.name} department."
+        3. Recommend these exact alternative departments retrieved from our database: ${alternatives.map(a => a.name).join(", ")}.
+        4. Explicitly explain WHY the student is a good fit for these alternative departments based on their profile (interests, score).
+      `;
+
+      // 3. Generate AI Message
+      const aiResponse = await chatWithAI([{ role: "user", content: prompt }]);
+
+      // 4. Save AI Response as a Message
+      await Message.create({
+        applicationId,
+        senderId: req.user._id, // Admin's ID
+        senderRole: req.user.role,
+        message: aiResponse,
+        read: false,
+      });
+
+      // 5. Create Notification for student
+      await Notification.create({
+        userId: student._id,
+        title: "Important Update on your Application",
+        body: `We have new insights regarding your application to ${currentCourse.name}. Please check your application messages for an academic advisory update.`,
+        type: "info",
+        link: "/applications",
+      });
+    }
+  }
+
+  // Add to audit trail
+  application.auditTrail.push({
+    action: \`Application evaluated: \${status}\`,
+    performedBy: req.user.email || "admin",
+    notes: actionReason ? \`Reason: \${actionReason}\` : "",
+  });
+
+  await application.save();
+
+  res.json({
+    success: true,
+    message: "Application evaluated successfully",
+    data: application,
+  });
+});

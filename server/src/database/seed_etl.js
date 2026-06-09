@@ -787,6 +787,14 @@ const seedData = async () => {
     });
     console.log(`Demo Admin registered: ${demoAdmin.fullName}`);
 
+    const hennyAdmin = await User.create({
+      fullName: "Henny Colour",
+      email: "hennycolour@gmail.com",
+      password: "Lasustech123@",
+      role: "admin",
+    });
+    console.log(`Demo Admin registered: ${hennyAdmin.fullName}`);
+
     // 8. Seed Applications & Recommendations relationally
     console.log("Mapping and seeding transactional data (recommendations & applications)...");
     const unilag = institutionMap.get("University of Lagos");

@@ -149,3 +149,32 @@ export const getCourseById = asyncHandler(async (req, res) => {
     throw new Error("Program not found");
   }
 });
+
+// @desc    Update program capacity
+// @route   PUT /api/programs/:id/capacity
+// @access  Private/Admin
+export const updateProgramCapacity = asyncHandler(async (req, res) => {
+  const { totalCapacity } = req.body;
+
+  if (totalCapacity === undefined) {
+    res.status(400);
+    throw new Error("Total capacity is required");
+  }
+
+  const program = await Program.findById(req.params.id);
+
+  if (!program) {
+    res.status(404);
+    throw new Error("Program not found");
+  }
+
+  program.totalCapacity = Number(totalCapacity);
+  await program.save();
+
+  res.json({
+    success: true,
+    message: "Program capacity updated successfully",
+    data: program,
+  });
+});
+

@@ -146,6 +146,16 @@ const seedData = async () => {
     });
     console.log(`Seeded demo admin: ${demoAdmin.fullName} (${demoAdmin.email})`);
 
+    // Seed Henny Admin
+    console.log("Seeding Henny admin user...");
+    const hennyAdmin = await User.create({
+      fullName: "Henny Colour",
+      email: "hennycolour@gmail.com",
+      password: "Lasustech123@",
+      role: "admin",
+    });
+    console.log(`Seeded Henny admin: ${hennyAdmin.fullName} (${hennyAdmin.email})`);
+
     // 5. Seed Recommendations for Demo User
     console.log("Seeding recommendations...");
     const unilag = uniMap["University of Lagos"];
