@@ -59,6 +59,11 @@ interface OLevelSubject {
 }
 
 interface OLevelSitting {
+  resultSlip?: {
+    _id: string;
+    name: string;
+    url: string;
+  };
   sittingNumber: number;
   examType: string;
   examYear: string;
@@ -119,7 +124,9 @@ const GRADE_RANKS: Record<string, number> = {
 function Documents() {
   const queryClient = useQueryClient();
   // Tabs: "verification" | "locker"
-  const [activeTab, setActiveTab] = useState<"verification" | "locker">("verification");
+  const [jambResultSlip, setJambResultSlip] = useState<any>(null);
+  const [isJambUploading, setIsJambUploading] = useState(false);
+  const [isOlevelUploading, setIsOlevelUploading] = useState<Record<number, boolean>>({});
 
   // Api Hooks
   const { data: profile, loading: profileLoading, refresh: refreshProfile } = useApi("getProfile", getProfile);
@@ -196,6 +203,9 @@ function Documents() {
         setSittingCount(1);
       }
 
+      if ((profile as any).jambResultSlip) {
+        setJambResultSlip((profile as any).jambResultSlip);
+      }
       if (profile.jambScore !== undefined) {
         setJambScore(profile.jambScore);
       }
@@ -342,8 +352,8 @@ function Documents() {
   };
 
   // OCR Auto populate script
-  const handleOcrPopulate = (ocrData: any) => {
-    if (ocrData.examType === "JAMB") {
+  const handleOcrPopulate = (ocrData: any, type: string, sittingNumber?: number) => {
+    if (type === "jamb" || ocrData.examType === "JAMB") {
       setJambScore(ocrData.score || 250);
       if (ocrData.jambRegNo) {
         setJambRegNo(ocrData.jambRegNo);
@@ -388,7 +398,7 @@ function Documents() {
       toast.success("JAMB metrics auto-populated! Review details in JAMB section.");
     } else {
       // O'Level Sittings
-      const activeSittingIdx = olevelSittings.length === 2 && olevelSittings[0].examNumber ? 1 : 0;
+      const activeSittingIdx = sittingNumber ? sittingNumber - 1 : (olevelSittings.length === 2 && olevelSittings[0].examNumber ? 1 : 0);
       if (activeSittingIdx === 1) {
         setSittingCount(2);
       }
@@ -426,6 +436,24 @@ function Documents() {
 
       setOlevelSittings(updated);
       toast.success(`OCR Extracted! ${ocrData.examType} details loaded into Sitting #${activeSittingIdx + 1}.`);
+    }
+  };
+
+  const handleSingleUpload = async (file: File, type: "jamb" | "olevel", sittingNumber?: number) => {
+    if (type === "jamb") setIsJambUploading(true);
+    else if (type === "olevel" && sittingNumber) setIsOlevelUploading(prev => ({ ...prev, [sittingNumber]: true }));
+
+    try {
+      const uploaded = await uploadDocument(file, type, sittingNumber);
+      const ocr = await ocrExtractResult(file);
+      handleOcrPopulate(ocr, type, sittingNumber);
+      refreshProfile();
+      toast.success("Document uploaded and processed successfully!");
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err.message || "Unknown error"}`);
+    } finally {
+      if (type === "jamb") setIsJambUploading(false);
+      else if (type === "olevel" && sittingNumber) setIsOlevelUploading(prev => ({ ...prev, [sittingNumber]: false }));
     }
   };
 
@@ -656,148 +684,11 @@ function Documents() {
           title="Academic Locker & Verification"
           subtitle="Keep your exam certificates securely synced and verified for direct university admissions."
         />
-        <div className="flex items-center gap-2">
-          <Button
-            variant={activeTab === "verification" ? "default" : "outline"}
-            className={activeTab === "verification" ? "bg-gradient-primary" : ""}
-            onClick={() => setActiveTab("verification")}
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" /> Entry & Verification
-          </Button>
-          <Button
-            variant={activeTab === "locker" ? "default" : "outline"}
-            className={activeTab === "locker" ? "bg-gradient-primary" : ""}
-            onClick={() => setActiveTab("locker")}
-          >
-            <FileText className="mr-2 h-4 w-4" /> Upload Locker
-          </Button>
-        </div>
+        
       </div>
 
-      {activeTab === "locker" ? (
-        // FILE UPLOAD AND LOCKER VIEW
-        <div className="space-y-6">
-          <motion.div
-            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={(e) => {
-              e.preventDefault(); setDrag(false);
-              if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
-            }}
-            animate={{ scale: drag ? 1.01 : 1 }}
-            className={`rounded-3xl border-2 border-dashed bg-card p-12 text-center transition-colors ${
-              drag ? "border-primary bg-primary/5" : "border-border"
-            }`}
-          >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground shadow-glow">
-              <Upload className="h-7 w-7" />
-            </div>
-            <h3 className="mt-4 font-display text-lg font-semibold">Sync certificates and scores</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Drag & drop WAEC, NECO, GCE or JAMB results slips (PDF, JPG, PNG up to 10MB).
-            </p>
-            <p className="text-xs text-primary/80 font-medium mt-1 flex items-center justify-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Document scanning will automatically extract and pre-fill your verification records.
-            </p>
-            <label className="mt-5 inline-block">
-              <input type="file" multiple className="hidden" onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-              <Button className="bg-gradient-primary" asChild><span>Browse Certificate Files</span></Button>
-            </label>
-          </motion.div>
-
-          {/* Active Uploading / Processing list */}
-          {docs.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Active Processing</p>
-              <div className="grid gap-3">
-                {docs.map((d) => (
-                  <div key={d.id} className="rounded-2xl border bg-card p-4 shadow-soft flex items-center gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                      <FileText className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium">{d.name}</p>
-                      <p className="text-xs text-muted-foreground">{(d.size / 1024).toFixed(1)} KB</p>
-                      {(d.status === "uploading" || d.status === "ocr") && (
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                          <motion.div
-                            animate={{ width: d.status === "ocr" ? "100%" : `${d.progress}%` }}
-                            className={`h-full ${d.status === "ocr" ? "bg-warning animate-pulse" : "bg-gradient-primary"}`}
-                          />
-                        </div>
-                      )}
-                      {d.status === "ocr" && (
-                        <p className="mt-1 flex items-center gap-1 text-[11px] text-warning">
-                          <ScanLine className="h-3 w-3 animate-pulse" /> Extracting academic scores…
-                        </p>
-                      )}
-                    </div>
-                    {d.status === "ready" && <Badge tone="success"><CheckCircle2 className="mr-1 h-3 w-3" />Synchronized</Badge>}
-                    {d.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
-                    {d.status === "ocr" && <Loader2 className="h-4 w-4 animate-spin text-warning shrink-0" />}
-                    {d.status === "error" && <Badge tone="destructive">Failed</Badge>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Secure Document Locker Repository */}
-          <div className="rounded-2xl border bg-card p-6">
-            <h3 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" /> Verified Admissions Vault
-            </h3>
-            {docsLoading ? (
-              <div className="py-8 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /></div>
-            ) : !backendDocs || backendDocs.length === 0 ? (
-              <EmptyState icon={FileText} title="Admissions Vault is Empty" hint="No verified files archived. Sync a document to secure your records." />
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {backendDocs.map((doc: any) => (
-                  <div key={doc.id} className="flex items-center justify-between rounded-xl border bg-muted/30 p-3 hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-3 truncate">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <FileText className="h-4 w-4" />
-                      </div>
-                      <div className="truncate">
-                        <p className="truncate text-xs font-semibold">{doc.name}</p>
-                        <p className="text-[10px] text-muted-foreground">Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <a
-                        href={`${BACKEND_URL}${doc.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border hover:bg-background text-muted-foreground hover:text-foreground transition-colors"
-                        title="View Document"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDocument(doc.id)}
-                        disabled={deletingId === doc.id}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-destructive/20 hover:border-destructive hover:bg-destructive/10 text-destructive hover:text-destructive transition-colors disabled:opacity-50"
-                        title="Delete Document"
-                      >
-                        {deletingId === doc.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        // VERIFICATION AND MANUAL ENTRY FORMS
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Main Entry Panel */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main Entry Panel */}
           <div className="space-y-6 lg:col-span-2">
             {/* O'LEVEL PANEL */}
             <div className="rounded-3xl border bg-card p-6 shadow-soft space-y-6 relative overflow-hidden">
@@ -852,6 +743,52 @@ function Documents() {
                     )}
                   </div>
 
+                  <div className="flex items-center justify-between mb-4 bg-muted/20 p-4 rounded-2xl border border-dashed border-primary/20">
+                    <div className="flex items-center gap-3">
+                      {sitting.resultSlip ? (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
+                            <CheckCircle2 className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold">Document Uploaded</p>
+                            <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{sitting.resultSlip.name}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <Upload className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold">Upload Result Slip</p>
+                            <p className="text-[10px] text-muted-foreground">Auto-fills the form below</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      {sitting.resultSlip ? (
+                         <div className="flex items-center gap-2">
+                           <a href={`${BACKEND_URL}${sitting.resultSlip.url}`} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary hover:underline">View</a>
+                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDeleteDocument(sitting.resultSlip!._id)}>
+                             {deletingId === sitting.resultSlip._id ? <Loader2 className="h-3 w-3 animate-spin"/> : <Trash2 className="h-3 w-3" />}
+                           </Button>
+                         </div>
+                      ) : (
+                        <label className="cursor-pointer">
+                          <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleSingleUpload(e.target.files[0], 'olevel', sIdx + 1);
+                            }
+                          }} disabled={isOlevelUploading[sIdx + 1]} />
+                          <Button asChild size="sm" className="bg-gradient-primary rounded-xl text-xs h-8" disabled={isOlevelUploading[sIdx + 1]}>
+                            <span>{isOlevelUploading[sIdx + 1] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Select File'}</span>
+                          </Button>
+                        </label>
+                      )}
+                    </div>
+                  </div>
                   {/* Demographics / Details Grid */}
                   <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
                     <div className="space-y-1">
@@ -1048,6 +985,53 @@ function Documents() {
               <div className="border-b pb-4">
                 <h3 className="font-display text-lg font-bold text-foreground">JAMB UTME Record</h3>
                 <p className="text-xs text-muted-foreground">Enter your aggregate score and four distinct subject grades.</p>
+              </div>
+
+              <div className="flex items-center justify-between mb-4 bg-muted/20 p-4 rounded-2xl border border-dashed border-secondary/20">
+                <div className="flex items-center gap-3">
+                  {jambResultSlip ? (
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">JAMB Slip Uploaded</p>
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[150px]">{jambResultSlip.name}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10 text-secondary-foreground">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">Upload JAMB Slip</p>
+                        <p className="text-[10px] text-muted-foreground">Auto-fills UTME details</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  {jambResultSlip ? (
+                     <div className="flex items-center gap-2">
+                       <a href={`${BACKEND_URL}${jambResultSlip.url}`} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary hover:underline">View</a>
+                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive" onClick={() => handleDeleteDocument(jambResultSlip._id)}>
+                         {deletingId === jambResultSlip._id ? <Loader2 className="h-3 w-3 animate-spin"/> : <Trash2 className="h-3 w-3" />}
+                       </Button>
+                     </div>
+                  ) : (
+                    <label className="cursor-pointer">
+                      <input type="file" className="hidden" accept="image/*,.pdf" onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleSingleUpload(e.target.files[0], 'jamb');
+                        }
+                      }} disabled={isJambUploading} />
+                      <Button asChild size="sm" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl text-xs h-8" disabled={isJambUploading}>
+                        <span>{isJambUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Select File'}</span>
+                      </Button>
+                    </label>
+                  )}
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -1376,27 +1360,9 @@ function Documents() {
               ) : null}
             </div>
 
-            {/* Quick Upload Action */}
-            <div className="rounded-3xl border bg-gradient-hero p-5 text-card-foreground shadow-soft relative overflow-hidden flex flex-col justify-between">
-              <div>
-                <FileText className="h-6 w-6 text-primary animate-pulse" />
-                <h4 className="font-display font-bold text-sm mt-2 text-foreground">Skip Manual Typing</h4>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  Upload your result certificates and let the system automatically extract and format your scores.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-4 bg-background hover:bg-muted text-xs rounded-xl"
-                onClick={() => setActiveTab("locker")}
-              >
-                Go to Locker Upload <ArrowRight className="ml-1.5 h-3 w-3" />
-              </Button>
-            </div>
+            
           </div>
         </div>
-      )}
     </div>
   );
 }

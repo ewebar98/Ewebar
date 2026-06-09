@@ -252,26 +252,50 @@ router.delete(
       throw new Error("User not found");
     }
 
-    const docIndex = user.uploadedDocuments.findIndex(
-      (doc) => doc._id.toString() === req.params.id
-    );
+    let deleted = false;
+    let docToRemove = null;
 
-    if (docIndex === -1) {
+    if (user.jambResultSlip && user.jambResultSlip._id && user.jambResultSlip._id.toString() === req.params.id) {
+      docToRemove = user.jambResultSlip;
+      user.jambResultSlip = undefined;
+      deleted = true;
+    } else {
+      for (let i = 0; i < user.olevelSittings.length; i++) {
+        if (user.olevelSittings[i].resultSlip && user.olevelSittings[i].resultSlip._id && user.olevelSittings[i].resultSlip._id.toString() === req.params.id) {
+          docToRemove = user.olevelSittings[i].resultSlip;
+          user.olevelSittings[i].resultSlip = undefined;
+          deleted = true;
+          break;
+        }
+      }
+    }
+
+    if (!deleted) {
+      const docIndex = user.uploadedDocuments.findIndex(
+        (doc) => doc._id.toString() === req.params.id
+      );
+
+      if (docIndex !== -1) {
+        docToRemove = user.uploadedDocuments[docIndex];
+        user.uploadedDocuments.splice(docIndex, 1);
+        deleted = true;
+      }
+    }
+
+    if (!deleted || !docToRemove) {
       res.status(404);
       throw new Error("Document not found");
     }
 
-    const doc = user.uploadedDocuments[docIndex];
-
     // Unlink file from local disk if it exists
-    if (doc.url) {
+    if (docToRemove.url) {
       try {
         const fs = await import("fs");
         const path = await import("path");
         const { fileURLToPath } = await import("url");
 
         const currentDir = path.dirname(fileURLToPath(import.meta.url));
-        const filename = doc.url.replace("/uploads/", "");
+        const filename = docToRemove.url.replace("/uploads/", "");
         const filePath = path.join(currentDir, "..", "uploads", filename);
 
         if (fs.existsSync(filePath)) {
@@ -283,8 +307,6 @@ router.delete(
       }
     }
 
-    // Pull document from MongoDB subdocument array
-    user.uploadedDocuments.splice(docIndex, 1);
     await user.save();
 
     res.json({
@@ -319,10 +341,31 @@ router.post(
       uploadedAt: new Date(),
     };
 
-    user.uploadedDocuments.push(newDoc);
-    await user.save();
+    const type = req.query.type;
+    let savedDoc;
 
-    const savedDoc = user.uploadedDocuments[user.uploadedDocuments.length - 1];
+    if (type === "jamb") {
+      user.jambResultSlip = newDoc;
+      savedDoc = user.jambResultSlip;
+    } else if (type === "olevel") {
+      const sittingNumber = parseInt(req.query.sittingNumber, 10) || 1;
+      const sittingIndex = user.olevelSittings.findIndex(s => s.sittingNumber === sittingNumber);
+      if (sittingIndex !== -1) {
+        user.olevelSittings[sittingIndex].resultSlip = newDoc;
+        savedDoc = user.olevelSittings[sittingIndex].resultSlip;
+      } else {
+        user.olevelSittings.push({
+          sittingNumber,
+          resultSlip: newDoc
+        });
+        savedDoc = user.olevelSittings[user.olevelSittings.length - 1].resultSlip;
+      }
+    } else {
+      user.uploadedDocuments.push(newDoc);
+      savedDoc = user.uploadedDocuments[user.uploadedDocuments.length - 1];
+    }
+
+    await user.save();
 
     res.status(201).json({
       success: true,

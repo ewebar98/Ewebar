@@ -92,6 +92,7 @@ export const profileUpdateSchema = z.object({
       .min(0, "JAMB score cannot be negative")
       .max(400, "Maximum JAMB score is 400")
       .optional(),
+    jambResultSlip: z.any().optional(),
     interests: z
       .array(z.string().min(1, "Interest cannot be an empty string"))
       .max(20, "Cannot add more than 20 interests")

@@ -51,6 +51,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    jambResultSlip: {
+      _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+      name: String,
+      url: String,
+      uploadedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
     interests: [String],
     preferredLocation: String,
     stateOfOrigin: {
@@ -97,6 +106,15 @@ const userSchema = new mongoose.Schema(
         registrationNumber: String,
         serialNumber: String,
         pin: String,
+        resultSlip: {
+          _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+          name: String,
+          url: String,
+          uploadedAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
         subjects: [
           {
             name: String,

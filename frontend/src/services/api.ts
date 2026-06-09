@@ -378,10 +378,17 @@ export async function registerUser(name: string, email: string, password: string
   };
 }
 
-export async function uploadDocument(file: File) {
+export async function uploadDocument(file: File, type?: string, sittingNumber?: number) {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await request<any>("/users/upload-document", {
+  
+  let url = "/users/upload-document";
+  const params = new URLSearchParams();
+  if (type) params.append("type", type);
+  if (sittingNumber) params.append("sittingNumber", sittingNumber.toString());
+  if (params.toString()) url += `?${params.toString()}`;
+
+  const res = await request<any>(url, {
     method: "POST",
     body: formData,
   });
@@ -402,11 +409,7 @@ export async function ocrExtractResult(file: File) {
     method: "POST",
     body: formData,
   });
-  return {
-    examType: res.examType,
-    score: res.score || 0,
-    subjects: res.subjects || [],
-  };
+  return res;
 }
 
 export async function getUploadedDocuments() {
