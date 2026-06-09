@@ -1,4 +1,4 @@
-// src/routes/admin.admissionRules.tsx
+// src/routes/admin.admission-rules.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -23,7 +23,7 @@ interface AdmissionRule {
   criteria: any; // Adjust based on actual schema
 }
 
-export const Route = createFileRoute("/admin/admissionRules")({
+export const Route = createFileRoute("/admin/admission-rules")({
   beforeLoad: async () => {
     // Only admin users can access (assume requireRole middleware works globally)
     return {};

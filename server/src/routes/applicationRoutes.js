@@ -11,17 +11,19 @@ import {
   getApplicationMessages,
   sendApplicationMessage,
   markMessagesAsRead,
+  confirmOfferAcceptance,
 } from "../controllers/applicationController.js";
 
 const router = express.Router();
 
 // Application Routes
-router.route("/apply").post(protect, applyForCourse);
-router.route("/").get(protect, getUserApplications);
+router.route("/applications/apply").post(protect, applyForCourse);
+router.route("/applications").get(protect, getUserApplications);
+router.post("/applications/:id/confirm-accept", protect, confirmOfferAcceptance);
 
 // Application Messages
-router.route("/:id/messages").get(protect, getApplicationMessages).post(protect, sendApplicationMessage);
-router.route("/:id/messages/read").put(protect, markMessagesAsRead);
+router.route("/applications/:id/messages").get(protect, getApplicationMessages).post(protect, sendApplicationMessage);
+router.route("/applications/:id/messages/read").put(protect, markMessagesAsRead);
 
 // Scholarship Routes
 router.route("/scholarships")
@@ -35,3 +37,4 @@ router.route("/scholarships/:id")
 router.post("/scholarships/:id/apply", protect, applyForScholarship);
 
 export default router;
+

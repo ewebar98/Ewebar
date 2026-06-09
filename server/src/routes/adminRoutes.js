@@ -168,18 +168,46 @@ router.put(
   asyncHandler(async (req, res) => {
     const { status, notes } = req.body;
 
-    if (!["pending", "reviewed", "accepted", "rejected"].includes(status)) {
+    if (!["pending", "reviewed", "accepted", "rejected", "offered", "provisional"].includes(status)) {
       res.status(400);
       throw new Error("Invalid application evaluation status");
     }
 
     const application = await Application.findById(req.params.id)
       .populate("universityId", "name")
-      .populate("courseId", "name");
+      .populate("courseId", "name totalCapacity currentAdmitted");
 
     if (!application) {
       res.status(404);
       throw new Error("Application not found");
+    }
+
+    const previousStatus = application.status;
+    const isNewAdmitted = ["accepted", "offered"].includes(status);
+    const wasAdmitted = ["accepted", "offered"].includes(previousStatus);
+
+    if (isNewAdmitted && !wasAdmitted) {
+      // Check program capacity
+      const program = await Program.findById(application.courseId._id);
+      if (program) {
+        const capacity = program.totalCapacity || 100;
+        const admitted = program.currentAdmitted || 0;
+        if (admitted >= capacity) {
+          res.status(400);
+          throw new Error(`Cannot approve admission: target department "${program.name}" is already at full capacity (${capacity} slots).`);
+        }
+        program.currentAdmitted = admitted + 1;
+        await program.save();
+        console.log(`[Capacity Alloc] Incremented currentAdmitted for "${program.name}" to ${program.currentAdmitted}`);
+      }
+    } else if (wasAdmitted && !isNewAdmitted) {
+      // Decrement program currentAdmitted to release reservation
+      const program = await Program.findById(application.courseId._id);
+      if (program) {
+        program.currentAdmitted = Math.max(0, (program.currentAdmitted || 0) - 1);
+        await program.save();
+        console.log(`[Capacity Release] Decremented currentAdmitted for "${program.name}" to ${program.currentAdmitted}`);
+      }
     }
 
     application.status = status;

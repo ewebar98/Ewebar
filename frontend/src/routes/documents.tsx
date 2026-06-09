@@ -130,6 +130,11 @@ function Documents() {
   const [olevelSittings, setOlevelSittings] = useState<OLevelSitting[]>([createDefaultSitting(1)]);
   const [sittingCount, setSittingCount] = useState<1 | 2>(1);
   const [jambScore, setJambScore] = useState<number>(0);
+  const [jambRegNo, setJambRegNo] = useState<string>("");
+  const [jambCandidateName, setJambCandidateName] = useState<string>("");
+  const [jambDateOfBirth, setJambDateOfBirth] = useState<string>("");
+  const [jambGender, setJambGender] = useState<string>("Male");
+  const [jambExamNo, setJambExamNo] = useState<string>("");
   const [jambSubjects, setJambSubjects] = useState<JambSubject[]>([
     { name: "Use of English", score: 0 },
     { name: "", score: 0 },
@@ -196,6 +201,22 @@ function Documents() {
         setJambScore(profile.jambScore);
       }
 
+      if (profile.jambRegNo !== undefined) {
+        setJambRegNo(profile.jambRegNo);
+      }
+      if ((profile as any).jambCandidateName !== undefined) {
+        setJambCandidateName((profile as any).jambCandidateName);
+      }
+      if ((profile as any).jambDateOfBirth !== undefined) {
+        setJambDateOfBirth((profile as any).jambDateOfBirth);
+      }
+      if ((profile as any).jambGender !== undefined) {
+        setJambGender((profile as any).jambGender || "Male");
+      }
+      if ((profile as any).jambExamNo !== undefined) {
+        setJambExamNo((profile as any).jambExamNo);
+      }
+
       if (profile.jambSubjects && profile.jambSubjects.length === 4) {
         setJambSubjects(profile.jambSubjects);
       } else {
@@ -234,7 +255,20 @@ function Documents() {
   const handleSittingFieldChange = (index: number, field: keyof OLevelSitting, value: any) => {
     setOlevelSittings((prev) => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      let updatedSitting = { ...updated[index], [field]: value };
+      
+      // Auto-set sittingType based on examType
+      if (field === "examType") {
+        if (value === "WAEC" || value === "NABTEB") {
+          updatedSitting.sittingType = "May/June";
+        } else if (value === "NECO") {
+          updatedSitting.sittingType = "June/July";
+        } else if (value === "GCE") {
+          updatedSitting.sittingType = "Nov/Dec";
+        }
+      }
+      
+      updated[index] = updatedSitting;
       return updated;
     });
   };
@@ -312,6 +346,27 @@ function Documents() {
   const handleOcrPopulate = (ocrData: any) => {
     if (ocrData.examType === "JAMB") {
       setJambScore(ocrData.score || 250);
+      if (ocrData.jambRegNo) {
+        setJambRegNo(ocrData.jambRegNo);
+      }
+      if (ocrData.candidateFullName) {
+        setJambCandidateName(ocrData.candidateFullName);
+      }
+      if (ocrData.dateOfBirth) {
+        setJambDateOfBirth(ocrData.dateOfBirth);
+      }
+      if (ocrData.gender) {
+        setJambGender(ocrData.gender);
+      }
+      if (ocrData.examNumber) {
+        setJambExamNo(ocrData.examNumber);
+      }
+      if (ocrData.stateOfOrigin) {
+        const foundState = NIGERIAN_STATES.find(s => ocrData.stateOfOrigin.toLowerCase().includes(s.toLowerCase()));
+        if (foundState) {
+          setStateOfOrigin(foundState);
+        }
+      }
       const subjectsMap: JambSubject[] = [
         { name: "Use of English", score: 0 },
         { name: "", score: 0 },
@@ -562,8 +617,17 @@ function Documents() {
         }
       }
 
+      if (jambRegNo && !/^(19|20)\d{2}\d{4,8}[A-Z]{2}$/i.test(jambRegNo)) {
+        throw new Error("JAMB Registration Number must start with a 4-digit registration year, followed by 4 to 8 digits, and end with 2 letters (e.g. 20261234AB or 202330639047FF)");
+      }
+
       await updateProfile({
         jambScore,
+        jambRegNo,
+        jambCandidateName,
+        jambDateOfBirth,
+        jambGender,
+        jambExamNo,
         jambSubjects: jambSubjects.filter((s) => s.name),
         olevelSittings,
         subjects: combinedOLevelInfo.uniqueSubjects,
@@ -989,6 +1053,21 @@ function Documents() {
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">JAMB Registration Number</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 20261234AB"
+                    value={jambRegNo || ""}
+                    onChange={(e) => setJambRegNo(e.target.value.toUpperCase())}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-sm font-bold text-primary focus:border-primary focus:outline-none"
+                  />
+                  {jambRegNo && !/^(19|20)\d{2}\d{4,8}[A-Z]{2}$/i.test(jambRegNo) && (
+                    <p className="text-[10px] text-destructive font-medium mt-0.5">
+                      Invalid format. Must be Year (4 digits) + 4 to 8 numbers + 2 letters (e.g. 20261234AB or 202330639047FF).
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Aggregate Score</label>
                   <input
                     type="number"
@@ -1000,9 +1079,53 @@ function Documents() {
                     className="w-full rounded-xl border bg-background px-3 py-2 text-sm font-bold text-primary focus:border-primary focus:outline-none"
                   />
                 </div>
-                <div className="col-span-2 flex items-center bg-muted/40 p-3.5 rounded-2xl border text-xs text-muted-foreground">
+                <div className="flex items-center bg-muted/40 p-3.5 rounded-2xl border text-xs text-muted-foreground">
                   <Info className="h-4 w-4 mr-2 shrink-0 text-primary" />
-                  <span>JAMB UTME contains exactly 4 subjects, where the first is locked to <b>Use of English</b>. Scores must add up to your aggregate.</span>
+                  <span>JAMB UTME contains exactly 4 subjects, where the first is locked to Use of English. Scores must add up to aggregate.</span>
+                </div>
+              </div>
+
+              {/* Candidate Demographics Row */}
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-4 bg-muted/10 p-4 rounded-2xl border">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Candidate Name</label>
+                  <input
+                    type="text"
+                    placeholder="Full Name on Slip"
+                    value={jambCandidateName}
+                    onChange={(e) => setJambCandidateName(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-xs focus:border-primary focus:outline-none font-medium"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={jambDateOfBirth}
+                    onChange={(e) => setJambDateOfBirth(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gender</label>
+                  <select
+                    value={jambGender}
+                    onChange={(e) => setJambGender(e.target.value)}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Exam Number</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. C05502116"
+                    value={jambExamNo}
+                    onChange={(e) => setJambExamNo(e.target.value.toUpperCase())}
+                    className="w-full rounded-xl border bg-background px-3 py-2 text-xs focus:border-primary focus:outline-none font-medium"
+                  />
                 </div>
               </div>
 

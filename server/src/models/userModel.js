@@ -31,6 +31,26 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    jambRegNo: {
+      type: String,
+      default: "",
+    },
+    jambCandidateName: {
+      type: String,
+      default: "",
+    },
+    jambDateOfBirth: {
+      type: String,
+      default: "",
+    },
+    jambGender: {
+      type: String,
+      default: "",
+    },
+    jambExamNo: {
+      type: String,
+      default: "",
+    },
     interests: [String],
     preferredLocation: String,
     stateOfOrigin: {

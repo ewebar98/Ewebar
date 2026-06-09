@@ -24,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
 
 export const Route = createFileRoute("/admin/courses")({
   beforeLoad: requireRole("admin"),
@@ -37,6 +38,7 @@ function ManageCourses() {
   const { data: faculties, refresh: refreshFaculties } = useApi("getAdminFaculties", getAdminFaculties);
   const { data: departments, refresh: refreshDepartments } = useApi("getAdminDepartments", getAdminDepartments);
 
+  const [activeViewTab, setActiveViewTab] = useState<"catalog" | "slots">("catalog");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any | null>(null);
@@ -276,6 +278,29 @@ function ManageCourses() {
         } 
       />
 
+      <div className="flex border-b border-border select-none gap-2">
+        <button
+          onClick={() => setActiveViewTab("catalog")}
+          className={`pb-3 text-xs font-bold uppercase tracking-wider text-center border-b-2 transition-all px-4 ${
+            activeViewTab === "catalog"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Course Catalog
+        </button>
+        <button
+          onClick={() => setActiveViewTab("slots")}
+          className={`pb-3 text-xs font-bold uppercase tracking-wider text-center border-b-2 transition-all px-4 ${
+            activeViewTab === "slots"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Capacity & Slot Management
+        </button>
+      </div>
+
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search courses or faculties..." className="pl-9" />
@@ -463,7 +488,7 @@ function ManageCourses() {
 
       {loadingCourses && <Skeleton className="h-64 rounded-2xl" />}
 
-      {!loadingCourses && (
+      {!loadingCourses && activeViewTab === "catalog" && (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredCourses.map((c) => (
             <div key={c.id} className="rounded-2xl border bg-card p-5 shadow-soft hover:shadow-medium transition-shadow">
@@ -488,16 +513,16 @@ function ManageCourses() {
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-muted-foreground">Seat Occupancy</span>
                     <span className="text-foreground">
-                      {c.currentAdmitted || 0} / {c.totalCapacity} admitted
+                      {c.admittedCount || 0} / {c.totalCapacity} admitted
                     </span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      style={{ width: `${Math.min(100, Math.round(((c.currentAdmitted || 0) / c.totalCapacity) * 100))}%` }}
+                      style={{ width: `${Math.min(100, Math.round(((c.admittedCount || 0) / c.totalCapacity) * 100))}%` }}
                       className={`h-full rounded-full transition-all ${
-                        (c.currentAdmitted || 0) >= c.totalCapacity
+                        (c.admittedCount || 0) >= c.totalCapacity
                           ? "bg-destructive"
-                          : (c.currentAdmitted || 0) / c.totalCapacity >= 0.9
+                          : (c.admittedCount || 0) / c.totalCapacity >= 0.9
                             ? "bg-amber-500"
                             : "bg-emerald-500"
                       }`}
@@ -539,6 +564,84 @@ function ManageCourses() {
               No courses matching your search query.
             </div>
           )}
+        </div>
+      )}
+
+      {!loadingCourses && activeViewTab === "slots" && (
+        <div className="overflow-hidden rounded-2xl border bg-card shadow-soft">
+          <Table className="w-full text-sm">
+            <TableHeader>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead className="px-5 py-3 text-left">Course / Department</TableHead>
+                <TableHead className="px-5 py-3 text-left">Faculty</TableHead>
+                <TableHead className="px-5 py-3 text-center">Quota (Capacity)</TableHead>
+                <TableHead className="px-5 py-3 text-center">Applicants Applied</TableHead>
+                <TableHead className="px-5 py-3 text-center">Admitted Candidates</TableHead>
+                <TableHead className="px-5 py-3 text-center">Remaining Slots</TableHead>
+                <TableHead className="px-5 py-3 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCourses.map((c) => {
+                const total = c.totalCapacity ?? 0;
+                const admitted = c.admittedCount ?? 0;
+                const remaining = Math.max(0, total - admitted);
+                const applied = c.appliedCount ?? 0;
+                const isFull = remaining === 0;
+
+                return (
+                  <TableRow key={c.id} className="hover:bg-muted/10 transition-colors">
+                    <TableCell className="px-5 py-4 font-semibold text-foreground text-left">{c.name}</TableCell>
+                    <TableCell className="px-5 py-4 text-muted-foreground text-left">{c.faculty || "N/A"}</TableCell>
+                    <TableCell className="px-5 py-4 text-center font-bold text-foreground">{total}</TableCell>
+                    <TableCell className="px-5 py-4 text-center">
+                      <Badge tone="default" className="bg-muted px-2.5 py-0.5 rounded-full font-semibold">
+                        {applied}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-center">
+                      <Badge tone={admitted > 0 ? "success" : "default"} className="font-semibold">
+                        {admitted}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-center">
+                      <Badge tone={isFull ? "destructive" : remaining <= 5 ? "warning" : "primary"} className="font-bold">
+                        {isFull ? "Full" : `${remaining} slots`}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEdit(c)}
+                          className="h-8 text-xs hover:border-primary/50"
+                        >
+                          Edit Quota
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleRunAdmissions(c)}
+                          className="h-8 text-xs bg-gradient-primary"
+                          disabled={isFull}
+                        >
+                          Run Admissions
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filteredCourses.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                    No courses matching your search query.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>

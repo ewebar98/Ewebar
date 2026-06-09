@@ -78,6 +78,15 @@ export const profileUpdateSchema = z.object({
       .min(2, "Full name must be at least 2 characters")
       .max(100, "Full name cannot exceed 100 characters")
       .optional(),
+    jambRegNo: z
+      .string()
+      .regex(/^(19|20)\d{2}\d{4,8}[A-Z]{2}$/i, "JAMB Registration Number must start with a 4-digit registration year, followed by 4 to 8 digits, and end with 2 letters (e.g. 20261234AB or 202330639047FF)")
+      .optional()
+      .or(z.literal("")),
+    jambCandidateName: z.string().optional().or(z.literal("")),
+    jambDateOfBirth: z.string().optional().or(z.literal("")),
+    jambGender: z.string().optional().or(z.literal("")),
+    jambExamNo: z.string().optional().or(z.literal("")),
     jambScore: z
       .number()
       .min(0, "JAMB score cannot be negative")

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef } from "react";
-import { Search, Eye, FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck, ChevronRight, X, MessageCircle, Send, Loader2 } from "lucide-react";
+import { Search, Eye, FileText, CheckCircle2, XCircle, Clock, Calendar, ShieldCheck, ChevronRight, X, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
 import { PageHeader, Badge, Skeleton, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
@@ -137,6 +137,10 @@ function EvaluateApplications() {
         return <Badge tone="destructive"><XCircle className="mr-1 h-3 w-3" />Rejected</Badge>;
       case "reviewed":
         return <Badge tone="primary"><ShieldCheck className="mr-1 h-3 w-3" />Reviewed</Badge>;
+      case "offered":
+        return <Badge tone="warning"><Clock className="mr-1 h-3 w-3" />Offered</Badge>;
+      case "provisional":
+        return <Badge tone="primary" className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0"><Sparkles className="mr-1 h-3 w-3" />Provisional</Badge>;
       default:
         return <Badge tone="warning"><Clock className="mr-1 h-3 w-3" />Pending</Badge>;
     }
@@ -213,6 +217,25 @@ function EvaluateApplications() {
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground animate-pulse shadow-sm">
                           {a.unreadMessagesCount}
                         </span>
+                      )}
+                      {a.status === "provisional" && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1"
+                          onClick={async () => {
+                            if (!window.confirm(`Approve provisional admission for ${a.student.name}?`)) return;
+                            try {
+                              await updateApplicationStatus(a.id, "accepted", "Provisional admission approved by administrator.");
+                              toast.success("Provisional admission approved!");
+                              refresh();
+                            } catch (err: any) {
+                              toast.error(err.message || "Failed to approve admission");
+                            }
+                          }}
+                        >
+                          Approve
+                        </Button>
                       )}
                       <Button
                         size="sm"
@@ -425,6 +448,8 @@ function EvaluateApplications() {
                         className="w-full rounded-xl border bg-background px-3 py-2 text-sm font-semibold focus:ring-1 focus:ring-primary"
                       >
                         <option value="pending">Pending Review</option>
+                        <option value="provisional">Provisional Auto-Admit</option>
+                        <option value="offered">Offered (Reserved Slot)</option>
                         <option value="reviewed">Reviewed</option>
                         <option value="accepted">Accepted / Admit</option>
                         <option value="rejected">Rejected / Deny</option>

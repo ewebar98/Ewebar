@@ -69,6 +69,8 @@ export interface Course {
   requirements?: string[];
   totalCapacity?: number;
   currentAdmitted?: number;
+  appliedCount?: number;
+  admittedCount?: number;
 }
 
 export async function getUniversities(): Promise<University[]> {
@@ -131,6 +133,8 @@ export async function getCourses(): Promise<Course[]> {
     requirements: c.requirements || [],
     totalCapacity: c.totalCapacity ?? 0,
     currentAdmitted: c.currentAdmitted ?? 0,
+    appliedCount: c.appliedCount ?? 0,
+    admittedCount: c.admittedCount ?? 0,
   }));
 }
 
@@ -277,6 +281,11 @@ export async function getProfile() {
     state: u.preferredLocation || "",
     gender: u.gender || "",
     jambScore: u.jambScore || 0,
+    jambRegNo: u.jambRegNo || "",
+    jambCandidateName: u.jambCandidateName || "",
+    jambDateOfBirth: u.jambDateOfBirth || "",
+    jambGender: u.jambGender || "",
+    jambExamNo: u.jambExamNo || "",
     interests: u.interests || [],
     preferredUniversities: u.preferredUniversities || [],
     bio: u.bio || "",
@@ -293,6 +302,11 @@ export async function updateProfile(data: any) {
   const payload: any = {};
   if (data.name !== undefined) payload.fullName = data.name;
   if (data.jambScore !== undefined && data.jambScore !== "") payload.jambScore = Number(data.jambScore);
+  if (data.jambRegNo !== undefined) payload.jambRegNo = data.jambRegNo;
+  if (data.jambCandidateName !== undefined) payload.jambCandidateName = data.jambCandidateName;
+  if (data.jambDateOfBirth !== undefined) payload.jambDateOfBirth = data.jambDateOfBirth;
+  if (data.jambGender !== undefined) payload.jambGender = data.jambGender;
+  if (data.jambExamNo !== undefined) payload.jambExamNo = data.jambExamNo;
   if (data.interests !== undefined) payload.interests = data.interests;
   if (data.state !== undefined) payload.preferredLocation = data.state;
   if (data.subjects !== undefined) payload.subjects = data.subjects;
@@ -315,6 +329,11 @@ export async function updateProfile(data: any) {
     state: u.preferredLocation || "",
     gender: u.gender ?? null,
     jambScore: u.jambScore || 0,
+    jambRegNo: u.jambRegNo || "",
+    jambCandidateName: u.jambCandidateName || "",
+    jambDateOfBirth: u.jambDateOfBirth || "",
+    jambGender: u.jambGender || "",
+    jambExamNo: u.jambExamNo || "",
     interests: u.interests || [],
     preferredUniversities: u.preferredUniversities || [],
     bio: u.bio || "",

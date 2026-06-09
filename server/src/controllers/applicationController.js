@@ -161,47 +161,37 @@ export const applyForCourse = asyncHandler(async (req, res) => {
     documents: documents || [],
   });
 
-  // Auto-offer logic (immediate mode) — make a reserved offer atomically
+  // Auto-admission logic (provisional/proposed)
   try {
-    if (program.autoAdmission && program.autoAdmission.enabled && program.autoAdmission.mode === "immediate") {
+    if (program.autoAdmission && program.autoAdmission.enabled) {
       const threshold = program.autoAdmission.autoAcceptThreshold || 85;
       if (calculatedMatchScore >= threshold) {
-        // Attempt to atomically reserve a slot by incrementing currentAdmitted when slots remain
-        const updatedProgram = await Program.findOneAndUpdate(
-          { _id: program._id, $expr: { $lt: ["$currentAdmitted", "$totalCapacity"] } },
-          { $inc: { currentAdmitted: 1 } },
-          { new: true }
-        );
+        // Set status to provisional, awaiting admin final approval
+        application.status = "provisional";
+        application.auditTrail.push({
+          action: `Provisional Auto-Admission Proposed`,
+          performedBy: "system",
+          notes: `AutoAcceptThreshold=${threshold}. Awaiting final administrator approval on dashboard.`,
+        });
+        await application.save();
 
-        if (updatedProgram) {
-          const OFFER_HOURS = program.autoAdmission.offerExpiryHours || 72;
-          application.status = "offered";
-          application.offerExpiresAt = new Date(Date.now() + OFFER_HOURS * 60 * 60 * 1000);
-          application.auditTrail.push({
-            action: `Offered (immediate) to ${program.name}`,
-            performedBy: "system",
-            notes: `AutoAcceptThreshold=${threshold}; Expires in ${OFFER_HOURS} hours`,
-          });
-          await application.save();
+        // Notify student about provisional status
+        await Notification.create({
+          userId: req.user._id,
+          title: "Provisional Admission Matched",
+          body: `Congratulations! Your profile matches the auto-admission criteria for ${program.name} at ${university.name}. Your application is placed on the provisional list awaiting final administrative sign-off.`,
+          type: "info",
+          link: "/applications",
+        });
 
-          // Notify student about the offer
-          await Notification.create({
-            userId: req.user._id,
-            title: "Admission Offer",
-            body: `You have been offered admission to ${program.name} at ${university.name}. Please confirm within ${OFFER_HOURS} hours to secure your place.`,
-            type: "success",
-            link: "/applications",
-          });
-
-          // Create an admissions message in the application thread
-          await Message.create({
-            applicationId: application._id,
-            senderId: null,
-            senderRole: "system",
-            message: `System: You have been offered admission to ${program.name}. Please confirm within ${OFFER_HOURS} hours to secure your place.`,
-            read: false,
-          });
-        }
+        // Create a system message in the application thread
+        await Message.create({
+          applicationId: application._id,
+          senderId: null,
+          senderRole: "system",
+          message: `System: Applicant met the auto-admission match score threshold of ${threshold}%. Admission status set to provisional, awaiting final approval.`,
+          read: false,
+        });
       }
     }
   } catch (err) {

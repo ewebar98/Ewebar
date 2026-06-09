@@ -1,4 +1,5 @@
 import { Institution, Program } from "../models/universityModel.js";
+import { Application } from "../models/applicationModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import AuditLog from "../models/auditLogModel.js";
 import eventBus from "../utils/eventBus.js"
@@ -119,6 +120,17 @@ export const getCourses = asyncHandler(async (req, res) => {
 
   const total = await Program.countDocuments(query);
 
+  const programsWithCounts = await Promise.all(
+    programs.map(async (p) => {
+      const appliedCount = await Application.countDocuments({ courseId: p._id });
+      const admittedCount = await Application.countDocuments({ courseId: p._id, status: "accepted" });
+      const pObj = p.toObject();
+      pObj.appliedCount = appliedCount;
+      pObj.admittedCount = admittedCount;
+      return pObj;
+    })
+  );
+
   res.json({
     success: true,
     message: "Programs fetched successfully",
@@ -128,7 +140,7 @@ export const getCourses = asyncHandler(async (req, res) => {
       limit: limitNum,
       pages: Math.ceil(total / limitNum),
     },
-    data: programs,
+    data: programsWithCounts,
   });
 });
 

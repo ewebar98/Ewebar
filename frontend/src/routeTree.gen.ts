@@ -32,7 +32,7 @@ import { Route as AdminScholarshipsRouteImport } from './routes/admin.scholarshi
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
-import { Route as AdminAdmissionRulesRouteImport } from './routes/admin.admissionRules'
+import { Route as AdminAdmissionRulesRouteImport } from './routes/admin.admission-rules'
 
 const UniversitiesRoute = UniversitiesRouteImport.update({
   id: '/universities',
@@ -150,8 +150,8 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdmissionRulesRoute = AdminAdmissionRulesRouteImport.update({
-  id: '/admin/admissionRules',
-  path: '/admin/admissionRules',
+  id: '/admin/admission-rules',
+  path: '/admin/admission-rules',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -170,7 +170,7 @@ export interface FileRoutesByFullPath {
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
   '/universities': typeof UniversitiesRouteWithChildren
-  '/admin/admissionRules': typeof AdminAdmissionRulesRoute
+  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -195,7 +195,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
-  '/admin/admissionRules': typeof AdminAdmissionRulesRoute
+  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -222,7 +222,7 @@ export interface FileRoutesById {
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
   '/universities': typeof UniversitiesRouteWithChildren
-  '/admin/admissionRules': typeof AdminAdmissionRulesRoute
+  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -250,7 +250,7 @@ export interface FileRouteTypes {
     | '/scholarships'
     | '/settings'
     | '/universities'
-    | '/admin/admissionRules'
+    | '/admin/admission-rules'
     | '/admin/analytics'
     | '/admin/applications'
     | '/admin/courses'
@@ -275,7 +275,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/scholarships'
     | '/settings'
-    | '/admin/admissionRules'
+    | '/admin/admission-rules'
     | '/admin/analytics'
     | '/admin/applications'
     | '/admin/courses'
@@ -301,7 +301,7 @@ export interface FileRouteTypes {
     | '/scholarships'
     | '/settings'
     | '/universities'
-    | '/admin/admissionRules'
+    | '/admin/admission-rules'
     | '/admin/analytics'
     | '/admin/applications'
     | '/admin/courses'
@@ -501,10 +501,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/admissionRules': {
-      id: '/admin/admissionRules'
-      path: '/admin/admissionRules'
-      fullPath: '/admin/admissionRules'
+    '/admin/admission-rules': {
+      id: '/admin/admission-rules'
+      path: '/admin/admission-rules'
+      fullPath: '/admin/admission-rules'
       preLoaderRoute: typeof AdminAdmissionRulesRouteImport
       parentRoute: typeof rootRouteImport
     }
