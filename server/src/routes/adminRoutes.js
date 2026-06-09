@@ -1,12 +1,17 @@
 import express from "express";
 import asyncHandler from "../utils/asyncHandler.js";
+import AuditLog from "../models/auditLogModel.js";
+import eventBus from "../utils/eventBus.js"
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
 import User from "../models/userModel.js";
 import { Institution, Program, Faculty, Department } from "../models/universityModel.js";
 import { Application } from "../models/applicationModel.js";
+import AdmissionRule from "../models/admissionRuleModel.js";
+import { recalculateRecommendations } from "../services/recommendationService.js";
 import Notification from "../models/notificationModel.js";
 import Message from "../models/messageModel.js";
 import admissionsService from "../services/admissionsService.js";
+
 
 const router = express.Router();
 
@@ -617,6 +622,24 @@ router.post(
       autoAdmission: req.body.autoAdmission || { enabled: false, mode: "batch", autoAcceptThreshold: 85 },
     });
 
+    const performedBy = {
+      userId: req.user.id,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    };
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'PROGRAM_CREATED',
+      entityName: 'Program',
+      entityId: newProgram._id,
+      previousState: null,
+      newState: newProgram,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    });
+    eventBus.emit('PROGRAM_CREATED', { programId: newProgram._id });
+
     res.status(201).json({
       success: true,
       message: "Program created successfully",
@@ -665,10 +688,43 @@ router.put(
 
     const updatedProgram = await program.save();
 
+    // Create audit log entry for program update
+    await AuditLog.create({
+      actorId: req.user._id,
+      actorRole: req.user.role,
+      action: 'PROGRAM_UPDATED',
+      entityName: 'Program',
+      entityId: updatedProgram._id,
+      previousState: null,
+      newState: updatedProgram,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    });
+    // Emit domain event for rule change if applicable
+    eventBus.emit('RULE_CHANGED', { programId: updatedProgram._id });
+
+    const performedBy = {
+      userId: req.user.id,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    };
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'PROGRAM_CAPACITY_UPDATED',
+      entityName: 'Program',
+      entityId: program._id,
+      previousState: null,
+      newState: { totalCapacity: program.totalCapacity, name: program.name },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    });
+    eventBus.emit('PROGRAM_CAPACITY_UPDATED', { programId: program._id });
+
     res.json({
       success: true,
-      message: "Program updated successfully",
-      data: updatedProgram,
+      message: "Program capacity updated successfully",
+      data: program,
     });
   })
 );
@@ -691,6 +747,24 @@ router.delete(
     await Application.deleteMany({ courseId: program._id });
 
     await program.deleteOne();
+
+    const performedBy = {
+      userId: req.user.id,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    };
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'PROGRAM_DELETED',
+      entityName: 'Program',
+      entityId: program._id,
+      previousState: null,
+      newState: { name: program.name, institutionId: program.institutionId },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    });
+    eventBus.emit('PROGRAM_DELETED', { programId: program._id });
 
     res.json({
       success: true,
@@ -715,8 +789,283 @@ router.post(
       throw new Error("Program not found");
     }
 
+    // Audit log for batch admissions
+    await AuditLog.create({
+      actorId: req.user._id,
+      actorRole: req.user.role,
+      action: 'BATCH_ADMISSIONS_RUN',
+      entityName: 'Program',
+      entityId: programId,
+      previousState: null,
+      newState: result,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    });
+    // Emit event for batch admissions
+    eventBus.emit('BATCH_ADMISSIONS_COMPLETED', { programId, admitted: result.admitted });
+
     res.json({ success: true, message: `Batch admissions completed. Admitted ${result.admitted} students.`, data: result });
   })
 );
 
+// @desc    CRUD for Admission Rules
+// @route   GET /api/admin/rules
+// @access  Private/Admin
+router.get(
+  "/rules",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const rules = await AdmissionRule.find({}).populate('createdBy', 'fullName email');
+    res.json({ success: true, data: rules });
+  })
+);
+
+// @desc    Create a new admission rule
+// @route   POST /api/admin/rules
+// @access  Private/Admin
+router.post(
+  "/rules",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const { name, description, criteria, active } = req.body;
+    if (!name || !criteria) {
+      res.status(400);
+      throw new Error("Name and criteria are required for AdmissionRule");
+    }
+    const newRule = await AdmissionRule.create({
+      name,
+      description,
+      criteria,
+      active: active !== undefined ? active : true,
+      createdBy: req.user._id,
+    });
+
+    // Audit log
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: "RULE_CREATED",
+      entityName: "AdmissionRule",
+      entityId: newRule._id,
+      previousState: null,
+      newState: newRule,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent") || "",
+    });
+
+    // Emit event
+    eventBus.emit("RULE_CREATED", { ruleId: newRule._id });
+
+    res.status(201).json({ success: true, data: newRule });
+  })
+);
+
+// @desc    Update an admission rule
+// @route   PUT /api/admin/rules/:id
+// @access  Private/Admin
+router.put(
+  "/rules/:id",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const { name, description, criteria, active } = req.body;
+    const rule = await AdmissionRule.findById(req.params.id);
+    if (!rule) {
+      res.status(404);
+      throw new Error("AdmissionRule not found");
+    }
+
+    if (name !== undefined) rule.name = name;
+    if (description !== undefined) rule.description = description;
+    if (criteria !== undefined) rule.criteria = criteria;
+    if (active !== undefined) rule.active = active;
+
+    const updatedRule = await rule.save();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: "RULE_UPDATED",
+      entityName: "AdmissionRule",
+      entityId: updatedRule._id,
+      previousState: null,
+      newState: updatedRule,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent") || "",
+    });
+
+    eventBus.emit("RULE_UPDATED", { ruleId: updatedRule._id });
+
+    res.json({ success: true, data: updatedRule });
+  })
+);
+
+// @desc    Delete an admission rule
+// @route   DELETE /api/admin/rules/:id
+// @access  Private/Admin
+router.delete(
+  "/rules/:id",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const rule = await AdmissionRule.findById(req.params.id);
+    if (!rule) {
+      res.status(404);
+      throw new Error("AdmissionRule not found");
+    }
+    await rule.deleteOne();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: "RULE_DELETED",
+      entityName: "AdmissionRule",
+      entityId: rule._id,
+      previousState: null,
+      newState: null,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent") || "",
+    });
+
+    eventBus.emit("RULE_DELETED", { ruleId: rule._id });
+
+    res.json({ success: true, message: "Admission rule deleted" });
+  })
+);
+
+// @desc    CRUD for Admission Rules
+// @route   GET /api/admin/rules
+// @access  Private/Admin
+router.get(
+  "/rules",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const rules = await AdmissionRule.find({}).populate('createdBy', 'fullName email');
+    res.json({ success: true, data: rules });
+  })
+);
+
+// @desc    Create a new admission rule
+// @route   POST /api/admin/rules
+// @access  Private/Admin
+router.post(
+  "/rules",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const { name, description, criteria, active } = req.body;
+    if (!name || !criteria) {
+      res.status(400);
+      throw new Error("Name and criteria are required for AdmissionRule");
+    }
+    const newRule = await AdmissionRule.create({
+      name,
+      description,
+      criteria,
+      active: active !== undefined ? active : true,
+      createdBy: req.user._id,
+    });
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: "RULE_CREATED",
+      entityName: "AdmissionRule",
+      entityId: newRule._id,
+      previousState: null,
+      newState: newRule,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent") || "",
+    });
+
+    eventBus.emit("RULE_CREATED", { ruleId: newRule._id });
+
+    res.status(201).json({ success: true, data: newRule });
+  })
+);
+
+// @desc    Update an admission rule
+// @route   PUT /api/admin/rules/:id
+// @access  Private/Admin
+router.put(
+  "/rules/:id",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const { name, description, criteria, active } = req.body;
+    const rule = await AdmissionRule.findById(req.params.id);
+    if (!rule) {
+      res.status(404);
+      throw new Error("AdmissionRule not found");
+    }
+    if (name !== undefined) rule.name = name;
+    if (description !== undefined) rule.description = description;
+    if (criteria !== undefined) rule.criteria = criteria;
+    if (active !== undefined) rule.active = active;
+    const updatedRule = await rule.save();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: "RULE_UPDATED",
+      entityName: "AdmissionRule",
+      entityId: updatedRule._id,
+      previousState: null,
+      newState: updatedRule,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent") || "",
+    });
+
+    eventBus.emit("RULE_UPDATED", { ruleId: updatedRule._id });
+
+    res.json({ success: true, data: updatedRule });
+  })
+);
+
+// @desc    Delete an admission rule
+// @route   DELETE /api/admin/rules/:id
+// @access  Private/Admin
+router.delete(
+  "/rules/:id",
+  protect,
+  adminOnly,
+  asyncHandler(async (req, res) => {
+    const rule = await AdmissionRule.findById(req.params.id);
+    if (!rule) {
+      res.status(404);
+      throw new Error("AdmissionRule not found");
+    }
+    await rule.deleteOne();
+
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: "RULE_DELETED",
+      entityName: "AdmissionRule",
+      entityId: rule._id,
+      previousState: null,
+      newState: null,
+      ipAddress: req.ip,
+      userAgent: req.get("User-Agent") || "",
+    });
+
+    eventBus.emit("RULE_DELETED", { ruleId: rule._id });
+
+    res.json({ success: true, message: "Admission rule deleted" });
+  })
+);
+router.post('/recalculate/:programId', protect, adminOnly, asyncHandler(async (req, res) => {
+  const { programId } = req.params;
+  await recalculateRecommendations(programId);
+  await AuditLog.create({
+    user: req.user.id,
+    action: 'RECOMMENDATION_RECALCULATED',
+    target: programId,
+    details: 'Recalculated recommendations via admin endpoint',
+  });
+  res.json({ success: true, message: 'Recommendations recalculated for all users.' });
+}));
 export default router;

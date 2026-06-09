@@ -1,6 +1,8 @@
 import { generateRecommendations } from "../services/recommendationService.js";
 import Recommendation from "../models/recommendationModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import AuditLog from "../models/auditLogModel.js";
+import eventBus from "../utils/eventBus.js";
 
 // @desc    Get recommendations for the logged-in user (With optimized MongoDB Caching)
 // @route   GET /api/recommendations
@@ -91,6 +93,21 @@ export const getRecommendations = asyncHandler(async (req, res) => {
     matchScore: r.matchPercentage,
     reason: r.explanation,
   }));
+
+  // Audit log for recommendation generation
+  await AuditLog.create({
+    actorId: req.user._id,
+    actorRole: req.user.role,
+    action: 'RECOMMENDATIONS_GENERATED',
+    entityName: 'Recommendation',
+    entityId: req.user._id,
+    previousState: cachedRec ? cachedRec.toObject() : null,
+    newState: data,
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent') || '',
+  });
+  // Emit event for new recommendations
+  eventBus.emit('RECOMMENDATIONS_UPDATED', { userId: req.user._id });
 
   res.json({
     success: true,

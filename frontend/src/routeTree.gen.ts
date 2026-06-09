@@ -32,6 +32,7 @@ import { Route as AdminScholarshipsRouteImport } from './routes/admin.scholarshi
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminAdmissionRulesRouteImport } from './routes/admin.admissionRules'
 
 const UniversitiesRoute = UniversitiesRouteImport.update({
   id: '/universities',
@@ -148,6 +149,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/admin/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAdmissionRulesRoute = AdminAdmissionRulesRouteImport.update({
+  id: '/admin/admission-rules',
+  path: '/admin/admission-rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/universities': typeof UniversitiesRouteWithChildren
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/scholarships': typeof ScholarshipsRoute
   '/settings': typeof SettingsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/universities': typeof UniversitiesRouteWithChildren
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/admission-rules': typeof AdminAdmissionRulesRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/scholarships': typeof AdminScholarshipsRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/universities'
     | '/admin/analytics'
+    | '/admin/admission-rules'
     | '/admin/applications'
     | '/admin/courses'
     | '/admin/scholarships'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/scholarships'
     | '/settings'
     | '/admin/analytics'
+    | '/admin/admission-rules'
     | '/admin/applications'
     | '/admin/courses'
     | '/admin/scholarships'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/universities'
     | '/admin/analytics'
+    | '/admin/admission-rules'
     | '/admin/applications'
     | '/admin/courses'
     | '/admin/scholarships'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   UniversitiesRoute: typeof UniversitiesRouteWithChildren
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAdmissionRulesRoute: typeof AdminAdmissionRulesRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminCoursesRoute: typeof AdminCoursesRoute
   AdminScholarshipsRoute: typeof AdminScholarshipsRoute
@@ -488,6 +501,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/admission-rules': {
+      id: '/admin/admission-rules'
+      path: '/admin/admission-rules'
+      fullPath: '/admin/admission-rules'
+      preLoaderRoute: typeof AdminAdmissionRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -521,6 +541,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   UniversitiesRoute: UniversitiesRouteWithChildren,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAdmissionRulesRoute: AdminAdmissionRulesRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminCoursesRoute: AdminCoursesRoute,
   AdminScholarshipsRoute: AdminScholarshipsRoute,

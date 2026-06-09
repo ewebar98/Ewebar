@@ -6,6 +6,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { validate, profileUpdateSchema } from "../middleware/validationMiddleware.js";
 import upload from "../utils/multerConfig.js";
+import AuditLog from "../models/auditLogModel.js";
 
 const router = express.Router();
 
@@ -72,6 +73,7 @@ router.put(
   validate(profileUpdateSchema),
   asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
+    const previousState = user ? user.toObject() : null;
 
     if (user) {
       user.fullName = req.body.fullName || user.fullName;
@@ -114,6 +116,17 @@ router.put(
           body: "Your academic results (JAMB & O'Level sittings) have been successfully saved and verified. Recommendations are recalculated.",
           type: "success",
           link: "/profile",
+        });
+        await AuditLog.create({
+          actorId: req.user._id,
+          actorRole: req.user.role,
+          action: "USER_PROFILE_UPDATE",
+          entityName: "User",
+          entityId: user._id,
+          previousState,
+          newState: updatedUser.toObject(),
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"] || "",
         });
       }
 

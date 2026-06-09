@@ -1,5 +1,7 @@
 import { Institution, Program } from "../models/universityModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import AuditLog from "../models/auditLogModel.js";
+import eventBus from "../utils/eventBus.js"
 
 // @desc    Get all institutions / universities with text search & metadata filters
 // @route   GET /api/universities
@@ -171,10 +173,27 @@ export const updateProgramCapacity = asyncHandler(async (req, res) => {
   program.totalCapacity = Number(totalCapacity);
   await program.save();
 
+  const performedBy = {
+    userId: req.user.id,
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent') || '',
+  };
+    await AuditLog.create({
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      action: 'PROGRAM_CAPACITY_UPDATED',
+      entityName: 'Program',
+      entityId: program._id,
+      previousState: null,
+      newState: { totalCapacity: program.totalCapacity, name: program.name },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent') || '',
+    });
+  eventBus.emit('PROGRAM_CAPACITY_UPDATED', { programId: program._id });
+
   res.json({
     success: true,
     message: "Program capacity updated successfully",
     data: program,
   });
 });
-

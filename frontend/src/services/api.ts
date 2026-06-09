@@ -800,3 +800,19 @@ export async function confirmOfferAcceptance(applicationId: string) {
     method: "POST",
   });
 }
+export async function fetchAdmissionRules(): Promise<any[]> {
+  return await request<any[]>('/admin/rules');
+}
+
+export async function createAdmissionRule(data: any): Promise<any> {
+  return await request<any>('/admin/rules', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateAdmissionRule(id: string, data: any): Promise<any> {
+  return await request<any>(`/admin/rules/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteAdmissionRule(id: string): Promise<any> {
+  return await request<any>(`/admin/rules/${id}`, { method: 'DELETE' });
+}
+

@@ -31,6 +31,7 @@ const adminNav = [
   { to: "/admin/applications", icon: FileText, label: "Applications" },
   // { to: "/admin/scholarships", icon: Wallet, label: "Scholarships" },
   { to: "/admin/analytics", icon: BarChart, label: "Analytics" },
+  { to: "/admin/admission-rules", icon: Settings, label: "Admission Rules" },
 ];
 
 export function AppLayout({ variant = "student", children }: { variant?: "student" | "admin"; children?: ReactNode }) {

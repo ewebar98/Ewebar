@@ -1,0 +1,15 @@
+{
+  "name": "intellipath",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "IntelliPath server",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "node server/src/index.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "mongoose": "^7.8.9"
+  }
+}

@@ -1,5 +1,7 @@
-git commit -m "Finalized WeBAR system audit and fixes"
+import Recommendation from "../models/recommendationModel.js";
+import eventBus from "../utils/eventBus.js";
 import { Program, Institution } from "../models/universityModel.js";
+import User from "../models/userModel.js";
 
 /**
  * Calculates a strict match score based on JAMB cutoff, JAMB subjects, and O'Level credits.
@@ -155,6 +157,7 @@ export const calculateMatchScore = (student, program) => {
  * Generates academic recommendations using indexed database pre-filtering.
  */
 export const generateRecommendations = async (user) => {
+  // existing function unchanged
   const jambScore = Number(user.jambScore) || 0;
 
   // Constrain recommendations strictly to LASUSTECH
@@ -214,3 +217,82 @@ export const generateRecommendations = async (user) => {
 
   return recommendations.slice(0, 5); // Return top 5
 };
+
+/**
+ * Recalculates recommendations for all users when a program or rule changes.
+ * @param {string} programId - The ID of the affected program.
+ */
+export const recalculateRecommendations = async (programId) => {
+  try {
+    // For now, recompute for all users (could be optimized later).
+    const users = await User.find({});
+    for (const user of users) {
+      const rawRecs = await generateRecommendations(user);
+      await Recommendation.findOneAndUpdate(
+        { userId: user._id },
+        {
+          recommendedCourses: rawRecs.map((r) => ({
+            courseId: r.course._id,
+            matchPercentage: r.matchPercentage,
+            explanation: r.explanation,
+          })),
+          matchPercentage: rawRecs.length > 0 ? rawRecs[0].matchPercentage : 0,
+        },
+        { upsert: true }
+      );
+    }
+  } catch (err) {
+    console.error('Error during recommendation recalculation:', err);
+  }
+};
+
+// Event listeners to trigger recalculation
+eventBus.on('RULE_CHANGED', async ({ programId }) => {
+  await recalculateRecommendations(programId);
+});
+
+eventBus.on('PROGRAM_UPDATED', async ({ programId }) => {
+  await recalculateRecommendations(programId);
+});
+
+eventBus.on('CAPACITY_UPDATED', async ({ programId }) => {
+  await recalculateRecommendations(programId);
+});
+
+/**
+ * Recalculates recommendations for a single user.
+ * @param {string} userId - The ID of the user whose recommendations should be refreshed.
+ */
+export const recalculateForUser = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.warn(`User ${userId} not found for recommendation refresh`);
+      return;
+    }
+    const rawRecs = await generateRecommendations(user);
+    await Recommendation.findOneAndUpdate(
+      { userId },
+      {
+        recommendedCourses: rawRecs.map((r) => ({
+          courseId: r.course._id,
+          matchPercentage: r.matchPercentage,
+          explanation: r.explanation,
+        })),
+        matchPercentage: rawRecs.length > 0 ? rawRecs[0].matchPercentage : 0,
+      },
+      { upsert: true }
+    );
+  } catch (err) {
+    console.error('Error during per-user recommendation recalculation:', err);
+  }
+};
+
+// Event listeners for per-user updates
+eventBus.on('USER_PROFILE_UPDATED', async ({ userId }) => {
+  await recalculateForUser(userId);
+});
+
+eventBus.on('APPLICATION_SUBMITTED', async ({ userId }) => {
+  await recalculateForUser(userId);
+});
