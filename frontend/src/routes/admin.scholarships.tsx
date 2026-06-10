@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { AppLayout } from "@/layouts/AppLayout";
@@ -29,9 +29,11 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/scholarships")({
-  beforeLoad: requireRole("admin"),
+  beforeLoad: () => {
+    throw redirect({ to: "/admin" });
+  },
   head: () => ({ meta: [{ title: "Manage Scholarships | WeBAR" }] }),
-  component: () => <AppLayout variant="admin"><Manage /></AppLayout>,
+  component: () => null,
 });
 
 function Manage() {

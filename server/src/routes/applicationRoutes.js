@@ -25,16 +25,16 @@ router.post("/applications/:id/confirm-accept", protect, confirmOfferAcceptance)
 router.route("/applications/:id/messages").get(protect, getApplicationMessages).post(protect, sendApplicationMessage);
 router.route("/applications/:id/messages/read").put(protect, markMessagesAsRead);
 
-// Scholarship Routes
-router.route("/scholarships")
-  .get(getScholarships)
-  .post(protect, adminOnly, createScholarship);
-
-router.route("/scholarships/:id")
-  .put(protect, adminOnly, updateScholarship)
-  .delete(protect, adminOnly, deleteScholarship);
-
-router.post("/scholarships/:id/apply", protect, applyForScholarship);
+// Scholarship Routes (Commented out)
+// router.route("/scholarships")
+//   .get(getScholarships)
+//   .post(protect, adminOnly, createScholarship);
+// 
+// router.route("/scholarships/:id")
+//   .put(protect, adminOnly, updateScholarship)
+//   .delete(protect, adminOnly, deleteScholarship);
+// 
+// router.post("/scholarships/:id/apply", protect, applyForScholarship);
 
 export default router;
 

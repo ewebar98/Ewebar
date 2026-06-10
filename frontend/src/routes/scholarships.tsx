@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { requireRole } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
@@ -12,9 +12,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/scholarships")({
-  beforeLoad: requireRole("student"),
+  beforeLoad: () => {
+    throw redirect({ to: "/" });
+  },
   head: () => ({ meta: [{ title: "Scholarships | WeBAR" }] }),
-  component: () => <AppLayout><Scholarships /></AppLayout>,
+  component: () => null,
 });
 
 function Countdown({ deadline }: { deadline: string }) {
