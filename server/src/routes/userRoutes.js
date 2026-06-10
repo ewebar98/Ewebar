@@ -449,7 +449,6 @@ For subjects, the grade should be the letter grade (e.g. A1, B2, C4, F9). Extrac
       response_format: { type: "json_object" }
     });
 
-    let ocrResult;
     try {
       ocrResult = JSON.parse(aiResponse.choices[0].message.content);
       // Normalise subjects: ensure grade field exists (some models return 'score')

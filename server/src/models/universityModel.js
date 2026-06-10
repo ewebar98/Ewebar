@@ -100,7 +100,7 @@ institutionSchema.pre("validate", function (next) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
-  next();
+  if (typeof next === "function") next();
 });
 
 // High performance compound text search index for Institution
@@ -141,7 +141,7 @@ facultySchema.pre("validate", function (next) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
-  next();
+  if (typeof next === "function") next();
 });
 
 export const Faculty = mongoose.model("Faculty", facultySchema);
@@ -182,7 +182,7 @@ departmentSchema.pre("validate", function (next) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
-  next();
+  if (typeof next === "function") next();
 });
 
 export const Department = mongoose.model("Department", departmentSchema);
@@ -269,7 +269,7 @@ programSchema.pre("validate", function (next) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   }
-  next();
+  if (typeof next === "function") next();
 });
 
 // High performance compound text search index

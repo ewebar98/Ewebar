@@ -101,7 +101,7 @@ subjectSchema.pre("validate", function (next) {
     // Deduplicate and join
     this.searchableText = Array.from(new Set(searchTerms)).join(" ");
   }
-  next();
+  if (typeof next === "function") next();
 });
 
 // High performance compound text search index

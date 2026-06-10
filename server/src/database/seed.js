@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import { University, Course } from "../models/universityModel.js";
-import { Scholarship, Application } from "../models/scholarshipModel.js";
+import { Scholarship } from "../models/scholarshipModel.js";
+import { Application } from "../models/applicationModel.js";
 import Recommendation from "../models/recommendationModel.js";
 
 dotenv.config();
@@ -114,11 +115,11 @@ const seedData = async () => {
     // 3. Seed Scholarships
     console.log("Seeding scholarships...");
     const scholarships = [
-      { title: "MTN Foundation Scholarship", eligibility: "JAMB ≥ 250, Sciences", deadline: new Date("2026-08-15"), coverage: "₦600,000", category: "Merit" },
-      { title: "Shell Nigeria Bursary", eligibility: "Engineering, GPA ≥ 4.0", deadline: new Date("2026-06-30"), coverage: "₦1,200,000", category: "STEM" },
-      { title: "NNPC/Total National Merit", eligibility: "Nigerian, JAMB ≥ 260", deadline: new Date("2026-07-20"), coverage: "₦800,000", category: "Merit" },
-      { title: "Agbami Medical Scholarship", eligibility: "Medicine, Year 2+", deadline: new Date("2026-09-01"), coverage: "₦500,000", category: "Need" },
-      { title: "Google Africa Developer Scholarship", eligibility: "18+, Coding", deadline: new Date("2026-05-25"), coverage: "Free training", category: "Tech" },
+      { name: "MTN Foundation Scholarship", sponsor: "MTN Foundation", amount: "₦600,000", deadline: new Date("2026-08-15"), category: "Merit", eligibility: ["JAMB ≥ 250", "Sciences"] },
+      { name: "Shell Nigeria Bursary", sponsor: "Shell Nigeria", amount: "₦1,200,000", deadline: new Date("2026-06-30"), category: "STEM", eligibility: ["Engineering", "GPA ≥ 4.0"] },
+      { name: "NNPC/Total National Merit", sponsor: "NNPC/Total", amount: "₦800,000", deadline: new Date("2026-07-20"), category: "Merit", eligibility: ["Nigerian", "JAMB ≥ 260"] },
+      { name: "Agbami Medical Scholarship", sponsor: "Agbami", amount: "₦500,000", deadline: new Date("2026-09-01"), category: "Need", eligibility: ["Medicine", "Year 2+"] },
+      { name: "Google Africa Developer Scholarship", sponsor: "Google", amount: "Free training", deadline: new Date("2026-05-25"), category: "Tech", eligibility: ["18+", "Coding"] },
     ];
     const seededScholarships = await Scholarship.insertMany(scholarships);
     console.log(`Seeded ${seededScholarships.length} scholarships.`);

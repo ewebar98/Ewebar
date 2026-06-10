@@ -1,8 +1,11 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/userModel.js";
+import { Institution, Program, Faculty } from "../models/universityModel.js";
+import { Application } from "../models/applicationModel.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
+
 
 const router = express.Router();
 
@@ -39,6 +42,136 @@ function generateSecurePassword(length = 12) {
     .sort(() => Math.random() - 0.5)
     .join("");
 }
+
+// @desc    Get system analytics
+// @route   GET /api/admin/analytics
+// @access  Admin only
+router.get(
+  "/analytics",
+  asyncHandler(async (req, res) => {
+    // 1. Totals
+    const [students, institutions, programs, applications] = await Promise.all([
+      User.countDocuments({ role: "student" }),
+      Institution.countDocuments({}),
+      Program.countDocuments({}),
+      Application.countDocuments({}),
+    ]);
+
+    // 2. Applications Trend (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const trendData = await Application.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const applicationsTrend = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const mLabel = months[d.getMonth()];
+      const year = d.getFullYear();
+      const monthNum = d.getMonth() + 1;
+
+      const matched = trendData.find(
+        (t) => t._id.year === year && t._id.month === monthNum
+      );
+      applicationsTrend.push({
+        month: mLabel,
+        value: matched ? matched.count : 0,
+      });
+    }
+
+    // 3. Faculty Mix
+    const facultyData = await Program.aggregate([
+      {
+        $group: {
+          _id: "$facultyId",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const faculties = await Faculty.find({
+      _id: { $in: facultyData.map((f) => f._id).filter(Boolean) },
+    });
+
+    const facultyMix = facultyData.map((fd) => {
+      const faculty = faculties.find((f) => String(f._id) === String(fd._id));
+      return {
+        name: faculty ? faculty.name : "Other",
+        value: fd.count,
+      };
+    });
+
+    // 4. Top Universities (Top 5 by application count)
+    const topUnisData = await Application.aggregate([
+      {
+        $group: {
+          _id: "$universityId",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+    ]);
+
+    const unis = await Institution.find({
+      _id: { $in: topUnisData.map((tu) => tu._id).filter(Boolean) },
+    });
+
+    const topUniversities = topUnisData.map((tu) => {
+      const uni = unis.find((u) => String(u._id) === String(tu._id));
+      return {
+        name: uni ? uni.name : "Unknown",
+        value: tu.count,
+      };
+    });
+
+    // 5. Program Capacities
+    const activePrograms = await Program.find({})
+      .populate("institutionId", "name")
+      .sort({ currentAdmitted: -1 })
+      .limit(10);
+
+    const programCapacities = activePrograms.map((p) => ({
+      id: p._id,
+      name: p.name,
+      institution: p.institutionId ? p.institutionId.name : "Unknown",
+      capacity: p.totalCapacity || 100,
+      admitted: p.currentAdmitted || 0,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        totals: {
+          students,
+          universities: institutions,
+          courses: programs,
+          applications,
+        },
+        applicationsTrend,
+        facultyMix,
+        topUniversities,
+        programCapacities,
+      },
+    });
+  })
+);
 
 // @desc    List all users with optional filters
 // @route   GET /api/admin/users

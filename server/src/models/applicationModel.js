@@ -80,7 +80,7 @@ applicationSchema.pre("save", function (next) {
       notes: `Initial program application matching score is ${this.matchScore}%`,
     });
   }
-  next();
+  if (typeof next === "function") next();
 });
 
 export const Application = mongoose.model("Application", applicationSchema);

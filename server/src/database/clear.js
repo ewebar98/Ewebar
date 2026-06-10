@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import { University, Course } from "../models/universityModel.js";
-import { Scholarship, Application } from "../models/scholarshipModel.js";
+import { Scholarship } from "../models/scholarshipModel.js";
+import { Application } from "../models/applicationModel.js";
 import Recommendation from "../models/recommendationModel.js";
 
 dotenv.config();
